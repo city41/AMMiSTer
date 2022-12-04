@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    ".eslintrc.cjs",
+    "**/*.config.js",
+    "**/*.config.cjs",
+    "**/*.config.mjs",
+    "**/*.config.*.js",
+    "**/*.config.*.cjs",
+    "**/*.config.*.mjs"
+  ]
+}
