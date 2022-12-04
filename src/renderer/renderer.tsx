@@ -1,8 +1,4 @@
-/**
- * React renderer.
- */
-// Import the styles here to process them with webpack
-import '_public/style.css';
+import './renderer.css';
 
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
