@@ -2,19 +2,18 @@ import {
 	CombinedState,
 	combineReducers,
 	configureStore,
-	getDefaultMiddleware,
 } from '@reduxjs/toolkit';
 import {
-	reducer as homeDirReducer,
-	HomeDirState,
-} from './components/homeDir/homeDirSlice';
+	reducer as misterReducer,
+	MisterState,
+} from './components/mister/misterSlice';
 
 type AppState = CombinedState<{
-	homeDir: HomeDirState;
+	mister: MisterState;
 }>;
 
 const rootReducer = combineReducers({
-	homeDir: homeDirReducer,
+	mister: misterReducer,
 });
 
 const store = configureStore({

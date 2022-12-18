@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
-import { HomeDir } from './components/homeDir/HomeDir';
+import { MisterArcadeGames } from './components/mister/MisterArcadeGames';
 import { store } from './store';
 
 function App(): JSX.Element {
@@ -11,7 +11,7 @@ function App(): JSX.Element {
 	return (
 		<Provider store={store}>
 			<div className="app">
-				<HomeDir />
+				<MisterArcadeGames />
 			</div>
 		</Provider>
 	);

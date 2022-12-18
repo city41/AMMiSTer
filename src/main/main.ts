@@ -1,8 +1,9 @@
 import path from 'node:path';
-import fsp from 'node:fs/promises';
 import settings from 'electron-settings';
 import { BrowserWindow, app, ipcMain } from 'electron';
 import * as nodeEnv from '_utils/node-env';
+
+import * as mister from './mister';
 
 const packageJson = require('../../package.json');
 const SETTINGS_FILE = `${packageJson.name}.json`;
@@ -73,8 +74,8 @@ ipcMain.on('renderer-ready', () => {
 	console.log('Renderer is ready.');
 });
 
-ipcMain.handle('homeDir:get-files', async () => {
-	return fsp.readdir('/home/matt');
+ipcMain.handle('mister:get-arcade-games', async (_event, ipAddress: string) => {
+	return mister.getArcadeGames(ipAddress);
 });
 
 // In this file you can include the rest of your app"s specific main process

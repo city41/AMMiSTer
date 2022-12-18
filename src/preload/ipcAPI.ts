@@ -5,8 +5,8 @@ const ipcAPI = {
 	rendererReady() {
 		ipcRenderer.send('renderer-ready');
 	},
-	getHomeDirFiles() {
-		return ipcRenderer.invoke('homeDir:get-files');
+	getArcadeGamesOnMister(ipAddress: string) {
+		return ipcRenderer.invoke('mister:get-arcade-games', ipAddress);
 	},
 };
 
