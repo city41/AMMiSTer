@@ -1,4 +1,7 @@
 import React, { useEffect } from 'react';
+import { Provider } from 'react-redux';
+import { HomeDir } from './components/homeDir/HomeDir';
+import { store } from './store';
 
 function App(): JSX.Element {
 	useEffect(() => {
@@ -6,9 +9,11 @@ function App(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="app">
-			<h1 className="text-4xl">AMMiSTer</h1>
-		</div>
+		<Provider store={store}>
+			<div className="app">
+				<HomeDir />
+			</div>
+		</Provider>
 	);
 }
 
