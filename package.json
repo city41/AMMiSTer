@@ -1,5 +1,5 @@
 {
-	"name": "fmmister",
+	"name": "ammister",
 	"version": "0.0.0",
 	"description": "A File Manager for the MiSTer",
 	"main": "./dist/main.bundle.js",
@@ -22,8 +22,8 @@
 		"clean": "rimraf dist && rimraf out"
 	},
 	"build": {
-		"appId": "dev.mattgreer.fmmister",
-		"productName": "FMMiSTer",
+		"appId": "dev.mattgreer.ammister",
+		"productName": "AMMiSTer",
 		"directories": {
 			"app": "./dist/",
 			"output": "./out/"
@@ -100,6 +100,6 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/city41/FMMiSTer"
+		"url": "git+https://github.com/city41/AMMiSTer"
 	}
 }

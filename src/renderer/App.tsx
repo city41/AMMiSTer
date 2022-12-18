@@ -7,7 +7,7 @@ function App(): JSX.Element {
 
 	return (
 		<div className="app">
-			<h1 className="text-4xl">FMMiSTer</h1>
+			<h1 className="text-4xl">AMMiSTer</h1>
 		</div>
 	);
 }
