@@ -1,11 +1,11 @@
-/**
- * Entry point of the Election app.
- */
-import * as path from 'node:path';
+import path from 'node:path';
 import fsp from 'node:fs/promises';
-// eslint-disable-next-line import/no-extraneous-dependencies
+import settings from 'electron-settings';
 import { BrowserWindow, app, ipcMain } from 'electron';
 import * as nodeEnv from '_utils/node-env';
+
+const packageJson = require('../../package.json');
+const SETTINGS_FILE = `${packageJson.name}.json`;
 
 let mainWindow: Electron.BrowserWindow | undefined;
 
@@ -46,6 +46,16 @@ app
 		app.on('activate', () => {
 			if (BrowserWindow.getAllWindows.length === 0) createWindow();
 		});
+		console.log(
+			'settings file',
+			path.resolve(app.getPath('userData'), SETTINGS_FILE)
+		);
+		settings.configure({
+			fileName: SETTINGS_FILE,
+			prettify: true,
+			numSpaces: 2,
+		});
+		settings.set('mySetting', 'yes');
 	})
 	.finally(() => {
 		/* no action */
