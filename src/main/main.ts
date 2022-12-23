@@ -1,12 +1,12 @@
 import path from 'node:path';
 import settings from 'electron-settings';
 import { BrowserWindow, app, ipcMain } from 'electron';
-import * as nodeEnv from '_utils/node-env';
+import * as nodeEnv from '../utils/node-env';
 
 import * as mister from './mister';
+import * as db from './db';
 
-const packageJson = require('../../package.json');
-const SETTINGS_FILE = `${packageJson.name}.json`;
+const SETTINGS_FILE = 'ammister.json';
 
 let mainWindow: Electron.BrowserWindow | undefined;
 
@@ -17,13 +17,14 @@ function createWindow() {
 		width: 800,
 		webPreferences: {
 			devTools: nodeEnv.dev,
-			preload: path.join(__dirname, './preload.bundle.js'),
+			preload: path.join(__dirname, '../preload.bundle.js'),
 			webSecurity: nodeEnv.prod,
 		},
 	});
 
 	// and load the index.html of the app.
-	mainWindow.loadFile('index.html').finally(() => {
+	const indexPath = nodeEnv.dev ? '../index.html' : './index.html';
+	mainWindow.loadFile(indexPath).finally(() => {
 		/* no action */
 	});
 
@@ -42,7 +43,7 @@ function createWindow() {
 app
 	.whenReady()
 	.then(() => {
-		if (nodeEnv.dev || nodeEnv.prod) createWindow();
+		createWindow();
 
 		app.on('activate', () => {
 			if (BrowserWindow.getAllWindows.length === 0) createWindow();
@@ -74,8 +75,12 @@ ipcMain.on('renderer-ready', () => {
 	console.log('Renderer is ready.');
 });
 
-ipcMain.handle('mister:get-arcade-games', async (_event, ipAddress: string) => {
+ipcMain.handle('mister:getArcadeGames', async (_event, ipAddress: string) => {
 	return mister.getArcadeGames(ipAddress);
+});
+
+ipcMain.handle('db:getUpdateJson', async (_event, url: string) => {
+	return db.getUpdateJson(url);
 });
 
 // In this file you can include the rest of your app"s specific main process

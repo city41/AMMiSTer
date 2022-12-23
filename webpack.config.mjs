@@ -104,4 +104,4 @@ const rendererConfig = merge(commonConfig, {
 	],
 });
 
-export default [mainConfig, preloadConfig, rendererConfig];
+export default [preloadConfig, rendererConfig];

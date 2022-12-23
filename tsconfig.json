@@ -1,28 +1,16 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "baseUrl": ".",
-    "module": "ES2020",
-    "moduleResolution": "Node",
-    "paths": {
-      "_/*": ["src/*"],
-      "_public/*": ["public/*"],
-      "_main/*": ["src/main/*"],
-      "_preload/*": ["src/preload/*"],
-      "_renderer/*": ["src/renderer/*"],
-      "_types/*": ["src/types/*"],
-      "_utils/*": ["src/utils/*"],
-      "_tests/*": ["tests/*"]
-    },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "jsx": "react",
-    "target": "ES2020"
-  },
-  "include": ["src/**/*"]
+	"compilerOptions": {
+		"strict": true,
+		"baseUrl": ".",
+		"module": "CommonJS",
+		"moduleResolution": "Node",
+		"typeRoots": ["./node_modules/@types", "./src/types"],
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"jsx": "react",
+		"target": "ES2020",
+		"outDir": "dist"
+	},
+	"include": ["src/**/*"]
 }

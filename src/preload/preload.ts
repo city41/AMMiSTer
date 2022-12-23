@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { contextBridge } from 'electron';
-import { ipcAPI } from '_preload/ipcAPI';
+import { ipcAPI } from './ipcAPI';
 
 contextBridge.exposeInMainWorld('ipcAPI', ipcAPI);

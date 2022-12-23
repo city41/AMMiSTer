@@ -6,7 +6,11 @@ const ipcAPI = {
 		ipcRenderer.send('renderer-ready');
 	},
 	getArcadeGamesOnMister(ipAddress: string) {
-		return ipcRenderer.invoke('mister:get-arcade-games', ipAddress);
+		return ipcRenderer.invoke('mister:getArcadeGames', ipAddress);
+	},
+
+	getUpdateJson(url: string) {
+		return ipcRenderer.invoke('db:getUpdateJson', url);
 	},
 };
 
