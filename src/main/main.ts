@@ -5,6 +5,7 @@ import * as nodeEnv from '../utils/node-env';
 
 import * as mister from './mister';
 import * as db from './db';
+import { DBJSON } from './db/types';
 
 const SETTINGS_FILE = 'ammister.json';
 
@@ -42,7 +43,7 @@ function createWindow() {
 // Some APIs can only be used after this event occurs.
 app
 	.whenReady()
-	.then(() => {
+	.then(async () => {
 		createWindow();
 
 		app.on('activate', () => {
@@ -57,7 +58,7 @@ app
 			prettify: true,
 			numSpaces: 2,
 		});
-		settings.set('mySetting', 'yes');
+		await settings.set('rootDir', app.getPath('userData'));
 	})
 	.finally(() => {
 		/* no action */
@@ -82,6 +83,13 @@ ipcMain.handle('mister:getArcadeGames', async (_event, ipAddress: string) => {
 ipcMain.handle('db:getUpdateJson', async (_event, url: string) => {
 	return db.getUpdateJson(url);
 });
+
+ipcMain.handle(
+	'db:downloadUpdatesForDb',
+	async (_event, dbToUpdate: DBJSON) => {
+		return db.downloadUpdatesForDb(dbToUpdate);
+	}
+);
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.

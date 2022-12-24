@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron';
+import { DBJSON } from 'src/main/db/types';
 
 const ipcAPI = {
 	/** Notify main the renderer is ready. */
@@ -11,6 +12,10 @@ const ipcAPI = {
 
 	getUpdateJson(url: string) {
 		return ipcRenderer.invoke('db:getUpdateJson', url);
+	},
+
+	downloadUpdatesForDb(db: DBJSON) {
+		return ipcRenderer.invoke('db:downloadUpdatesForDb', db);
 	},
 };
 

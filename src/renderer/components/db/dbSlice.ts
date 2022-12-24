@@ -56,7 +56,20 @@ const loadDb =
 		}
 	};
 
+const updateDb =
+	(db: any): DbSliceThunk =>
+	async (dispatch) => {
+		dispatch(dbSlice.actions.setLoadState('loading'));
+
+		try {
+			await window.ipcAPI?.downloadUpdatesForDb(db);
+			dispatch(dbSlice.actions.setLoadState('success'));
+		} catch (e) {
+			dispatch(dbSlice.actions.setLoadState('error'));
+		}
+	};
+
 const reducer = dbSlice.reducer;
 
-export { reducer, loadDb };
+export { reducer, loadDb, updateDb };
 export type { DbState };
