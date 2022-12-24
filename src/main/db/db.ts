@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import Debug from 'debug';
 import os from 'node:os';
 import path from 'node:path';
 import fsp from 'node:fs/promises';
@@ -10,6 +11,7 @@ import { extractZipFileToPath } from '../util/zip';
 import { DBJSON, FileEntry, Update } from './types';
 
 const GAME_CACHE_DIR = 'gameCache';
+const debug = Debug('main/db/db.ts');
 
 async function getGameCacheDir(): Promise<string> {
 	const rootDir = await settings.get('rootDir');
@@ -108,8 +110,7 @@ async function updateFile(update: Update): Promise<void> {
 
 	const fullPath = path.resolve(gameCacheDir, update.fileEntry.relFilePath);
 	await mkdirp(path.dirname(fullPath));
-
-	console.log('downloading', fullPath);
+	debug('downloading', fullPath);
 	return downloadFile(update.fileEntry.remoteUrl, fullPath);
 }
 
@@ -126,6 +127,8 @@ async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
 			updates.push(update);
 		}
 	}
+
+	debug('Finished updating for', db.db_id, 'updates.length', updates.length);
 
 	return updates;
 }
