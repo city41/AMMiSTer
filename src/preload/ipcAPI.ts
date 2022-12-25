@@ -10,8 +10,8 @@ const ipcAPI = {
 		return ipcRenderer.invoke('mister:getArcadeGames', ipAddress);
 	},
 
-	getUpdateJson(url: string) {
-		return ipcRenderer.invoke('db:getUpdateJson', url);
+	getDbJson(url: string) {
+		return ipcRenderer.invoke('db:getDbJson', url);
 	},
 
 	downloadUpdatesForDb(db: DBJSON) {

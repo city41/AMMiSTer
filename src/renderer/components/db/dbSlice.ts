@@ -52,7 +52,7 @@ const loadDb =
 		dispatch(dbSlice.actions.setLoadState('loading'));
 
 		try {
-			const db = await window.ipcAPI?.getUpdateJson(dbs[name]);
+			const db = await window.ipcAPI?.getDbJson(dbs[name]);
 
 			dispatch(dbSlice.actions.setLoadedDb({ name, db }));
 			dispatch(dbSlice.actions.setLoadState('success'));

@@ -80,8 +80,8 @@ ipcMain.handle('mister:getArcadeGames', async (_event, ipAddress: string) => {
 	return mister.getArcadeGames(ipAddress);
 });
 
-ipcMain.handle('db:getUpdateJson', async (_event, url: string) => {
-	return db.getUpdateJson(url);
+ipcMain.handle('db:getDbJson', async (_event, url: string) => {
+	return db.getDbJson(url);
 });
 
 ipcMain.handle(

@@ -12,11 +12,19 @@ import { downloadFile } from '../util/network';
 import { extractZipFileToPath } from '../util/zip';
 import { Catalog, CatalogEntry, DBJSON, FileEntry, Update } from './types';
 
+/**
+ * Located at settings.get('rootDir'), this is the root
+ * dir of all local AMMister game files
+ */
 const GAME_CACHE_DIR = 'gameCache';
 const debug = Debug('main/db/db.ts');
 
 const xmlParser = new XMLParser({ ignoreAttributes: false });
 
+/**
+ * Returns the root directory of the game cache, or throws
+ * if called before it has been established
+ */
 async function getGameCacheDir(): Promise<string> {
 	const rootDir = await settings.get('rootDir');
 
@@ -31,7 +39,7 @@ async function getGameCacheDir(): Promise<string> {
  * Pulls down the db file from the given url. Most db files are zipped,
  * so will also unzip it if so
  */
-async function getUpdateJson(url: string): Promise<DBJSON> {
+async function getDbJson(url: string): Promise<DBJSON> {
 	const tmpDir = path.resolve(os.tmpdir(), 'ammister');
 	await mkdirp(tmpDir);
 
@@ -50,6 +58,10 @@ async function getUpdateJson(url: string): Promise<DBJSON> {
 	return require(extractedJsonPaths[0]) as DBJSON;
 }
 
+/**
+ * Takes a db as pulled from the internet and converts it
+ * into FileEntrys for easier processing
+ */
 function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 	const entries = Object.entries(db.files);
 
@@ -69,16 +81,17 @@ function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 	});
 }
 
-function filterToGameEntries(fileEntries: FileEntry[]): FileEntry[] {
-	return fileEntries.filter((fileEntry) => {
-		return fileEntry.relFilePath.startsWith('_Arcade');
-	});
-}
-
+/**
+ * Returns the md5 hash of the provided data
+ */
 function getFileHash(data: Buffer | string): string {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
+/**
+ * Given a FileEntry just pulled from a db file, determines what kind of
+ * update is needed to make sure AMMister's gameCache has the latest version
+ */
 async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
 	const gameCacheDir = await getGameCacheDir();
 	const fullPath = path.resolve(gameCacheDir, fileEntry.relFilePath);
@@ -109,6 +122,10 @@ async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
 	}
 }
 
+/**
+ * Takes an Update and downloads the corresponding file it represents,
+ * performing the update
+ */
 async function updateFile(update: Update): Promise<void> {
 	const gameCacheDir = await getGameCacheDir();
 	await mkdirp(gameCacheDir);
@@ -123,8 +140,14 @@ async function updateFile(update: Update): Promise<void> {
 	return downloadFile(update.fileEntry.remoteUrl, fullPath);
 }
 
+/**
+ * For a given db, determines what needs to be updated and then updates
+ * them. Returns what was updated and why
+ */
 async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
-	const fileEntries = filterToGameEntries(convertDbToFileEntries(db));
+	const fileEntries = convertDbToFileEntries(db).filter((f) =>
+		f.relFilePath.startsWith('_Arcade')
+	);
 
 	const updates: Update[] = [];
 
@@ -142,6 +165,10 @@ async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
 	return updates;
 }
 
+/**
+ * Takes an mra file and parses it to grab its metadata and ultimately
+ * form an catalog entry
+ */
 async function parseMraToCatalogEntry(
 	db_id: string,
 	mraFilePath: string
@@ -181,6 +208,10 @@ async function parseMraToCatalogEntry(
 	};
 }
 
+/**
+ * For a directory where a db's files have been dumped into, creates
+ * an AMMister catalog for it
+ */
 async function getCatalogForDir(dbDirPath: string): Promise<Catalog> {
 	const dbId = path.basename(dbDirPath);
 	const mras = (await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))).filter(
@@ -201,6 +232,10 @@ async function getCatalogForDir(dbDirPath: string): Promise<Catalog> {
 	};
 }
 
+/**
+ * Examines all the files found in gameCache and builds an AMMister
+ * Catalog for it
+ */
 async function buildGameCatalog(): Promise<Catalog> {
 	const gameCacheDir = await getGameCacheDir();
 
@@ -225,4 +260,4 @@ async function buildGameCatalog(): Promise<Catalog> {
 	return catalog;
 }
 
-export { getUpdateJson, downloadUpdatesForDb, buildGameCatalog };
+export { getDbJson, downloadUpdatesForDb, buildGameCatalog };
