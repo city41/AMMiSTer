@@ -63,6 +63,7 @@
 		"debug": "^4.3.4",
 		"decompress": "^4.2.1",
 		"electron-settings": "^4.0.2",
+		"fast-xml-parser": "^4.0.12",
 		"mkdirp": "^1.0.4",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",

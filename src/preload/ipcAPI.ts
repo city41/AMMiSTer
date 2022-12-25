@@ -17,6 +17,10 @@ const ipcAPI = {
 	downloadUpdatesForDb(db: DBJSON) {
 		return ipcRenderer.invoke('db:downloadUpdatesForDb', db);
 	},
+
+	buildGameCatalog() {
+		return ipcRenderer.invoke('db:buildGameCatalog');
+	},
 };
 
 export { ipcAPI };

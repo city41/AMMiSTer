@@ -8,6 +8,7 @@ type LoadingState = 'dormant' | 'loading' | 'error' | 'success';
 type DbState = {
 	loadState: LoadingState;
 	dbs: Record<string, DB>;
+	catalog: Record<string, unknown>;
 };
 
 const dbs: Record<string, string> = {
@@ -20,21 +21,25 @@ const dbs: Record<string, string> = {
 const initialState: DbState = {
 	loadState: 'dormant',
 	dbs: {},
+	catalog: {},
 };
 
 const dbSlice = createSlice({
 	name: 'db',
 	initialState,
 	reducers: {
-		setLoadState: (state: DbState, action: PayloadAction<LoadingState>) => {
+		setLoadState(state: DbState, action: PayloadAction<LoadingState>) {
 			state.loadState = action.payload;
 		},
-		setLoadedDb: (
+		setLoadedDb(
 			state: DbState,
 			action: PayloadAction<{ name: string; db: DB }>
-		) => {
+		) {
 			const { name, db } = action.payload;
 			state.dbs[name] = db;
+		},
+		setCatalog(state: DbState, action: PayloadAction<any>) {
+			state.catalog = action.payload;
 		},
 	},
 });
@@ -69,7 +74,20 @@ const updateDb =
 		}
 	};
 
+const buildGameCatalog = (): DbSliceThunk => async (dispatch) => {
+	dispatch(dbSlice.actions.setLoadState('loading'));
+
+	try {
+		const catalog = await window.ipcAPI?.buildGameCatalog();
+
+		dispatch(dbSlice.actions.setCatalog(catalog));
+		dispatch(dbSlice.actions.setLoadState('success'));
+	} catch (e) {
+		dispatch(dbSlice.actions.setLoadState('error'));
+	}
+};
+
 const reducer = dbSlice.reducer;
 
-export { reducer, loadDb, updateDb };
+export { reducer, loadDb, updateDb, buildGameCatalog };
 export type { DbState };

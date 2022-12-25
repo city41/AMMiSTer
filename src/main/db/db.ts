@@ -3,15 +3,19 @@ import Debug from 'debug';
 import os from 'node:os';
 import path from 'node:path';
 import fsp from 'node:fs/promises';
+import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import settings from 'electron-settings';
+import { XMLParser } from 'fast-xml-parser';
 
 import { downloadFile } from '../util/network';
 import { extractZipFileToPath } from '../util/zip';
-import { DBJSON, FileEntry, Update } from './types';
+import { Catalog, CatalogEntry, DBJSON, FileEntry, Update } from './types';
 
 const GAME_CACHE_DIR = 'gameCache';
 const debug = Debug('main/db/db.ts');
+
+const xmlParser = new XMLParser({ ignoreAttributes: false });
 
 async function getGameCacheDir(): Promise<string> {
 	const rootDir = await settings.get('rootDir');
@@ -54,6 +58,7 @@ function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 		const { hash, size } = e[1];
 
 		return {
+			db_id: db.db_id,
 			type: path.extname(relFilePath).substring(1) as 'mra' | 'rbf',
 			relFilePath,
 			fileName: path.basename(relFilePath),
@@ -70,7 +75,7 @@ function filterToGameEntries(fileEntries: FileEntry[]): FileEntry[] {
 	});
 }
 
-function getFileHash(data: Buffer): string {
+function getFileHash(data: Buffer | string): string {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
@@ -108,7 +113,11 @@ async function updateFile(update: Update): Promise<void> {
 	const gameCacheDir = await getGameCacheDir();
 	await mkdirp(gameCacheDir);
 
-	const fullPath = path.resolve(gameCacheDir, update.fileEntry.relFilePath);
+	const fullPath = path.resolve(
+		gameCacheDir,
+		update.fileEntry.db_id,
+		update.fileEntry.relFilePath
+	);
 	await mkdirp(path.dirname(fullPath));
 	debug('downloading', fullPath);
 	return downloadFile(update.fileEntry.remoteUrl, fullPath);
@@ -133,4 +142,87 @@ async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
 	return updates;
 }
 
-export { getUpdateJson, downloadUpdatesForDb };
+async function parseMraToCatalogEntry(
+	db_id: string,
+	mraFilePath: string
+): Promise<CatalogEntry> {
+	const data = (await fsp.readFile(mraFilePath)).toString();
+
+	const parsed = xmlParser.parse(data);
+	const { name, manufacturer, year, rom } = parsed.misterromdescription;
+
+	const manufacturerA = Array.isArray(manufacturer)
+		? manufacturer
+		: [manufacturer];
+
+	const romEntries = Array.isArray(rom) ? rom : [rom];
+	const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
+	const romFile = romEntryWithZip?.['@_zip']?.replace('.zip', '') ?? '';
+
+	return {
+		db_id,
+		gameName: name,
+		manufacturer: manufacturerA,
+		yearReleased: Number(year),
+		orientation: 'horizontal',
+		rom: romFile,
+		titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/title/${romFile}.png`,
+		gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
+		files: {
+			mra: {
+				db_id,
+				type: 'mra',
+				fileName: path.basename(mraFilePath),
+				relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
+				hash: getFileHash(data),
+				size: data.length,
+			},
+		},
+	};
+}
+
+async function getCatalogForDir(dbDirPath: string): Promise<Catalog> {
+	const dbId = path.basename(dbDirPath);
+	const mras = (await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))).filter(
+		(f) => {
+			return f.toLowerCase().endsWith('mra');
+		}
+	);
+
+	const entryPromises = mras.map(async (mraFile) => {
+		const mraPath = path.resolve(dbDirPath, '_Arcade', mraFile);
+		return parseMraToCatalogEntry(dbId, mraPath);
+	});
+
+	const entries = await Promise.all(entryPromises);
+
+	return {
+		[dbId]: entries,
+	};
+}
+
+async function buildGameCatalog(): Promise<Catalog> {
+	const gameCacheDir = await getGameCacheDir();
+
+	const gameCacheDirFiles = await fsp.readdir(gameCacheDir);
+	const dbIdDirs = gameCacheDirFiles.filter((gcFile) => {
+		return fs.statSync(path.resolve(gameCacheDir, gcFile)).isDirectory();
+	});
+
+	const dirCatalogPromises = dbIdDirs.map((dbIdDir) => {
+		return getCatalogForDir(path.resolve(gameCacheDir, dbIdDir));
+	});
+
+	const dirCatalogs = await Promise.all(dirCatalogPromises);
+
+	const catalog = dirCatalogs.reduce<Catalog>((accum, entry) => {
+		return {
+			...accum,
+			...entry,
+		};
+	}, {});
+
+	return catalog;
+}
+
+export { getUpdateJson, downloadUpdatesForDb, buildGameCatalog };

@@ -13,7 +13,8 @@ export type DBJSON = {
 };
 
 export type FileEntry = {
-	type: 'mra' | 'rbf';
+	db_id: string;
+	type: 'mra' | 'rbf' | 'rom';
 	relFilePath: string;
 	fileName: string;
 	remoteUrl: string;
@@ -24,4 +25,26 @@ export type FileEntry = {
 export type Update = {
 	fileEntry: FileEntry;
 	updateReason: 'missing' | 'updated' | 'corrupt';
+};
+
+type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
+
+export type CatalogEntry = {
+	db_id: string;
+	gameName: string;
+	manufacturer: string[];
+	yearReleased: number;
+	orientation: 'vertical' | 'horizontal';
+	rom: string;
+	titleScreenshotUrl: string;
+	gameplayScreenshotUrl: string;
+	files: {
+		mra?: CatalogFileEntry;
+		rbf?: CatalogFileEntry;
+		rom?: CatalogFileEntry;
+	};
+};
+
+export type Catalog = {
+	[db_id: string]: CatalogEntry[];
 };
