@@ -209,101 +209,110 @@ async function parseMraToCatalogEntry(
 	mraFilePath: string,
 	rbfFiles: string[]
 ): Promise<CatalogEntry> {
-	const gameCacheDir = await getGameCacheDir();
-	const mraData = (await fsp.readFile(mraFilePath)).toString();
+	try {
+		const gameCacheDir = await getGameCacheDir();
+		const mraData = (await fsp.readFile(mraFilePath)).toString();
 
-	const parsed = xmlParser.parse(mraData);
-	const {
-		name,
-		manufacturer,
-		year,
-		rom,
-		mameversion = DEFAULT_MAME_VERSION,
-		rbf,
-		setname,
-		parent,
-	} = parsed.misterromdescription;
+		const parsed = xmlParser.parse(mraData);
+		const {
+			name,
+			manufacturer,
+			year,
+			rom,
+			mameversion = DEFAULT_MAME_VERSION,
+			rbf,
+			setname,
+			parent,
+		} = parsed.misterromdescription;
 
-	// TODO: what if the rbf file is not found?
-	const rbfFilePath = rbfFiles.find((f) => {
-		return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}`);
-	})!;
+		// TODO: what if the rbf file is not found?
+		const rbfFilePath = rbfFiles.find((f) => {
+			return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}`);
+		});
 
-	const rbfData = await fsp.readFile(rbfFilePath!);
+		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;
 
-	const manufacturerA = Array.isArray(manufacturer)
-		? manufacturer
-		: [manufacturer];
+		const manufacturerA = Array.isArray(manufacturer)
+			? manufacturer
+			: [manufacturer];
 
-	const romEntries = Array.isArray(rom) ? rom : [rom];
-	const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
-	const romFile =
-		romEntryWithZip?.['@_zip']?.replaceAll('.zip', '') ||
-		setname ||
-		parent ||
-		rbf;
+		const romEntries = Array.isArray(rom) ? rom : [rom];
+		const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
+		const romFile =
+			romEntryWithZip?.['@_zip']?.replaceAll('.zip', '') ||
+			setname ||
+			parent ||
+			rbf;
 
-	if (!romFile) {
-		debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
-	}
+		if (!romFile) {
+			debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
+		}
 
-	let romData = null;
-	for (const r of romFile.split('|')) {
-		try {
-			if (r) {
-				romData = await fsp.readFile(
-					path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
-				);
-			}
-		} catch (e) {}
-	}
+		let romData = null;
+		for (const r of romFile.split('|')) {
+			try {
+				if (r) {
+					romData = await fsp.readFile(
+						path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
+					);
+				}
+			} catch (e) {}
+		}
 
-	const romEntry: CatalogFileEntry | undefined = !romData
-		? undefined
-		: {
-				db_id,
-				type: 'rom',
-				fileName: `${rom}.zip`,
-				relFilePath: `games/mame/${rom}.zip`,
-				hash: getFileHash(romData),
-				size: romData.byteLength,
-		  };
+		const romEntry: CatalogFileEntry | undefined = !romData
+			? undefined
+			: {
+					db_id,
+					type: 'rom',
+					fileName: `${rom}.zip`,
+					relFilePath: `games/mame/${rom}.zip`,
+					hash: getFileHash(romData),
+					size: romData.byteLength,
+			  };
 
-	const catalogEntry: CatalogEntry = {
-		db_id,
-		gameName: name,
-		manufacturer: manufacturerA,
-		yearReleased: Number(year),
-		orientation: 'horizontal',
-		rom: romFile,
-		mameVersion: mameversion,
-		titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/title/${romFile}.png`,
-		gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
-		files: {
-			mra: {
-				db_id,
-				type: 'mra',
-				fileName: path.basename(mraFilePath),
-				relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
-				hash: getFileHash(mraData),
-				size: mraData.length,
+		const catalogEntry: CatalogEntry = {
+			db_id,
+			gameName: name,
+			manufacturer: manufacturerA,
+			yearReleased: Number(year),
+			orientation: 'horizontal',
+			rom: romFile,
+			mameVersion: mameversion,
+			titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/title/${romFile}.png`,
+			gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
+			files: {
+				mra: {
+					db_id,
+					type: 'mra',
+					fileName: path.basename(mraFilePath),
+					relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
+					hash: getFileHash(mraData),
+					size: mraData.length,
+				},
 			},
-			rbf: {
+		};
+
+		if (romEntry) {
+			catalogEntry.files.rom = romEntry;
+		}
+
+		if (rbfData && rbfFilePath) {
+			catalogEntry.files.rbf = {
 				db_id,
 				type: 'rbf',
 				fileName: path.basename(rbfFilePath),
 				relFilePath: rbfFilePath.substring(rbfFilePath.indexOf('_Arcade')),
 				hash: getFileHash(rbfData),
 				size: rbfData.byteLength,
-			},
-		},
-	};
+			};
+		}
 
-	if (romEntry) {
-		catalogEntry.files.rom = romEntry;
+		return catalogEntry;
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		debug(`parseMraToCatalogEntry error for ${mraFilePath}: ${message}`);
+		throw e;
 	}
-
-	return catalogEntry;
 }
 
 /**

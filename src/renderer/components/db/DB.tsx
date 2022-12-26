@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState, dispatch } from '../../store';
-import { buildGameCatalog, updateCatalog } from './dbSlice';
+import { updateCatalog } from './dbSlice';
 
 function DB() {
 	const catalog = useSelector((s: AppState) => {

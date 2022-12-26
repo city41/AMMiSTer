@@ -3,19 +3,13 @@ import {
 	combineReducers,
 	configureStore,
 } from '@reduxjs/toolkit';
-import {
-	reducer as misterReducer,
-	MisterState,
-} from './components/mister/misterSlice';
 import { reducer as dbReducer, DbState } from './components/db/dbSlice';
 
 type AppState = CombinedState<{
-	mister: MisterState;
 	db: DbState;
 }>;
 
 const rootReducer = combineReducers({
-	mister: misterReducer,
 	db: dbReducer,
 });
 
