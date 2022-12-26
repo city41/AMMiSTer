@@ -1,7 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import mkdirp from 'mkdirp';
+
+axiosRetry(axios, {
+	retries: 2,
+	retryDelay(retryCount) {
+		return retryCount * 1500;
+	},
+});
 
 async function downloadFile(
 	url: string,
