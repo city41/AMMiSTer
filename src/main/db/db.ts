@@ -10,16 +10,29 @@ import { XMLParser } from 'fast-xml-parser';
 
 import { downloadFile } from '../util/network';
 import { extractZipFileToPath } from '../util/zip';
-import { Catalog, CatalogEntry, DBJSON, FileEntry, Update } from './types';
+import {
+	Catalog,
+	CatalogEntry,
+	CatalogFileEntry,
+	DBJSON,
+	FileEntry,
+	MissingRomEntry,
+	Update,
+	UpdateReason,
+} from './types';
 
 /**
  * Located at settings.get('rootDir'), this is the root
  * dir of all local AMMister game files
  */
 const GAME_CACHE_DIR = 'gameCache';
+const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
 
-const xmlParser = new XMLParser({ ignoreAttributes: false });
+const xmlParser = new XMLParser({
+	ignoreAttributes: false,
+	numberParseOptions: { leadingZeros: false, hex: false },
+});
 
 /**
  * Returns the root directory of the game cache, or throws
@@ -94,13 +107,24 @@ function getFileHash(data: Buffer | string): string {
  */
 async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
 	const gameCacheDir = await getGameCacheDir();
-	const fullPath = path.resolve(gameCacheDir, fileEntry.relFilePath);
+	const fullPath = path.resolve(
+		gameCacheDir,
+		fileEntry.db_id,
+		fileEntry.relFilePath
+	);
+
+	debug(`determineUpdate, full path: ${fullPath}`);
 
 	try {
 		const fileData = await fsp.readFile(fullPath);
 		const hash = await getFileHash(fileData);
 
+		debug(
+			`determineUpdate for ${fileEntry.fileName}, local hash: ${hash} versus db hash: ${fileEntry.hash}`
+		);
+
 		if (hash === fileEntry.hash) {
+			debug(`determineUpdate, no update needed for ${fileEntry.fileName}`);
 			return null;
 		}
 
@@ -144,9 +168,15 @@ async function updateFile(update: Update): Promise<void> {
  * For a given db, determines what needs to be updated and then updates
  * them. Returns what was updated and why
  */
-async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
-	const fileEntries = convertDbToFileEntries(db).filter((f) =>
-		f.relFilePath.startsWith('_Arcade')
+async function downloadUpdatesForDb(
+	db: DBJSON,
+	cb: (update: Update) => void
+): Promise<Update[]> {
+	const fileEntries = convertDbToFileEntries(db).filter(
+		(f) =>
+			f.relFilePath.startsWith('_Arcade') &&
+			// TODO: deal with alternatives
+			!f.relFilePath.includes('_alternatives')
 	);
 
 	const updates: Update[] = [];
@@ -155,6 +185,10 @@ async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
 		const update = await determineUpdate(fileEntry);
 
 		if (update) {
+			debug(
+				`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
+			);
+			cb(update);
 			await updateFile(update);
 			updates.push(update);
 		}
@@ -171,12 +205,30 @@ async function downloadUpdatesForDb(db: DBJSON): Promise<Update[]> {
  */
 async function parseMraToCatalogEntry(
 	db_id: string,
-	mraFilePath: string
+	mraFilePath: string,
+	rbfFiles: string[]
 ): Promise<CatalogEntry> {
-	const data = (await fsp.readFile(mraFilePath)).toString();
+	const gameCacheDir = await getGameCacheDir();
+	const mraData = (await fsp.readFile(mraFilePath)).toString();
 
-	const parsed = xmlParser.parse(data);
-	const { name, manufacturer, year, rom } = parsed.misterromdescription;
+	const parsed = xmlParser.parse(mraData);
+	const {
+		name,
+		manufacturer,
+		year,
+		rom,
+		mameversion = DEFAULT_MAME_VERSION,
+		rbf,
+		setname,
+		parent,
+	} = parsed.misterromdescription;
+
+	// TODO: what if the rbf file is not found?
+	const rbfFilePath = rbfFiles.find((f) => {
+		return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}`);
+	})!;
+
+	const rbfData = await fsp.readFile(rbfFilePath!);
 
 	const manufacturerA = Array.isArray(manufacturer)
 		? manufacturer
@@ -184,15 +236,46 @@ async function parseMraToCatalogEntry(
 
 	const romEntries = Array.isArray(rom) ? rom : [rom];
 	const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
-	const romFile = romEntryWithZip?.['@_zip']?.replace('.zip', '') ?? '';
+	const romFile =
+		romEntryWithZip?.['@_zip']?.replaceAll('.zip', '') ||
+		setname ||
+		parent ||
+		rbf;
 
-	return {
+	if (!romFile) {
+		debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
+	}
+
+	let romData = null;
+	for (const r of romFile.split('|')) {
+		try {
+			if (r) {
+				romData = await fsp.readFile(
+					path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
+				);
+			}
+		} catch (e) {}
+	}
+
+	const romEntry: CatalogFileEntry | undefined = !romData
+		? undefined
+		: {
+				db_id,
+				type: 'rom',
+				fileName: `${rom}.zip`,
+				relFilePath: `games/mame/${rom}.zip`,
+				hash: getFileHash(romData),
+				size: romData.byteLength,
+		  };
+
+	const catalogEntry: CatalogEntry = {
 		db_id,
 		gameName: name,
 		manufacturer: manufacturerA,
 		yearReleased: Number(year),
 		orientation: 'horizontal',
 		rom: romFile,
+		mameVersion: mameversion,
 		titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/title/${romFile}.png`,
 		gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
 		files: {
@@ -201,11 +284,25 @@ async function parseMraToCatalogEntry(
 				type: 'mra',
 				fileName: path.basename(mraFilePath),
 				relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
-				hash: getFileHash(data),
-				size: data.length,
+				hash: getFileHash(mraData),
+				size: mraData.length,
+			},
+			rbf: {
+				db_id,
+				type: 'rbf',
+				fileName: path.basename(rbfFilePath),
+				relFilePath: rbfFilePath.substring(rbfFilePath.indexOf('_Arcade')),
+				hash: getFileHash(rbfData),
+				size: rbfData.byteLength,
 			},
 		},
 	};
+
+	if (romEntry) {
+		catalogEntry.files.rom = romEntry;
+	}
+
+	return catalogEntry;
 }
 
 /**
@@ -214,15 +311,28 @@ async function parseMraToCatalogEntry(
  */
 async function getCatalogForDir(dbDirPath: string): Promise<Catalog> {
 	const dbId = path.basename(dbDirPath);
-	const mras = (await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))).filter(
-		(f) => {
-			return f.toLowerCase().endsWith('mra');
+	const mraFiles = await (
+		await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))
+	).flatMap((f) => {
+		if (f.endsWith('.mra')) {
+			return [path.resolve(dbDirPath, '_Arcade', f)];
+		} else {
+			return [];
 		}
-	);
+	});
 
-	const entryPromises = mras.map(async (mraFile) => {
-		const mraPath = path.resolve(dbDirPath, '_Arcade', mraFile);
-		return parseMraToCatalogEntry(dbId, mraPath);
+	const rbfFiles = await (
+		await fsp.readdir(path.resolve(dbDirPath, '_Arcade', 'cores'))
+	).flatMap((f) => {
+		if (f.endsWith('.rbf')) {
+			return [path.resolve(dbDirPath, '_Arcade', 'cores', f)];
+		} else {
+			return [];
+		}
+	});
+
+	const entryPromises = mraFiles.map(async (mraPath) => {
+		return parseMraToCatalogEntry(dbId, mraPath, rbfFiles);
 	});
 
 	const entries = await Promise.all(entryPromises);
@@ -260,4 +370,198 @@ async function buildGameCatalog(): Promise<Catalog> {
 	return catalog;
 }
 
-export { getDbJson, downloadUpdatesForDb, buildGameCatalog };
+type UpdateCallback = (args: { message: string; complete?: boolean }) => void;
+
+const dbs: Record<string, string> = {
+	distribution_mister:
+		'https://raw.githubusercontent.com/MiSTer-devel/Distribution_MiSTer/main/db.json.zip',
+	jtcores:
+		'https://raw.githubusercontent.com/jotego/jtcores_mister/main/jtbindb.json.zip',
+};
+
+async function determineMissingRoms(
+	catalog: Catalog
+): Promise<MissingRomEntry[]> {
+	const catalogEntries = Object.values(catalog).reduce<CatalogEntry[]>(
+		(accum, entries) => {
+			return accum.concat(entries);
+		},
+		[]
+	);
+
+	const entriesMissingTheirRom = catalogEntries.filter((ce) => !ce.files.rom);
+
+	return entriesMissingTheirRom.map<MissingRomEntry>((ce) => {
+		const mre: MissingRomEntry = {
+			db_id: ce.db_id,
+			romFiles: ce.rom
+				.split('|')
+				.map((r) => r.toLowerCase().replace('.zip', '')),
+			mameVersion: ce.mameVersion,
+		};
+
+		return mre;
+	});
+}
+
+async function downloadRom(
+	romEntry: MissingRomEntry,
+	overrideMameVersion?: string
+): Promise<Update | null> {
+	debug(
+		`downloadRom, getting ${romEntry.romFiles.join('|')} with mameVersion ${
+			overrideMameVersion || romEntry.mameVersion
+		}`
+	);
+	const gameCacheDir = await getGameCacheDir();
+
+	for (const romFile of romEntry.romFiles) {
+		if (romFile.toLowerCase().includes('.zip')) {
+			throw new Error('MissingRomEntry has bad romFile name: ' + romFile);
+		}
+
+		const mameVersionToUse =
+			overrideMameVersion || romEntry.mameVersion || DEFAULT_MAME_VERSION;
+		const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romFile}.zip`;
+
+		try {
+			const fileName = path.basename(remoteUrl);
+			const relFilePath = `games/mame/${fileName}`;
+			const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
+
+			let updateReason: UpdateReason;
+			let romData;
+
+			try {
+				romData = await fsp.readFile(localPath);
+				updateReason = 'fulfilled';
+			} catch (e) {
+				debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
+				await downloadFile(remoteUrl, localPath);
+				romData = await fsp.readFile(localPath);
+				updateReason = 'missing';
+			}
+
+			return {
+				fileEntry: {
+					db_id: romEntry.db_id,
+					type: 'rom',
+					relFilePath,
+					fileName,
+					remoteUrl,
+					hash: getFileHash(romData),
+					size: romData.byteLength,
+				},
+				updateReason,
+			};
+		} catch (e) {
+			// @ts-expect-error
+			debug(`downloadRom, error`, e.message);
+		}
+	}
+
+	return null;
+}
+
+async function downloadRoms(
+	romEntries: MissingRomEntry[],
+	cb: (update: Update) => void
+): Promise<Update[]> {
+	const updates: Update[] = [];
+
+	for (const romEntry of romEntries) {
+		const update =
+			(await downloadRom(romEntry)) ??
+			(await downloadRom(romEntry, DEFAULT_MAME_VERSION));
+
+		// we will quietly ignore fulfilled updates as the user doesn't need to know
+		if (update && update.updateReason !== 'fulfilled') {
+			updates.push(update);
+			cb(update);
+		} else {
+			debug(`downloadRoms: failed to download ${romEntry.romFiles.join('|')}`);
+			// TODO: updates should support errors for repoting
+		}
+	}
+
+	return updates;
+}
+
+function addMisingRomsToCatalog(
+	romUpdates: Update[],
+	catalog: Catalog
+): Catalog {
+	for (const romUpdate of romUpdates) {
+		const db = catalog[romUpdate.fileEntry.db_id];
+		const gameEntry = db.find((ce) => {
+			const allRoms = ce.rom.split('|');
+			return allRoms.some((r) =>
+				romUpdate.fileEntry.relFilePath.toLowerCase().includes(r.toLowerCase())
+			);
+		});
+
+		gameEntry!.files.rom = romUpdate.fileEntry;
+	}
+
+	return catalog;
+}
+
+/**
+ * An orchestration function for doing a full update. The callback is intended
+ * for updating the UI as it progresses
+ */
+async function updateCatalog(
+	providedCallback: UpdateCallback
+): Promise<{ updates: Update[]; catalog: Catalog }> {
+	const gameCacheDir = await getGameCacheDir();
+	await mkdirp(gameCacheDir);
+
+	const updates: Update[] = [];
+
+	const callback: UpdateCallback = (args) => {
+		debug(args.message);
+		providedCallback(args);
+	};
+
+	for (const [dbId, dbUrl] of Object.entries(dbs)) {
+		callback({ message: `Getting latest for ${dbId}` });
+
+		const dbResult = await getDbJson(dbUrl);
+		const dbUpdates = await downloadUpdatesForDb(dbResult, (update) => {
+			const verb: Record<UpdateReason, string> = {
+				missing: 'Dowloading',
+				updated: 'Updating',
+				corrupt: 'Fixing',
+				fulfilled: '',
+			};
+
+			callback({
+				message: `${verb[update.updateReason]} ${update.fileEntry.fileName}`,
+			});
+		});
+		updates.push(...dbUpdates);
+	}
+
+	callback({ message: 'Building catalog...' });
+	const catalog = await buildGameCatalog();
+
+	const missingRoms = await determineMissingRoms(catalog);
+	debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
+
+	const romUpdates = await downloadRoms(missingRoms, (update) => {
+		callback({ message: `Downloaded ROM ${update.fileEntry.fileName}` });
+	});
+	updates.push(...romUpdates);
+
+	callback({ message: 'Adding new ROMs to the catalog' });
+	const finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
+
+	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+
+	callback({ message: 'Update finished', complete: true });
+
+	return { updates, catalog: finalCatalog };
+}
+
+export { getDbJson, downloadUpdatesForDb, buildGameCatalog, updateCatalog };

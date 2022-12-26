@@ -24,7 +24,7 @@ export type DBJSON = {
  * A struct representing a mister file, mostly used
  * in local situations away from a db.json
  */
-export type FileEntry = {
+export type MissingFileEntry = {
 	/**
 	 * the db.json file it came from
 	 */
@@ -43,19 +43,39 @@ export type FileEntry = {
 	 * the latest version of it. Basically just base_file_url/<relFilePath>
 	 */
 	remoteUrl: string;
+};
+
+/**
+ * Since roms in mra files can be multiple files separated by a pipe,
+ * this type is used to capture that
+ */
+export type MissingRomEntry = {
+	db_id: string;
+	romFiles: string[];
+	mameVersion: string;
+};
+
+export type FileEntry = MissingFileEntry & {
 	hash: string;
 	size: number;
 };
 
 /**
  * Represents an update for a mister file
+ * missing: not present locally
+ * updated: present locally, but there is a new version
+ * corrupt: present locally, but seems incomplete/corrupt
+ * fulfilled: during an update, some other game/core/whatever already got this file
+ *
+ * note: corrupt is not used (yet)
  */
+export type UpdateReason = 'missing' | 'updated' | 'corrupt' | 'fulfilled';
 export type Update = {
 	/**
 	 * The file to update
 	 */
 	fileEntry: FileEntry;
-	updateReason: 'missing' | 'updated' | 'corrupt';
+	updateReason: UpdateReason;
 };
 
 /**
@@ -68,7 +88,7 @@ export type Update = {
  * A file entry as found in the catalog. The current implementation
  * makes saving remoteUrl tough, so for now at least just omitting it.
  */
-type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
+export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
 
 /**
  * The full local representation of a Mister arcade game. Has
@@ -81,6 +101,7 @@ export type CatalogEntry = {
 	yearReleased: number;
 	orientation: 'vertical' | 'horizontal';
 	rom: string;
+	mameVersion: string;
 	titleScreenshotUrl: string;
 	gameplayScreenshotUrl: string;
 	files: {

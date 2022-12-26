@@ -87,12 +87,16 @@ ipcMain.handle('db:getDbJson', async (_event, url: string) => {
 ipcMain.handle(
 	'db:downloadUpdatesForDb',
 	async (_event, dbToUpdate: DBJSON) => {
-		return db.downloadUpdatesForDb(dbToUpdate);
+		return db.downloadUpdatesForDb(dbToUpdate, () => {});
 	}
 );
 
 ipcMain.handle('db:buildGameCatalog', async (_event) => {
 	return db.buildGameCatalog();
+});
+
+ipcMain.handle('db:updateCatalog', async (_event) => {
+	return db.updateCatalog(() => {});
 });
 
 // In this file you can include the rest of your app"s specific main process

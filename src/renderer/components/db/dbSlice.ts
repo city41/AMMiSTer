@@ -87,7 +87,20 @@ const buildGameCatalog = (): DbSliceThunk => async (dispatch) => {
 	}
 };
 
+const updateCatalog = (): DbSliceThunk => async (dispatch) => {
+	dispatch(dbSlice.actions.setLoadState('loading'));
+
+	try {
+		const catalog = await window.ipcAPI?.updateCatalog();
+
+		dispatch(dbSlice.actions.setCatalog(catalog));
+		dispatch(dbSlice.actions.setLoadState('success'));
+	} catch (e) {
+		dispatch(dbSlice.actions.setLoadState('error'));
+	}
+};
+
 const reducer = dbSlice.reducer;
 
-export { reducer, loadDb, updateDb, buildGameCatalog };
+export { reducer, loadDb, updateDb, buildGameCatalog, updateCatalog };
 export type { DbState };

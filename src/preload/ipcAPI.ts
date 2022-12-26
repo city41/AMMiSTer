@@ -21,6 +21,10 @@ const ipcAPI = {
 	buildGameCatalog() {
 		return ipcRenderer.invoke('db:buildGameCatalog');
 	},
+
+	updateCatalog() {
+		return ipcRenderer.invoke('db:updateCatalog');
+	},
 };
 
 export { ipcAPI };
