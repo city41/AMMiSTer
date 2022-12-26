@@ -30,6 +30,7 @@ function createWindow() {
 				{
 					click: () => mainWindow?.webContents.send('kickOffCatalogUpdate'),
 					label: 'Update...',
+					id: 'update-menu-item',
 				},
 			],
 		},
@@ -110,8 +111,19 @@ ipcMain.handle('db:buildGameCatalog', async (_event) => {
 });
 
 ipcMain.on('db:updateCatalog', async (event) => {
+	const menuItem =
+		Menu.getApplicationMenu()?.getMenuItemById('update-menu-item');
+
+	if (menuItem) {
+		menuItem.enabled = false;
+	}
+
 	db.updateCatalog((status) => {
 		event.reply('db:updateCatalog-status', status);
+	}).finally(() => {
+		if (menuItem) {
+			menuItem.enabled = true;
+		}
 	});
 });
 
