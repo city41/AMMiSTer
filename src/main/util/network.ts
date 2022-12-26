@@ -3,12 +3,23 @@ import path from 'node:path';
 import axios from 'axios';
 import mkdirp from 'mkdirp';
 
-async function downloadFile(url: string, localPath: string): Promise<void> {
+async function downloadFile(
+	url: string,
+	localPath: string,
+	expectedContentType?: string
+): Promise<void> {
 	await mkdirp(path.dirname(localPath));
 	return axios.get(url, { responseType: 'stream' }).then((response) => {
 		if (response.status >= 400) {
 			return Promise.reject(
 				`Axios request failed with status ${response.status}`
+			);
+		}
+
+		const contentType = response.headers['content-type'];
+		if (expectedContentType && contentType !== expectedContentType) {
+			return Promise.reject(
+				`Axios request expected content-type ${expectedContentType}, but got ${contentType}`
 			);
 		}
 

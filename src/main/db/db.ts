@@ -437,7 +437,7 @@ async function downloadRom(
 				updateReason = 'fulfilled';
 			} catch (e) {
 				debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
-				await downloadFile(remoteUrl, localPath);
+				await downloadFile(remoteUrl, localPath, 'application/zip');
 				romData = await fsp.readFile(localPath);
 				updateReason = 'missing';
 			}
