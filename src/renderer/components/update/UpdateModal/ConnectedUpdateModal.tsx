@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { AppState } from '../../../store';
+import { updateCatalog } from '../../db/dbSlice';
+import { AppState, dispatch } from '../../../store';
 
 import { UpdateModal } from './UpdateModal';
 
@@ -11,9 +12,13 @@ function ConnectedUpdateModal() {
 		(state: AppState) => state.db.updateCatalogStatus ?? { message: '' }
 	);
 
-	console.log({ complete });
-
 	const updates = useSelector((state: AppState) => state.db.updates);
+
+	useEffect(() => {
+		window.ipcAPI?.kickOffCatalogUpdate(() => {
+			dispatch(updateCatalog());
+		});
+	}, []);
 
 	useEffect(() => {
 		if (typeof complete === 'boolean') {

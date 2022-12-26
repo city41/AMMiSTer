@@ -1,6 +1,6 @@
 import path from 'node:path';
 import settings from 'electron-settings';
-import { BrowserWindow, app, ipcMain } from 'electron';
+import { BrowserWindow, app, ipcMain, Menu } from 'electron';
 import * as nodeEnv from '../utils/node-env';
 
 import * as mister from './mister';
@@ -22,6 +22,20 @@ function createWindow() {
 			webSecurity: nodeEnv.prod,
 		},
 	});
+
+	const menu = Menu.buildFromTemplate([
+		{
+			label: 'File',
+			submenu: [
+				{
+					click: () => mainWindow?.webContents.send('kickOffCatalogUpdate'),
+					label: 'Update...',
+				},
+			],
+		},
+	]);
+
+	Menu.setApplicationMenu(menu);
 
 	// and load the index.html of the app.
 	const indexPath = nodeEnv.dev ? '../index.html' : './index.html';

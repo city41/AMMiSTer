@@ -17,6 +17,10 @@ const ipcAPI = {
 
 		ipcRenderer.send('db:updateCatalog');
 	},
+
+	kickOffCatalogUpdate(callback: () => void) {
+		ipcRenderer.on('kickOffCatalogUpdate', callback);
+	},
 };
 
 export { ipcAPI };

@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
 import { Catalog, Update } from '../../../main/db/types';
-import { AppState } from '../../store';
+import { AppState, dispatch } from '../../store';
 
 type UpdateStatus = {
 	message: string;
