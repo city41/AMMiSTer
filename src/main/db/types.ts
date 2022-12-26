@@ -120,3 +120,10 @@ export type CatalogEntry = {
 export type Catalog = {
 	[db_id: string]: CatalogEntry[];
 };
+
+export type UpdateCallback = (args: {
+	message: string;
+	complete?: boolean;
+	catalog?: Catalog;
+	updates?: Update[];
+}) => void;

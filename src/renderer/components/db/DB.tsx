@@ -8,10 +8,6 @@ function DB() {
 		return s.db.catalog;
 	});
 
-	function handleCatalog() {
-		dispatch(buildGameCatalog());
-	}
-
 	function handleUpdate() {
 		dispatch(updateCatalog());
 	}
@@ -21,10 +17,11 @@ function DB() {
 			<h2 className="text-red-700">distribution_mister</h2>
 			<input type="text" />
 			<div className="flex flex-row gap-x-2">
-				<button onClick={handleCatalog}>Catalog</button>
 				<button onClick={handleUpdate}>Update</button>
 			</div>
-			<pre>{JSON.stringify(catalog, null, 2)}</pre>
+			{Object.keys(catalog).length > 0 && (
+				<pre>{JSON.stringify(catalog, null, 2)}</pre>
+			)}
 		</div>
 	);
 }

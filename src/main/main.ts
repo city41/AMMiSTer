@@ -95,8 +95,10 @@ ipcMain.handle('db:buildGameCatalog', async (_event) => {
 	return db.buildGameCatalog();
 });
 
-ipcMain.handle('db:updateCatalog', async (_event) => {
-	return db.updateCatalog(() => {});
+ipcMain.on('db:updateCatalog', async (event) => {
+	db.updateCatalog((status) => {
+		event.reply('db:updateCatalog-status', status);
+	});
 });
 
 // In this file you can include the rest of your app"s specific main process

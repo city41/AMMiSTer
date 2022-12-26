@@ -18,6 +18,7 @@ import {
 	FileEntry,
 	MissingRomEntry,
 	Update,
+	UpdateCallback,
 	UpdateReason,
 } from './types';
 
@@ -370,8 +371,6 @@ async function buildGameCatalog(): Promise<Catalog> {
 	return catalog;
 }
 
-type UpdateCallback = (args: { message: string; complete?: boolean }) => void;
-
 const dbs: Record<string, string> = {
 	distribution_mister:
 		'https://raw.githubusercontent.com/MiSTer-devel/Distribution_MiSTer/main/db.json.zip',
@@ -559,7 +558,12 @@ async function updateCatalog(
 	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
 
-	callback({ message: 'Update finished', complete: true });
+	callback({
+		message: 'Update finished',
+		complete: true,
+		catalog: finalCatalog,
+		updates,
+	});
 
 	return { updates, catalog: finalCatalog };
 }
