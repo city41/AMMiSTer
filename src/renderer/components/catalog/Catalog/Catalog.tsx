@@ -1,6 +1,6 @@
 import React from 'react';
 import { Catalog } from '../../../../main/db/types';
-import { CatalogEntry } from './CatalogEntry';
+import { CatalogEntry } from '../CatalogEntry';
 
 type InternalCatalogProps = {
 	catalog: Catalog;
