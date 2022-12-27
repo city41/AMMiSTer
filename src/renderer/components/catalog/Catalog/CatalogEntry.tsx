@@ -27,19 +27,21 @@ function CatalogEntry({ entry }: CatalogEntryProps) {
 					{entry.manufacturer.join(',')} {entry.yearReleased}{' '}
 				</div>
 				<div className="text-xs pr-1 flex flex-row items-center gap-x-0.5">
-					<div className="relative w-5 h-5">
-						<ScreenIcon
-							className={clsx('w-full h-full', {
-								'transform rotate-90': entry.orientation === 'vertical',
-							})}
-						/>
-						<div
-							className="absolute top-0 left-0 w-5 h-5 grid place-items-center"
-							style={{ fontSize: entry.orientation === 'vertical' ? 11 : 10 }}
-						>
-							{entry.orientation[0]}
+					{entry.orientation && (
+						<div className="relative w-5 h-5">
+							<ScreenIcon
+								className={clsx('w-full h-full', {
+									'transform rotate-90': entry.orientation === 'vertical',
+								})}
+							/>
+							<div
+								className="absolute top-0 left-0 w-5 h-5 grid place-items-center"
+								style={{ fontSize: entry.orientation === 'vertical' ? 11 : 10 }}
+							>
+								{entry.orientation[0]}
+							</div>
 						</div>
-					</div>
+					)}
 					{Object.entries(filesToKey).map((e) => {
 						return (
 							<div

@@ -100,3 +100,16 @@ export const Vertical = () => {
 		</div>
 	);
 };
+
+export const orientationUnknown = () => {
+	const entry = {
+		...completeEntry,
+		orientation: null,
+	} as const;
+
+	return (
+		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+			<CatalogEntry entry={entry} />
+		</div>
+	);
+};

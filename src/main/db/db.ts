@@ -4,9 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
+import { promisify } from 'node:util';
 import mkdirp from 'mkdirp';
 import settings from 'electron-settings';
 import { XMLParser } from 'fast-xml-parser';
+import _imageSize from 'image-size';
 
 import { downloadFile } from '../util/network';
 import { extractZipFileToPath } from '../util/zip';
@@ -21,6 +23,8 @@ import {
 	UpdateCallback,
 	UpdateReason,
 } from './types';
+
+const imageSize = promisify(_imageSize);
 
 /**
  * Located at settings.get('rootDir'), this is the root
@@ -200,6 +204,40 @@ async function downloadUpdatesForDb(
 	return updates;
 }
 
+async function determineOrientation(
+	romFile: string
+): Promise<'vertical' | 'horizontal' | null> {
+	debug(`determineOrientation(${romFile})`);
+	const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romFile}.png`;
+	const tmpDir = path.resolve(os.tmpdir(), 'ammister');
+	const tmpPath = path.resolve(tmpDir, `orientation-image-${Date.now()}.png`);
+	await mkdirp(tmpDir);
+	try {
+		await downloadFile(imageUrl, tmpPath, 'image/png');
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		debug(
+			`determineOrientation(${romFile}): downloadFile failed with: ${message}`
+		);
+		return null;
+	}
+
+	const dimension = await imageSize(tmpPath);
+
+	if (!dimension || !dimension.width || !dimension.height) {
+		debug(
+			`determineOrientation(${romFile}): imageSize failed to get the dimensions`
+		);
+		return null;
+	}
+
+	if (dimension.height > dimension.width) {
+		return 'vertical';
+	}
+
+	return 'horizontal';
+}
+
 /**
  * Takes an mra file and parses it to grab its metadata and ultimately
  * form an catalog entry
@@ -225,7 +263,6 @@ async function parseMraToCatalogEntry(
 			parent,
 		} = parsed.misterromdescription;
 
-		// TODO: what if the rbf file is not found?
 		const rbfFilePath = rbfFiles.find((f) => {
 			return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}`);
 		});
@@ -275,10 +312,12 @@ async function parseMraToCatalogEntry(
 			gameName: name,
 			manufacturer: manufacturerA,
 			yearReleased: Number(year),
-			orientation: 'horizontal',
+			orientation: romFile
+				? await determineOrientation(romFile.split('|')[0])
+				: null,
 			rom: romFile,
 			mameVersion: mameversion,
-			titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/title/${romFile}.png`,
+			titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romFile}.png`,
 			gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
 			files: {
 				mra: {
@@ -553,11 +592,14 @@ async function updateCatalog(
 		updates.push(...dbUpdates);
 	}
 
+	const currentCatalog = await getCurrentCatalog();
 	let catalogUpdated = false;
 	let catalog;
 
-	if (updates.length === 0) {
-		catalog = await getCurrentCatalog();
+	// nothing to update and we already have a catalog from a previous run?
+	// then just use it. If we have no catalog, we'll build a new one despite the lack of updates
+	if (updates.length === 0 && currentCatalog) {
+		catalog = currentCatalog;
 	}
 
 	if (!catalog) {
@@ -607,7 +649,8 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 	try {
 		return require(catalogPath) as Catalog;
 	} catch (e) {
-		debug(`getCurrentCatalog error: ${e}`);
+		const message = e instanceof Error ? e.message : String(e);
+		debug(`getCurrentCatalog error: ${message}`);
 		return null;
 	}
 }

@@ -26,7 +26,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 				return [
 					<li
 						key={dbName}
-						className="py-2 pl-1.5 font-bold sticky top-0 bg-white border border-l-black border-t-black border-b-black"
+						className="py-2 pl-1.5 font-bold sticky top-0 z-50 bg-white border border-l-black border-t-black border-b-black"
 					>
 						{dbName}
 					</li>,

@@ -100,7 +100,7 @@ export type CatalogEntry = {
 	gameName: string;
 	manufacturer: string[];
 	yearReleased: number;
-	orientation: 'vertical' | 'horizontal';
+	orientation: 'vertical' | 'horizontal' | null;
 	rom: string;
 	mameVersion: string;
 	titleScreenshotUrl: string;
