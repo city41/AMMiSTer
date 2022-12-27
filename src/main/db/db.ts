@@ -319,7 +319,7 @@ async function parseMraToCatalogEntry(
  * For a directory where a db's files have been dumped into, creates
  * an AMMister catalog for it
  */
-async function getCatalogForDir(dbDirPath: string): Promise<Catalog> {
+async function getCatalogForDir(dbDirPath: string): Promise<Partial<Catalog>> {
 	const dbId = path.basename(dbDirPath);
 	const mraFiles = await (
 		await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))
@@ -370,14 +370,16 @@ async function buildGameCatalog(): Promise<Catalog> {
 
 	const dirCatalogs = await Promise.all(dirCatalogPromises);
 
-	const catalog = dirCatalogs.reduce<Catalog>((accum, entry) => {
+	const catalog = dirCatalogs.reduce<Partial<Catalog>>((accum, entry) => {
 		return {
 			...accum,
 			...entry,
 		};
 	}, {});
 
-	return catalog;
+	catalog.updatedAt = Date.now();
+
+	return catalog as Catalog;
 }
 
 const dbs: Record<string, string> = {
@@ -390,7 +392,8 @@ const dbs: Record<string, string> = {
 async function determineMissingRoms(
 	catalog: Catalog
 ): Promise<MissingRomEntry[]> {
-	const catalogEntries = Object.values(catalog).reduce<CatalogEntry[]>(
+	const { updatedAt, ...restofCatalog } = catalog;
+	const catalogEntries = Object.values(restofCatalog).reduce<CatalogEntry[]>(
 		(accum, entries) => {
 			return accum.concat(entries);
 		},

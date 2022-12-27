@@ -118,8 +118,8 @@ export type CatalogEntry = {
  * a subcatalog by only having some dbs in it
  */
 export type Catalog = {
-	[db_id: string]: CatalogEntry[];
-};
+	updatedAt: number;
+} & Record<string, CatalogEntry[]>;
 
 export type UpdateCallback = (args: {
 	message: string;

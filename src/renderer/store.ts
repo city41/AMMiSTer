@@ -3,14 +3,17 @@ import {
 	combineReducers,
 	configureStore,
 } from '@reduxjs/toolkit';
-import { reducer as dbReducer, DbState } from './components/db/dbSlice';
+import {
+	reducer as catalogReducer,
+	CatalogState,
+} from './components/catalog/catalogSlice';
 
 type AppState = CombinedState<{
-	db: DbState;
+	catalog: CatalogState;
 }>;
 
 const rootReducer = combineReducers({
-	db: dbReducer,
+	catalog: catalogReducer,
 });
 
 const store = configureStore({

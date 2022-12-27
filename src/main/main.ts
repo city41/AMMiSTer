@@ -32,6 +32,16 @@ function createWindow() {
 					label: 'Update...',
 					id: 'update-menu-item',
 				},
+				{
+					click: () => mainWindow?.reload(),
+					label: 'Refresh',
+					accelerator: 'Ctrl+r',
+				},
+				{
+					click: () => mainWindow?.webContents.toggleDevTools(),
+					label: 'Dev Tools',
+					accelerator: 'Ctrl+Shift+i',
+				},
 			],
 		},
 	]);

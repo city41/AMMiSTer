@@ -1,36 +1,36 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
 import { Catalog, Update } from '../../../main/db/types';
-import { AppState, dispatch } from '../../store';
+import { AppState } from '../../store';
 
 type UpdateStatus = {
 	message: string;
 	complete?: boolean;
 };
 
-type DbState = {
-	catalog: Catalog;
+type CatalogState = {
+	catalog: Catalog | null;
 	updateCatalogStatus?: UpdateStatus;
 	updates: Update[] | null;
 };
 
-const initialState: DbState = {
-	catalog: {},
+const initialState: CatalogState = {
+	catalog: null,
 	updates: null,
 };
 
-const dbSlice = createSlice({
-	name: 'db',
+const catalogSlice = createSlice({
+	name: 'catalog',
 	initialState,
 	reducers: {
-		setCatalog(state: DbState, action: PayloadAction<Catalog>) {
+		setCatalog(state: CatalogState, action: PayloadAction<Catalog>) {
 			state.catalog = action.payload;
 		},
-		setUpdates(state: DbState, action: PayloadAction<Update[]>) {
+		setUpdates(state: CatalogState, action: PayloadAction<Update[]>) {
 			state.updates = action.payload;
 		},
 		setUpdateCatalogStatus(
-			state: DbState,
+			state: CatalogState,
 			action: PayloadAction<UpdateStatus>
 		) {
 			state.updateCatalogStatus = {
@@ -38,7 +38,7 @@ const dbSlice = createSlice({
 				complete: action.payload.complete ?? false,
 			};
 		},
-		resetUpdateCatalogStatus(state: DbState) {
+		resetUpdateCatalogStatus(state: CatalogState) {
 			state.updateCatalogStatus = {
 				message: '',
 				complete: undefined,
@@ -51,22 +51,22 @@ const dbSlice = createSlice({
 type DbSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 
 const updateCatalog = (): DbSliceThunk => async (dispatch) => {
-	dispatch(dbSlice.actions.resetUpdateCatalogStatus());
+	dispatch(catalogSlice.actions.resetUpdateCatalogStatus());
 
 	window.ipcAPI?.updateCatalog((status) => {
-		dispatch(dbSlice.actions.setUpdateCatalogStatus(status));
+		dispatch(catalogSlice.actions.setUpdateCatalogStatus(status));
 
 		if (status.catalog) {
-			dispatch(dbSlice.actions.setCatalog(status.catalog));
+			dispatch(catalogSlice.actions.setCatalog(status.catalog));
 		}
 
 		if (status.updates) {
-			dispatch(dbSlice.actions.setUpdates(status.updates));
+			dispatch(catalogSlice.actions.setUpdates(status.updates));
 		}
 	});
 };
 
-const reducer = dbSlice.reducer;
+const reducer = catalogSlice.reducer;
 
 export { reducer, updateCatalog };
-export type { DbState };
+export type { CatalogState };
