@@ -48,9 +48,9 @@ const catalogSlice = createSlice({
 	},
 });
 
-type DbSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
+type CatalogSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 
-const updateCatalog = (): DbSliceThunk => async (dispatch) => {
+const updateCatalog = (): CatalogSliceThunk => async (dispatch) => {
 	dispatch(catalogSlice.actions.resetUpdateCatalogStatus());
 
 	window.ipcAPI?.updateCatalog((status) => {
@@ -66,7 +66,15 @@ const updateCatalog = (): DbSliceThunk => async (dispatch) => {
 	});
 };
 
+const getCurrentCatalog = (): CatalogSliceThunk => async (dispatch) => {
+	const currentCatalog = await window.ipcAPI?.getCurrentCatalog();
+
+	if (currentCatalog) {
+		dispatch(catalogSlice.actions.setCatalog(currentCatalog));
+	}
+};
+
 const reducer = catalogSlice.reducer;
 
-export { reducer, updateCatalog };
+export { reducer, updateCatalog, getCurrentCatalog };
 export type { CatalogState };

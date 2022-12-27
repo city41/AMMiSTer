@@ -116,7 +116,7 @@ ipcMain.handle(
 	}
 );
 
-ipcMain.handle('db:buildGameCatalog', async (_event) => {
+ipcMain.handle('db:buildGameCatalog', async () => {
 	return db.buildGameCatalog();
 });
 
@@ -135,6 +135,10 @@ ipcMain.on('db:updateCatalog', async (event) => {
 			menuItem.enabled = true;
 		}
 	});
+});
+
+ipcMain.handle('db:getCurrentCatalog', async (_event) => {
+	return db.getCurrentCatalog();
 });
 
 // In this file you can include the rest of your app"s specific main process

@@ -580,4 +580,23 @@ async function updateCatalog(
 	return { updates, catalog: finalCatalog };
 }
 
-export { getDbJson, downloadUpdatesForDb, buildGameCatalog, updateCatalog };
+async function getCurrentCatalog(): Promise<Catalog | null> {
+	const gameCacheDir = await getGameCacheDir();
+	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+	debug(`getCurrentCatalog, catalogPath: ${catalogPath}`);
+
+	try {
+		return require(catalogPath) as Catalog;
+	} catch (e) {
+		debug(`getCurrentCatalog error: ${e}`);
+		return null;
+	}
+}
+
+export {
+	getDbJson,
+	downloadUpdatesForDb,
+	buildGameCatalog,
+	updateCatalog,
+	getCurrentCatalog,
+};

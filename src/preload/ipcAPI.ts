@@ -1,11 +1,16 @@
 import { ipcRenderer } from 'electron';
-import { UpdateCallback } from 'src/main/db/types';
+import { Catalog, UpdateCallback } from 'src/main/db/types';
 
 const ipcAPI = {
 	/** Notify main the renderer is ready. */
 	rendererReady() {
 		ipcRenderer.send('renderer-ready');
 	},
+
+	getCurrentCatalog(): Promise<Catalog | null> {
+		return ipcRenderer.invoke('db:getCurrentCatalog');
+	},
+
 	updateCatalog(statusCallback: UpdateCallback) {
 		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
 			statusCallback(status);

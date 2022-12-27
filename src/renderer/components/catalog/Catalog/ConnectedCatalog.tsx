@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { AppState } from '../../../store';
+import { AppState, dispatch } from '../../../store';
+import { getCurrentCatalog } from '../catalogSlice';
 import { Catalog } from './Catalog';
 
 function ConnectedCatalog() {
+	useEffect(() => {
+		dispatch(getCurrentCatalog());
+	}, []);
+
 	const catalog = useSelector((s: AppState) => {
 		return s.catalog.catalog;
 	});
