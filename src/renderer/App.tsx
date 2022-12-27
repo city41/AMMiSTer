@@ -12,11 +12,11 @@ function App(): JSX.Element {
 
 	return (
 		<Provider store={store}>
-			<div className="grid grid-cols-3">
-				<div className="flex flex-col gap-y-2">
+			<div className="grid grid-cols-3 h-screen">
+				<div className="col-span-2">Tree</div>
+				<div className="flex flex-col gap-y-2 h-full overflow-auto">
 					<Catalog />
 				</div>
-				<div className="col-span-2">Tree</div>
 			</div>
 			<UpdateModal />
 		</Provider>

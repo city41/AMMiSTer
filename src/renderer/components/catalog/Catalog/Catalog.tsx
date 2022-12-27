@@ -1,5 +1,6 @@
 import React from 'react';
 import { Catalog } from '../../../../main/db/types';
+import { CatalogEntry } from './CatalogEntry';
 
 type InternalCatalogProps = {
 	catalog: Catalog;
@@ -11,16 +12,22 @@ function Catalog({ catalog }: InternalCatalogProps) {
 	const dbs = Object.entries(restOfCatalog);
 
 	return (
-		<ul>
-			<li>Updated at: {new Date(updatedAt).toISOString()}</li>
+		<ul className="relative">
 			{dbs.flatMap((db) => {
 				const [dbName, gameEntries] = db;
 				const games = gameEntries.map((ge, i) => {
-					return <li key={ge.gameName + i}>{ge.gameName}</li>;
+					return (
+						<li key={ge.gameName + i}>
+							<CatalogEntry entry={ge} />
+						</li>
+					);
 				});
 
 				return [
-					<li key={dbName} className="p-4 font-bold">
+					<li
+						key={dbName}
+						className="py-2 pl-1.5 font-bold sticky top-0 bg-white border border-l-black border-t-black border-b-black"
+					>
 						{dbName}
 					</li>,
 					...games,
