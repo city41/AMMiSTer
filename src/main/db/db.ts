@@ -222,7 +222,16 @@ async function determineOrientation(
 		return null;
 	}
 
-	const dimension = await imageSize(tmpPath);
+	let dimension;
+	try {
+		dimension = await imageSize(tmpPath);
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		debug(
+			`determineOrientation(${romFile}): imageSize failed with: ${message}`
+		);
+		return null;
+	}
 
 	if (!dimension || !dimension.width || !dimension.height) {
 		debug(
@@ -307,18 +316,22 @@ async function parseMraToCatalogEntry(
 					size: romData.byteLength,
 			  };
 
+		const romSlug = romFile?.split('|')[0];
+
 		const catalogEntry: CatalogEntry = {
 			db_id,
 			gameName: name,
 			manufacturer: manufacturerA,
 			yearReleased: Number(year),
-			orientation: romFile
-				? await determineOrientation(romFile.split('|')[0])
-				: null,
+			orientation: romSlug ? await determineOrientation(romSlug) : null,
 			rom: romFile,
 			mameVersion: mameversion,
-			titleScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romFile}.png`,
-			gameplayScreenshotUrl: `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romFile}.png`,
+			titleScreenshotUrl: romSlug
+				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romSlug}.png`
+				: null,
+			gameplayScreenshotUrl: romSlug
+				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romSlug}.png`
+				: null,
 			files: {
 				mra: {
 					db_id,

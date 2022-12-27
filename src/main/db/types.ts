@@ -103,8 +103,8 @@ export type CatalogEntry = {
 	orientation: 'vertical' | 'horizontal' | null;
 	rom: string;
 	mameVersion: string;
-	titleScreenshotUrl: string;
-	gameplayScreenshotUrl: string;
+	titleScreenshotUrl: string | null;
+	gameplayScreenshotUrl: string | null;
 	files: {
 		mra?: CatalogFileEntry;
 		rbf?: CatalogFileEntry;
