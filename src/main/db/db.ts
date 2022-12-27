@@ -553,8 +553,18 @@ async function updateCatalog(
 		updates.push(...dbUpdates);
 	}
 
-	callback({ message: 'Building catalog...' });
-	const catalog = await buildGameCatalog();
+	let catalogUpdated = false;
+	let catalog;
+
+	if (updates.length === 0) {
+		catalog = await getCurrentCatalog();
+	}
+
+	if (!catalog) {
+		catalogUpdated = true;
+		callback({ message: 'Building catalog...' });
+		catalog = await buildGameCatalog();
+	}
 
 	const missingRoms = await determineMissingRoms(catalog);
 	debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
@@ -562,19 +572,28 @@ async function updateCatalog(
 	const romUpdates = await downloadRoms(missingRoms, (update) => {
 		callback({ message: `Downloaded ROM ${update.fileEntry.fileName}` });
 	});
-	updates.push(...romUpdates);
 
-	callback({ message: 'Adding new ROMs to the catalog' });
-	const finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
+	let finalCatalog;
+	if (romUpdates.length > 0) {
+		catalogUpdated = true;
+		callback({ message: 'Adding new ROMs to the catalog' });
+		finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
+	} else {
+		finalCatalog = catalog;
+	}
 
-	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
-	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+	if (catalogUpdated) {
+		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+	}
+
+	const message = catalogUpdated ? 'Update finished' : 'No updates available';
 
 	callback({
-		message: 'Update finished',
+		message,
 		complete: true,
 		catalog: finalCatalog,
-		updates,
+		updates: updates.concat(romUpdates),
 	});
 
 	return { updates, catalog: finalCatalog };
