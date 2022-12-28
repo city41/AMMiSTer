@@ -4,6 +4,7 @@ import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/
 import { FavoriteIcon, NotFavoriteIcon, ScreenIcon } from '../../../icons';
 
 type CatalogEntryProps = {
+	className?: string;
 	entry: CatalogEntryType;
 	onClick?: () => void;
 };
@@ -16,10 +17,15 @@ const filesToKey: Record<FileKey, string> = {
 	rom: 'R',
 };
 
-function CatalogEntry({ entry, onClick }: CatalogEntryProps) {
+function CatalogEntry({ className, entry, onClick }: CatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
 	return (
-		<div className="bg-gray-300 p-1 border border-l-gray-400 border-b-gray-400 border-t-white border-r-white">
+		<div
+			className={clsx(
+				className,
+				'bg-gray-300 p-1 border border-l-gray-400 border-b-gray-400 border-t-white border-r-white'
+			)}
+		>
 			<h3
 				className="whitespace-nowrap text-ellipsis overflow-hidden text-base font-bold hover:underline cursor-pointer"
 				onClick={onClick}

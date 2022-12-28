@@ -43,7 +43,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 		);
 
 		const olderGames = horizontalCapcomEntries.filter(
-			(ce) => ce.yearReleased < 1994
+			(ce) => ce.yearReleased < 1994 && ce.yearReleased > 1
 		);
 		const newerGames = horizontalCapcomEntries.filter(
 			(ce) => ce.yearReleased >= 1994

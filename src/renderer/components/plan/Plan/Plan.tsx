@@ -1,18 +1,27 @@
-import React from 'react';
-import { CatalogEntry } from '../../../../main/catalog/types';
+import React, { useState } from 'react';
+import clsx from 'clsx';
+import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
 } from '../../../../main/plan/types';
-import Tree, { RenderItemParams, TreeData, TreeItem } from '@atlaskit/tree';
+import Tree, {
+	ItemId,
+	mutateTree,
+	RenderItemParams,
+	TreeData,
+	TreeItem,
+} from '@atlaskit/tree';
+import { CatalogEntry } from '../../catalog/CatalogEntry';
+import { ChevronRight, ChevronDown } from 'src/renderer/icons';
 
 type InternalPlanProps = {
 	plan: Plan;
 };
 
 function isPlanGameDirectoryEntry(
-	entry: CatalogEntry | PlanGameDirectoryEntry
+	entry: CatalogEntryType | PlanGameDirectoryEntry
 ): entry is PlanGameDirectoryEntry {
 	return 'games' in entry;
 }
@@ -68,18 +77,31 @@ function getTreeItems(
 }
 
 function convertPlanToTree(plan: Plan): TreeData {
-	const items = getTreeItems(plan.games, 'root');
+	const items = getTreeItems(plan.games, '_Arcade');
 
-	const rootItem: TreeItem = {
-		id: 'root',
+	const _arcadeItem: TreeItem = {
+		id: '_Arcade',
 		children: plan.games.map((childEntry, i) => {
 			if (isPlanGameDirectoryEntry(childEntry)) {
-				return `root-${childEntry.directoryName}`;
+				return `_Arcade-${childEntry.directoryName}`;
 			} else {
-				return `root-${i}`;
+				return `_Arcade-${i}`;
 			}
 		}),
 		hasChildren: plan.games.length > 0,
+		isExpanded: true,
+		isChildrenLoading: false,
+		data: {
+			entry: {
+				directoryName: plan.name,
+			},
+		},
+	};
+
+	const rootItem: TreeItem = {
+		id: 'root',
+		children: ['_Arcade'],
+		hasChildren: true,
 		isExpanded: true,
 		isChildrenLoading: false,
 		data: {
@@ -91,25 +113,95 @@ function convertPlanToTree(plan: Plan): TreeData {
 		rootId: 'root',
 		items: {
 			...items,
+			_Arcade: _arcadeItem,
 			root: rootItem,
 		},
 	};
 }
 
+function countDescendants(item: TreeItem, tree: TreeData): number {
+	return item.children.reduce<number>((accum, childId) => {
+		const child = tree.items[childId];
+
+		if (child.data?.entry?.directoryName) {
+			const childDescendantCount = countDescendants(child, tree);
+			return accum + childDescendantCount;
+		} else {
+			return accum + 1;
+		}
+	}, 0);
+}
+
 function Plan({ plan }: InternalPlanProps) {
-	function renderItem({ item, depth, provided }: RenderItemParams) {
-		const content = item.data?.root
-			? '/'
-			: item.data?.entry?.directoryName ?? item.data?.entry?.gameName ?? '';
+	const [tree, setTree] = useState(convertPlanToTree(plan));
+
+	function renderItem({
+		item,
+		depth,
+		provided,
+		onCollapse,
+		onExpand,
+	}: RenderItemParams) {
+		const isDir = !!item.data?.entry?.directoryName;
+
+		let content;
+
+		if (isDir) {
+			const Icon = item.isExpanded ? ChevronDown : ChevronRight;
+			content = (
+				<div className="flex flex-row items-center">
+					<Icon />
+					<div>
+						{item.data?.entry?.directoryName} ({countDescendants(item, tree)}{' '}
+						games)
+					</div>
+				</div>
+			);
+		} else {
+			content = <CatalogEntry entry={item.data.entry} />;
+		}
 
 		return (
-			<div style={{ marginLeft: depth * 10 }} ref={provided.innerRef}>
+			<div
+				style={{ marginLeft: depth * 30 }}
+				className={clsx({
+					'p-2 border border-gray-500': isDir,
+					'w-72': !isDir,
+				})}
+				ref={provided.innerRef}
+				onClick={
+					isDir
+						? () => {
+								if (item.isExpanded) {
+									onCollapse(item.id);
+								} else {
+									onExpand(item.id);
+								}
+						  }
+						: undefined
+				}
+			>
 				{content}
 			</div>
 		);
 	}
 
-	return <Tree tree={convertPlanToTree(plan)} renderItem={renderItem} />;
+	function handleExpand(itemId: ItemId) {
+		setTree(mutateTree(tree, itemId, { isExpanded: true }));
+	}
+
+	function handleCollapse(itemId: ItemId) {
+		setTree(mutateTree(tree, itemId, { isExpanded: false }));
+	}
+
+	return (
+		<Tree
+			tree={tree}
+			renderItem={renderItem}
+			onExpand={handleExpand}
+			onCollapse={handleCollapse}
+		/>
+	);
 }
 
 export { Plan };

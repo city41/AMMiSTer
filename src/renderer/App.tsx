@@ -9,7 +9,7 @@ function App(): JSX.Element {
 	return (
 		<Provider store={store}>
 			<div className="grid grid-cols-3 h-screen">
-				<div className="col-span-2">
+				<div className="col-span-2 h-full overflow-auto">
 					<Plan />
 				</div>
 				<div className="flex flex-col gap-y-2 h-full overflow-auto">
