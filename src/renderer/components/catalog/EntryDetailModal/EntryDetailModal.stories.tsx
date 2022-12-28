@@ -1,7 +1,7 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
 import { EntryDetailModal } from './EntryDetailModal';
-import type { CatalogEntry as CatalogEntryType } from '../../../../main/db/types';
+import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 
 const meta: Meta = {
 	title: 'EntryDetailModal',

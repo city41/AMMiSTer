@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
 	Catalog,
 	CatalogEntry as CatalogEntryType,
-} from '../../../../main/db/types';
+} from '../../../../main/catalog/types';
 import { CatalogEntry } from '../CatalogEntry';
 import { EntryDetailModal } from '../EntryDetailModal/EntryDetailModal';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CatalogEntry } from '../../../../main/db/types';
+import { CatalogEntry } from '../../../../main/catalog/types';
 import { Modal } from '../../Modal';
 
 type EntryDetailModalProps = {

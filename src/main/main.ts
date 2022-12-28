@@ -3,9 +3,8 @@ import settings from 'electron-settings';
 import { BrowserWindow, app, ipcMain, Menu } from 'electron';
 import * as nodeEnv from '../utils/node-env';
 
-import * as mister from './mister';
-import * as db from './db';
-import { DBJSON } from './db/types';
+import * as catalog from './catalog';
+import { DBJSON } from './catalog/types';
 
 const SETTINGS_FILE = 'ammister.json';
 
@@ -101,26 +100,22 @@ ipcMain.on('renderer-ready', () => {
 	console.log('Renderer is ready.');
 });
 
-ipcMain.handle('mister:getArcadeGames', async (_event, ipAddress: string) => {
-	return mister.getArcadeGames(ipAddress);
-});
-
-ipcMain.handle('db:getDbJson', async (_event, url: string) => {
-	return db.getDbJson(url);
+ipcMain.handle('catalog:getDbJson', async (_event, url: string) => {
+	return catalog.getDbJson(url);
 });
 
 ipcMain.handle(
-	'db:downloadUpdatesForDb',
+	'catalog:downloadUpdatesForDb',
 	async (_event, dbToUpdate: DBJSON) => {
-		return db.downloadUpdatesForDb(dbToUpdate, () => {});
+		return catalog.downloadUpdatesForDb(dbToUpdate, () => {});
 	}
 );
 
-ipcMain.handle('db:buildGameCatalog', async () => {
-	return db.buildGameCatalog();
+ipcMain.handle('catalog:buildGameCatalog', async () => {
+	return catalog.buildGameCatalog();
 });
 
-ipcMain.on('db:updateCatalog', async (event) => {
+ipcMain.on('catalog:updateCatalog', async (event) => {
 	const menuItem =
 		Menu.getApplicationMenu()?.getMenuItemById('update-menu-item');
 
@@ -128,17 +123,19 @@ ipcMain.on('db:updateCatalog', async (event) => {
 		menuItem.enabled = false;
 	}
 
-	db.updateCatalog((status) => {
-		event.reply('db:updateCatalog-status', status);
-	}).finally(() => {
-		if (menuItem) {
-			menuItem.enabled = true;
-		}
-	});
+	catalog
+		.updateCatalog((status) => {
+			event.reply('catalog:updateCatalog-status', status);
+		})
+		.finally(() => {
+			if (menuItem) {
+				menuItem.enabled = true;
+			}
+		});
 });
 
-ipcMain.handle('db:getCurrentCatalog', async (_event) => {
-	return db.getCurrentCatalog();
+ipcMain.handle('catalog:getCurrentCatalog', async (_event) => {
+	return catalog.getCurrentCatalog();
 });
 
 // In this file you can include the rest of your app"s specific main process

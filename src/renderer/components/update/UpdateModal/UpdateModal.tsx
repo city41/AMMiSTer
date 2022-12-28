@@ -1,5 +1,5 @@
 import React from 'react';
-import { Update } from '../../../../main/db/types';
+import { Update } from '../../../../main/catalog/types';
 import { Modal } from '../../Modal';
 
 type InternalUpdateModalProps = {

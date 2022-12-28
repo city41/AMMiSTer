@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { Catalog, UpdateCallback } from 'src/main/db/types';
+import { Catalog, UpdateCallback } from 'src/main/catalog/types';
 
 const ipcAPI = {
 	/** Notify main the renderer is ready. */
@@ -8,19 +8,22 @@ const ipcAPI = {
 	},
 
 	getCurrentCatalog(): Promise<Catalog | null> {
-		return ipcRenderer.invoke('db:getCurrentCatalog');
+		return ipcRenderer.invoke('catalog:getCurrentCatalog');
 	},
 
 	updateCatalog(statusCallback: UpdateCallback) {
 		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
 			statusCallback(status);
 			if (status.done) {
-				ipcRenderer.removeListener('db:updateCatalog-status', onUpdateStatus);
+				ipcRenderer.removeListener(
+					'catalog:updateCatalog-status',
+					onUpdateStatus
+				);
 			}
 		};
-		ipcRenderer.on('db:updateCatalog-status', onUpdateStatus);
+		ipcRenderer.on('catalog:updateCatalog-status', onUpdateStatus);
 
-		ipcRenderer.send('db:updateCatalog');
+		ipcRenderer.send('catalog:updateCatalog');
 	},
 
 	kickOffCatalogUpdate(callback: () => void) {
