@@ -34,6 +34,12 @@ const ipcAPI = {
 		ipcRenderer.on('loadNewPlan', callback);
 	},
 
+	loadOpenedPlan(callback: (plan: Plan) => void) {
+		ipcRenderer.on('loadOpenedPlan', (_event, plan) => {
+			callback(plan);
+		});
+	},
+
 	newPlan(): Promise<Plan> {
 		return ipcRenderer.invoke('plan:newPlan');
 	},

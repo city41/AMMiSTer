@@ -670,10 +670,33 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 	}
 }
 
+function isCatalogEntry(obj: unknown): obj is CatalogEntry {
+	if (!obj) {
+		return false;
+	}
+
+	const ce = obj as CatalogEntry;
+
+	if (typeof ce.db_id !== 'string') {
+		return false;
+	}
+
+	if (typeof ce.gameName !== 'string') {
+		return false;
+	}
+
+	if (typeof ce.rom !== 'string') {
+		return false;
+	}
+
+	return true;
+}
+
 export {
 	getDbJson,
 	downloadUpdatesForDb,
 	buildGameCatalog,
 	updateCatalog,
 	getCurrentCatalog,
+	isCatalogEntry,
 };

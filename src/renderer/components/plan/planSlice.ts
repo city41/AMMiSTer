@@ -72,6 +72,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const reducer = planSlice.reducer;
+const { setPlan } = planSlice.actions;
 
-export { reducer, loadNewPlan, loadDemoPlan };
+export { reducer, loadNewPlan, loadDemoPlan, setPlan };
 export type { PlanState };

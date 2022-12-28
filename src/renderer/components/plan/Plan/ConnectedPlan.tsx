@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { loadDemoPlan, loadNewPlan } from '../../plan/planSlice';
+import { loadDemoPlan, loadNewPlan, setPlan } from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
 
 import { Plan } from './Plan';
@@ -25,6 +25,10 @@ function ConnectedPlan() {
 			} else {
 				dispatch(loadNewPlan());
 			}
+		});
+
+		window.ipcAPI.loadOpenedPlan(async (plan: Plan) => {
+			dispatch(setPlan(plan));
 		});
 	}, []);
 

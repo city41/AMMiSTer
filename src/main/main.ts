@@ -1,6 +1,7 @@
 import path from 'node:path';
+import Debug from 'debug';
 import settings from 'electron-settings';
-import { BrowserWindow, app, ipcMain, Menu } from 'electron';
+import { BrowserWindow, app, dialog, ipcMain, Menu } from 'electron';
 import * as nodeEnv from '../utils/node-env';
 
 import * as catalog from './catalog';
@@ -9,11 +10,11 @@ import { DBJSON } from './catalog/types';
 
 const SETTINGS_FILE = 'ammister.json';
 
-let mainWindow: Electron.BrowserWindow | undefined;
+const debug = Debug('main/main.ts');
 
 function createWindow() {
 	// Create the browser window.
-	mainWindow = new BrowserWindow({
+	const mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
 		webPreferences: {
@@ -30,15 +31,32 @@ function createWindow() {
 				{
 					label: 'New Plan',
 					accelerator: 'Ctrl+n',
-					click: () => mainWindow?.webContents.send('loadNewPlan'),
+					click: () => mainWindow.webContents.send('loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
 					accelerator: 'Ctrl+o',
+					click: async () => {
+						const result = await dialog.showOpenDialog(mainWindow, {
+							filters: [{ name: 'Plans', extensions: ['amip'] }],
+						});
+
+						if (!result.canceled) {
+							const openedPlan = await plan.openPlan(result.filePaths[0]);
+							if (openedPlan) {
+								debug('Open Plan: sending opened plan to mainWindow');
+								mainWindow.webContents.send('loadOpenedPlan', openedPlan);
+							} else {
+								debug(
+									'Open Plan: plan.openPlan returned null, nothing to send to mainWindow'
+								);
+							}
+						}
+					},
 				},
 				{
 					label: 'Load Demo Plan...',
-					click: () => mainWindow?.webContents.send('loadDemoPlan'),
+					click: () => mainWindow.webContents.send('loadDemoPlan'),
 				},
 			],
 		},
@@ -48,7 +66,7 @@ function createWindow() {
 				{
 					label: 'Check For Updates...',
 					id: 'update-menu-item',
-					click: () => mainWindow?.webContents.send('kickOffCatalogUpdate'),
+					click: () => mainWindow.webContents.send('kickOffCatalogUpdate'),
 				},
 			],
 		},
@@ -56,12 +74,12 @@ function createWindow() {
 			label: 'Dev',
 			submenu: [
 				{
-					click: () => mainWindow?.reload(),
+					click: () => mainWindow.reload(),
 					label: 'Refresh',
 					accelerator: 'Ctrl+r',
 				},
 				{
-					click: () => mainWindow?.webContents.toggleDevTools(),
+					click: () => mainWindow.webContents.toggleDevTools(),
 					label: 'Dev Tools',
 					accelerator: 'Ctrl+Shift+i',
 				},
@@ -82,7 +100,7 @@ function createWindow() {
 		// Dereference the window object, usually you would store windows
 		// in an array if your app supports multi windows, this is the time
 		// when you should delete the corresponding element.
-		mainWindow = undefined;
+		// mainWindow = undefined;
 	});
 }
 
