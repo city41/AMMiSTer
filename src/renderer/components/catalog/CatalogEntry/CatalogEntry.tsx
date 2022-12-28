@@ -5,6 +5,7 @@ import { FavoriteIcon, NotFavoriteIcon, ScreenIcon } from '../../../icons';
 
 type CatalogEntryProps = {
 	entry: CatalogEntryType;
+	onClick?: () => void;
 };
 
 type FileKey = keyof CatalogEntryType['files'];
@@ -15,11 +16,14 @@ const filesToKey: Record<FileKey, string> = {
 	rom: 'R',
 };
 
-function CatalogEntry({ entry }: CatalogEntryProps) {
+function CatalogEntry({ entry, onClick }: CatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
 	return (
 		<div className="bg-gray-300 p-1 border border-l-gray-400 border-b-gray-400 border-t-white border-r-white">
-			<h3 className="whitespace-nowrap text-ellipsis overflow-hidden text-base font-bold">
+			<h3
+				className="whitespace-nowrap text-ellipsis overflow-hidden text-base font-bold hover:underline cursor-pointer"
+				onClick={onClick}
+			>
 				{entry.gameName}
 			</h3>
 			<div className="flex flex-row justify-between">

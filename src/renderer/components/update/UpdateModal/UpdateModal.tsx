@@ -1,6 +1,6 @@
 import React from 'react';
-import ReactModal from 'react-modal';
 import { Update } from '../../../../main/db/types';
+import { Modal } from '../../Modal';
 
 type InternalUpdateModalProps = {
 	isOpen: boolean;
@@ -39,7 +39,7 @@ function UpdateModal({
 	}
 
 	return (
-		<ReactModal isOpen={isOpen}>
+		<Modal isOpen={isOpen}>
 			<div className="flex flex-col gap-y-2">
 				<div className="flex flex-1">{body}</div>
 				{Array.isArray(updates) && (
@@ -48,7 +48,7 @@ function UpdateModal({
 					</button>
 				)}
 			</div>
-		</ReactModal>
+		</Modal>
 	);
 }
 
