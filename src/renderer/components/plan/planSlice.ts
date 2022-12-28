@@ -42,15 +42,12 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				ce.manufacturer.includes('Capcom') && ce.orientation === 'horizontal'
 		);
 
-		const olderGames = horizontalCapcomEntries.filter(
-			(ce) => ce.yearReleased < 1994 && ce.yearReleased > 1
+		const fighters = horizontalCapcomEntries.filter((ce) =>
+			ce.category?.includes('Fight')
 		);
-		const newerGames = horizontalCapcomEntries.filter(
-			(ce) => ce.yearReleased >= 1994
+		const shooters = horizontalCapcomEntries.filter((ce) =>
+			ce.category?.includes('Shoot')
 		);
-
-		const oldestYear = Math.min(...olderGames.map((og) => og.yearReleased));
-		const newestYear = Math.max(...newerGames.map((ng) => ng.yearReleased));
 
 		plan.name = 'Demo Plan';
 		plan.games = [
@@ -58,12 +55,12 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				directoryName: 'Capcom',
 				games: [
 					{
-						directoryName: `${oldestYear} - 1993`,
-						games: olderGames,
+						directoryName: 'Fighters',
+						games: fighters,
 					},
 					{
-						directoryName: `1994 - ${newestYear}`,
-						games: newerGames,
+						directoryName: 'Horizontal Shooters',
+						games: shooters,
 					},
 				],
 			},

@@ -51,6 +51,8 @@ function EntryDetailModal({
 					<GridContent>{entry.manufacturer}</GridContent>
 					<GridHeader>Year</GridHeader>
 					<GridContent>{entry.yearReleased}</GridContent>
+					<GridHeader>Category</GridHeader>
+					<GridContent>{entry.category}</GridContent>
 					<GridHeader>MAME Version</GridHeader>
 					<GridContent>{entry.mameVersion}</GridContent>
 					<GridHeader>MAME ROM</GridHeader>

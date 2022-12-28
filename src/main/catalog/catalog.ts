@@ -270,6 +270,7 @@ async function parseMraToCatalogEntry(
 			rbf,
 			setname,
 			parent,
+			category,
 		} = parsed.misterromdescription;
 
 		const rbfFilePath = rbfFiles.find((f) => {
@@ -323,6 +324,7 @@ async function parseMraToCatalogEntry(
 			gameName: name,
 			manufacturer: manufacturerA,
 			yearReleased: Number(year),
+			category: category ?? null,
 			orientation: romSlug ? await determineOrientation(romSlug) : null,
 			rom: romFile,
 			mameVersion: mameversion,

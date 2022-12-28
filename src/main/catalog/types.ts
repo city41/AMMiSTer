@@ -99,6 +99,7 @@ export type CatalogEntry = {
 	db_id: string;
 	gameName: string;
 	manufacturer: string[];
+	category: string | null;
 	yearReleased: number;
 	orientation: 'vertical' | 'horizontal' | null;
 	rom: string;

@@ -41,7 +41,7 @@ function CatalogEntry({
 			</h3>
 			<div className="flex flex-row justify-between">
 				<div className="text-xs text-gray-500">
-					{entry.manufacturer.join(',')} {entry.yearReleased}{' '}
+					{entry.manufacturer.join(',')} {entry.yearReleased} {entry.category}{' '}
 				</div>
 				<div className="text-xs pr-1 flex flex-row items-center gap-x-0.5">
 					{entry.orientation && (
