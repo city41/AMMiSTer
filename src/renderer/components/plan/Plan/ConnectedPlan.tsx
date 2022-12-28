@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { loadDemoPlan } from '../../plan/planSlice';
+import { loadDemoPlan, loadNewPlan } from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
 
 import { Plan } from './Plan';
@@ -17,10 +17,19 @@ function ConnectedPlan() {
 				dispatch(loadDemoPlan());
 			}
 		});
+
+		window.ipcAPI.loadNewPlan(async () => {
+			const catalog = await window.ipcAPI.getCurrentCatalog();
+			if (!catalog) {
+				alert('Please update first');
+			} else {
+				dispatch(loadNewPlan());
+			}
+		});
 	}, []);
 
 	if (plan) {
-		return <Plan plan={plan} />;
+		return <Plan key={plan.name + plan.createdAt} plan={plan} />;
 	} else {
 		return null;
 	}

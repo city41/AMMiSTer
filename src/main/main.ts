@@ -30,6 +30,7 @@ function createWindow() {
 				{
 					label: 'New Plan',
 					accelerator: 'Ctrl+n',
+					click: () => mainWindow?.webContents.send('loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',

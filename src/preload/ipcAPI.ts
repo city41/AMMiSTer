@@ -30,6 +30,10 @@ const ipcAPI = {
 		ipcRenderer.on('loadDemoPlan', callback);
 	},
 
+	loadNewPlan(callback: () => void) {
+		ipcRenderer.on('loadNewPlan', callback);
+	},
+
 	newPlan(): Promise<Plan> {
 		return ipcRenderer.invoke('plan:newPlan');
 	},

@@ -23,8 +23,9 @@ const planSlice = createSlice({
 
 type PlanSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 
-const newPlan = (): PlanSliceThunk => async (dispatch) => {
+const loadNewPlan = (): PlanSliceThunk => async (dispatch) => {
 	const plan = await window.ipcAPI.newPlan();
+	plan.name = 'New Plan';
 	dispatch(planSlice.actions.setPlan(plan));
 };
 
@@ -72,5 +73,5 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 
 const reducer = planSlice.reducer;
 
-export { reducer, newPlan, loadDemoPlan };
+export { reducer, loadNewPlan, loadDemoPlan };
 export type { PlanState };
