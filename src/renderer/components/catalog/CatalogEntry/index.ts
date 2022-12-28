@@ -1,1 +1,1 @@
-export * from './CatalogEntry';
+export { ConnectedCatalogEntry as CatalogEntry } from './ConnectedCatalogEntry';

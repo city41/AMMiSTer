@@ -163,10 +163,9 @@ function Plan({ plan }: InternalPlanProps) {
 
 		return (
 			<div
-				style={{ marginLeft: depth * 30 }}
+				style={{ paddingLeft: depth * 30 }}
 				className={clsx({
 					'p-2 border border-gray-500': isDir,
-					'w-72': !isDir,
 				})}
 				ref={provided.innerRef}
 				onClick={

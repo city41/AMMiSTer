@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { Catalog, Update } from '../../../main/catalog/types';
+import { Catalog, CatalogEntry, Update } from '../../../main/catalog/types';
 import { AppState } from '../../store';
 
 type UpdateStatus = {
@@ -12,11 +12,13 @@ type CatalogState = {
 	catalog: Catalog | null;
 	updateCatalogStatus?: UpdateStatus;
 	updates: Update[] | null;
+	detailEntry: CatalogEntry | null;
 };
 
 const initialState: CatalogState = {
 	catalog: null,
 	updates: null,
+	detailEntry: null,
 };
 
 const catalogSlice = createSlice({
@@ -37,6 +39,12 @@ const catalogSlice = createSlice({
 				message: action.payload.message,
 				complete: action.payload.complete ?? false,
 			};
+		},
+		setDetailEntry(state: CatalogState, action: PayloadAction<CatalogEntry>) {
+			state.detailEntry = action.payload;
+		},
+		clearDetailEntry(state: CatalogState) {
+			state.detailEntry = null;
 		},
 		resetUpdateCatalogStatus(state: CatalogState) {
 			state.updateCatalogStatus = {
@@ -75,6 +83,13 @@ const getCurrentCatalog = (): CatalogSliceThunk => async (dispatch) => {
 };
 
 const reducer = catalogSlice.reducer;
+const { setDetailEntry, clearDetailEntry } = catalogSlice.actions;
 
-export { reducer, updateCatalog, getCurrentCatalog };
+export {
+	reducer,
+	updateCatalog,
+	getCurrentCatalog,
+	setDetailEntry,
+	clearDetailEntry,
+};
 export type { CatalogState };

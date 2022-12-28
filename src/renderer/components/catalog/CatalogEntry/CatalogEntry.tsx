@@ -3,9 +3,12 @@ import clsx from 'clsx';
 import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 import { FavoriteIcon, NotFavoriteIcon, ScreenIcon } from '../../../icons';
 
-type CatalogEntryProps = {
+type PublicCatalogEntryProps = {
 	className?: string;
 	entry: CatalogEntryType;
+};
+
+type InternalCatalogEntryProps = {
 	onClick?: () => void;
 };
 
@@ -17,7 +20,11 @@ const filesToKey: Record<FileKey, string> = {
 	rom: 'R',
 };
 
-function CatalogEntry({ className, entry, onClick }: CatalogEntryProps) {
+function CatalogEntry({
+	className,
+	entry,
+	onClick,
+}: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
 	return (
 		<div
@@ -77,3 +84,4 @@ function CatalogEntry({ className, entry, onClick }: CatalogEntryProps) {
 }
 
 export { CatalogEntry };
+export type { PublicCatalogEntryProps };

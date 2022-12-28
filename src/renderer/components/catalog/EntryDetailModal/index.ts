@@ -1,1 +1,1 @@
-export * from './EntryDetailModal';
+export { ConnectedEntryDetailModal as EntryDetailModal } from './ConnectedEntryDetailModal';

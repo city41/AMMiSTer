@@ -1,6 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Catalog } from './components/catalog/Catalog';
+import { EntryDetailModal } from './components/catalog/EntryDetailModal';
 import { Plan } from './components/plan/Plan';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
@@ -17,6 +18,7 @@ function App(): JSX.Element {
 				</div>
 			</div>
 			<UpdateModal />
+			<EntryDetailModal />
 		</Provider>
 	);
 }
