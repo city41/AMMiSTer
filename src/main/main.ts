@@ -4,6 +4,7 @@ import { BrowserWindow, app, ipcMain, Menu } from 'electron';
 import * as nodeEnv from '../utils/node-env';
 
 import * as catalog from './catalog';
+import * as plan from './plan';
 import { DBJSON } from './catalog/types';
 
 const SETTINGS_FILE = 'ammister.json';
@@ -27,10 +28,32 @@ function createWindow() {
 			label: 'File',
 			submenu: [
 				{
-					click: () => mainWindow?.webContents.send('kickOffCatalogUpdate'),
-					label: 'Update...',
-					id: 'update-menu-item',
+					label: 'New Plan',
+					accelerator: 'Ctrl+n',
 				},
+				{
+					label: 'Open Plan...',
+					accelerator: 'Ctrl+o',
+				},
+				{
+					label: 'Load Demo Plan...',
+					click: () => mainWindow?.webContents.send('loadDemoPlan'),
+				},
+			],
+		},
+		{
+			label: 'Catalog',
+			submenu: [
+				{
+					label: 'Check For Updates...',
+					id: 'update-menu-item',
+					click: () => mainWindow?.webContents.send('kickOffCatalogUpdate'),
+				},
+			],
+		},
+		{
+			label: 'Dev',
+			submenu: [
 				{
 					click: () => mainWindow?.reload(),
 					label: 'Refresh',
@@ -134,8 +157,12 @@ ipcMain.on('catalog:updateCatalog', async (event) => {
 		});
 });
 
-ipcMain.handle('catalog:getCurrentCatalog', async (_event) => {
+ipcMain.handle('catalog:getCurrentCatalog', async () => {
 	return catalog.getCurrentCatalog();
+});
+
+ipcMain.handle('plan:newPlan', () => {
+	return plan.newPlan();
 });
 
 // In this file you can include the rest of your app"s specific main process

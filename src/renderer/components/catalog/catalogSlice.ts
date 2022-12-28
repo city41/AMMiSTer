@@ -53,7 +53,7 @@ type CatalogSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 const updateCatalog = (): CatalogSliceThunk => async (dispatch) => {
 	dispatch(catalogSlice.actions.resetUpdateCatalogStatus());
 
-	window.ipcAPI?.updateCatalog((status) => {
+	window.ipcAPI.updateCatalog((status) => {
 		dispatch(catalogSlice.actions.setUpdateCatalogStatus(status));
 
 		if (status.catalog) {
@@ -67,7 +67,7 @@ const updateCatalog = (): CatalogSliceThunk => async (dispatch) => {
 };
 
 const getCurrentCatalog = (): CatalogSliceThunk => async (dispatch) => {
-	const currentCatalog = await window.ipcAPI?.getCurrentCatalog();
+	const currentCatalog = await window.ipcAPI.getCurrentCatalog();
 
 	if (currentCatalog) {
 		dispatch(catalogSlice.actions.setCatalog(currentCatalog));

@@ -52,6 +52,12 @@ const commonConfig = {
 					name: '[path][name].[ext]',
 				},
 			},
+			{
+				test: /\.m?js/,
+				resolve: {
+					fullySpecified: false,
+				},
+			},
 		],
 	},
 };

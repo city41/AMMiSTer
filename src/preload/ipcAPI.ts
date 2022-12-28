@@ -1,12 +1,8 @@
 import { ipcRenderer } from 'electron';
 import { Catalog, UpdateCallback } from 'src/main/catalog/types';
+import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
-	/** Notify main the renderer is ready. */
-	rendererReady() {
-		ipcRenderer.send('renderer-ready');
-	},
-
 	getCurrentCatalog(): Promise<Catalog | null> {
 		return ipcRenderer.invoke('catalog:getCurrentCatalog');
 	},
@@ -28,6 +24,14 @@ const ipcAPI = {
 
 	kickOffCatalogUpdate(callback: () => void) {
 		ipcRenderer.on('kickOffCatalogUpdate', callback);
+	},
+
+	loadDemoPlan(callback: () => void) {
+		ipcRenderer.on('loadDemoPlan', callback);
+	},
+
+	newPlan(): Promise<Plan> {
+		return ipcRenderer.invoke('plan:newPlan');
 	},
 };
 

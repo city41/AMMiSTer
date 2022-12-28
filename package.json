@@ -25,7 +25,8 @@
 		"build:linux": "electron-builder build --linux",
 		"clean": "rimraf dist && rimraf out",
 		"storybook": "start-storybook -p 6006",
-		"build-storybook": "build-storybook"
+		"build-storybook": "build-storybook",
+		"type-check": "yarn tsc --noEmit"
 	},
 	"build": {
 		"appId": "dev.mattgreer.ammister",
@@ -61,6 +62,7 @@
 	"author": "Matt Greer <matt.e.greer@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
+		"@atlaskit/tree": "^8.6.3",
 		"axios": "^1.2.1",
 		"axios-retry": "^3.3.1",
 		"clsx": "^1.2.1",
