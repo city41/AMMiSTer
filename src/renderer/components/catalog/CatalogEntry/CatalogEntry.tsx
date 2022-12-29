@@ -6,6 +6,7 @@ import { FavoriteIcon, NotFavoriteIcon, DangerIcon } from '../../../icons';
 type PublicCatalogEntryProps = {
 	className?: string;
 	entry: CatalogEntryType;
+	hideIcons?: boolean;
 };
 
 type InternalCatalogEntryProps = {
@@ -34,6 +35,7 @@ function Monitor({
 function CatalogEntry({
 	className,
 	entry,
+	hideIcons,
 	onClick,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
@@ -51,16 +53,18 @@ function CatalogEntry({
 				<div className="flex flex-row items-center gap-x-2 text-xs text-gray-500">
 					{entry.manufacturer.join(',')} {entry.yearReleased}
 				</div>
-				<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
-					{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
-					<Monitor orientation={entry.orientation} />
-					<FavIcon
-						className={clsx('w-5 h-5', {
-							'text-gray-500': !entry.favorite,
-							'text-orange-400': entry.favorite,
-						})}
-					/>
-				</div>
+				{!hideIcons && (
+					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
+						{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
+						<Monitor orientation={entry.orientation} />
+						<FavIcon
+							className={clsx('w-5 h-5', {
+								'text-gray-500': !entry.favorite,
+								'text-orange-400': entry.favorite,
+							})}
+						/>
+					</div>
+				)}
 			</div>
 		</div>
 	);

@@ -14,7 +14,12 @@ import Tree, {
 	TreeItem,
 } from '@atlaskit/tree';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
-import { ChevronRightIcon, ChevronDownIcon } from 'src/renderer/icons';
+import {
+	ChevronRightIcon,
+	ChevronDownIcon,
+	DirectoryAddIcon,
+	TrashIcon,
+} from 'src/renderer/icons';
 
 type InternalPlanProps = {
 	plan: Plan;
@@ -137,39 +142,49 @@ function Plan({ plan }: InternalPlanProps) {
 		if (isDir) {
 			const Icon = item.isExpanded ? ChevronDownIcon : ChevronRightIcon;
 			content = (
-				<div className="flex flex-row items-center">
-					<Icon className="w-5 h-5" />
-					<div>
-						{item.data?.entry?.directoryName} ({countDescendants(item, tree)}{' '}
-						games)
+				<div className="flex flex-row items-center gap-x-2">
+					<Icon
+						className="w-5 h-5 cursor-pointer hover:bg-green-100 rounded"
+						onClick={() => {
+							if (item.isExpanded) {
+								onCollapse(item.id);
+							} else {
+								onExpand(item.id);
+							}
+						}}
+					/>
+					<div className="flex flex-row items-center justify-between flex-1">
+						<div className="flex flex-row gap-x-2 items-center">
+							<div>{item.data?.entry?.directoryName}</div>
+							<div className="text-xs">
+								({countDescendants(item, tree)} games)
+							</div>
+						</div>
+						<DirectoryAddIcon className="w-5 h-5 invisible group-hover:visible cursor-pointer" />
 					</div>
 				</div>
 			);
 		} else {
-			content = <CatalogEntry entry={item.data.entry} />;
+			content = <CatalogEntry hideIcons entry={item.data.entry} />;
 		}
-
 		return (
 			<div
-				style={{ paddingLeft: depth * 30 }}
-				className={clsx('border-b border-gray-200', {
-					'p-2': isDir,
-					'even:bg-gray-50': !isDir,
-				})}
+				style={{
+					paddingLeft: depth * 30 + 5,
+					backgroundColor: isDir
+						? `rgb(0, 0, 0, ${0.3 - 0.1 * depth})`
+						: undefined,
+				}}
+				className={clsx(
+					'p-2 border-b border-gray-200 flex flex-row items-center justify-between group',
+					{
+						'even:bg-gray-50': !isDir,
+					}
+				)}
 				ref={provided.innerRef}
-				onClick={
-					isDir
-						? () => {
-								if (item.isExpanded) {
-									onCollapse(item.id);
-								} else {
-									onExpand(item.id);
-								}
-						  }
-						: undefined
-				}
 			>
-				{content}
+				<div className="flex-1 mr-4">{content}</div>
+				<TrashIcon className="w-5 h-5 invisible group-hover:visible cursor-pointer" />
 			</div>
 		);
 	}
