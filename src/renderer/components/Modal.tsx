@@ -5,8 +5,21 @@ type ModalProps = ReactModalProps;
 
 function Modal({ children, ...rest }: ModalProps) {
 	return (
-		<ReactModal style={{ content: { padding: 0 } }} {...rest}>
-			<div className="bg-slate-700 h-full">{children}</div>
+		// @ts-expect-error
+		<ReactModal
+			style={{
+				content: {
+					padding: 0,
+					inset: null,
+					position: null,
+				},
+				overlay: {
+					backgroundColor: null,
+				},
+			}}
+			{...rest}
+		>
+			{children}
 		</ReactModal>
 	);
 }

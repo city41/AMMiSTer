@@ -27,12 +27,19 @@ function EntryDetailModal({
 }: EntryDetailModalProps) {
 	return (
 		<Modal isOpen={isOpen} onRequestClose={onRequestClose}>
-			<h1 className="w-full px-4 py-2 mb-8 bg-slate-900 text-slate-100 flex flex-row justify-between items-center">
-				<div className="text-lg font-bold">{entry.gameName}</div>
-				<div className="text-slate-500 text-sm">{entry.db_id}</div>
-			</h1>
-			<div className="flex flex-col gap-y-8 items-center">
-				<div className="flex flex-row justify-evenly">
+			<div
+				className="px-4 py-5 sm:px-6"
+				style={{ minWidth: '80vw', maxWidth: '90vw' }}
+			>
+				<h1 className="text-lg font-medium leading-6 text-gray-900">
+					{entry.gameName}
+				</h1>
+				<p className="mt-1 max-w-2xl text-sm text-gray-500">
+					{entry.manufacturer} {entry.yearReleased}
+				</p>
+			</div>
+			<div className="flex flex-col items-stretch">
+				<div className="p-4 bg-gray-100 flex flex-row gap-x-4 justify-evenly border-t border-b border-gray-200">
 					<img
 						className="max-h-72"
 						alt={`Title Screen of ${entry.gameName}`}
@@ -44,30 +51,50 @@ function EntryDetailModal({
 						src={entry.gameplayScreenshotUrl ?? ''}
 					/>
 				</div>
-				<div className="grid grid-cols-2 gap-x-1 gap-y-1 w-3/4">
-					<GridHeader>Title</GridHeader>
-					<GridContent>{entry.gameName}</GridContent>
-					<GridHeader>Manufacturer</GridHeader>
-					<GridContent>{entry.manufacturer}</GridContent>
-					<GridHeader>Year</GridHeader>
-					<GridContent>{entry.yearReleased}</GridContent>
-					<GridHeader>Category</GridHeader>
-					<GridContent>{entry.category}</GridContent>
-					<GridHeader>MAME Version</GridHeader>
-					<GridContent>{entry.mameVersion}</GridContent>
-					<GridHeader>MAME ROM</GridHeader>
-					<GridContent>{entry.rom}.zip</GridContent>
-					<GridHeader>Orientation</GridHeader>
-					<GridContent>{entry.orientation ?? '?'}</GridContent>
-				</div>
-				<div className="grid grid-cols-2 gap-x-1 gap-y-1 w-3/4">
-					<GridHeader>MRA</GridHeader>
-					<GridContent>{entry.files.mra?.fileName ?? 'missing'}</GridContent>
-					<GridHeader>Core</GridHeader>
-					<GridContent>{entry.files.rbf?.fileName ?? 'missing'}</GridContent>
-					<GridHeader>ROM</GridHeader>
-					<GridContent>{entry.files.rom?.fileName ?? 'missing'}</GridContent>
-				</div>
+				<dl>
+					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">Category</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.category}
+						</dd>
+					</div>
+					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">MAME Version</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.mameVersion}
+						</dd>
+					</div>
+					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">MAME ROM</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.rom}
+						</dd>
+					</div>
+					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">Orientation</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.orientation}
+						</dd>
+					</div>
+					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">MRA</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.files.mra?.fileName ?? 'missing'}
+						</dd>
+					</div>
+					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">Core (RBF)</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.files.rbf?.fileName ?? 'missing'}
+						</dd>
+					</div>
+					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<dt className="text-sm font-medium text-gray-500">ROM</dt>
+						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							{entry.files.rom?.fileName ?? 'missing'}
+						</dd>
+					</div>
+				</dl>
 			</div>
 		</Modal>
 	);
