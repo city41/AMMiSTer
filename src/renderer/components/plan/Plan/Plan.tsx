@@ -14,7 +14,7 @@ import Tree, {
 	TreeItem,
 } from '@atlaskit/tree';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
-import { ChevronRight, ChevronDown } from 'src/renderer/icons';
+import { ChevronRightIcon, ChevronDownIcon } from 'src/renderer/icons';
 
 type InternalPlanProps = {
 	plan: Plan;
@@ -147,7 +147,7 @@ function Plan({ plan }: InternalPlanProps) {
 		let content;
 
 		if (isDir) {
-			const Icon = item.isExpanded ? ChevronDown : ChevronRight;
+			const Icon = item.isExpanded ? ChevronDownIcon : ChevronRightIcon;
 			content = (
 				<div className="flex flex-row items-center">
 					<Icon />

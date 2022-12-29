@@ -1,11 +1,14 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
-import { EntryDetailModal } from './EntryDetailModal';
-import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
+import { Catalog } from './Catalog';
+import type {
+	Catalog as CatalogType,
+	CatalogEntry as CatalogEntryType,
+} from '../../../../main/catalog/types';
 
 const meta: Meta = {
-	title: 'EntryDetailModal',
-	component: EntryDetailModal,
+	title: 'Catalog',
+	component: Catalog,
 };
 
 export default meta;
@@ -51,33 +54,16 @@ const completeEntry: CatalogEntryType = {
 	},
 };
 
+// @ts-expect-error
+const catalog: CatalogType = {
+	updatedAt: Date.now(),
+	jtcores: [completeEntry, completeEntry],
+};
+
 export const Basic = () => {
-	return <EntryDetailModal isOpen entry={completeEntry} />;
-};
-
-export const MissingRom = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
-	delete entry.files.rom;
-
-	return <EntryDetailModal isOpen entry={entry} />;
-};
-
-export const MissingRomAndCore = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
-	delete entry.files.rom;
-	delete entry.files.rbf;
-
-	return <EntryDetailModal isOpen entry={entry} />;
+	return (
+		<div style={{ width: 240 }}>
+			<Catalog catalog={catalog} />
+		</div>
+	);
 };

@@ -8,11 +8,7 @@ module.exports = {
 		},
 	},
 	variants: {
-		extend: {
-			display: ['group-hover'],
-			scale: ['group-hover'],
-			borderWidth: ['last'],
-		},
+		extend: {},
 	},
 	plugins: [],
 };

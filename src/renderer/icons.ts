@@ -1,7 +1,4 @@
-export { AiFillStar as FavoriteIcon } from 'react-icons/ai';
-export { AiOutlineStar as NotFavoriteIcon } from 'react-icons/ai';
-export {
-	MdOutlinePanoramaWideAngle as ScreenIcon,
-	MdArrowRight as ChevronRight,
-	MdArrowDropDown as ChevronDown,
-} from 'react-icons/md';
+export { StarIcon as NotFavoriteIcon } from '@heroicons/react/24/outline';
+export { StarIcon as FavoriteIcon } from '@heroicons/react/24/solid';
+export { ExclamationCircleIcon as DangerIcon } from '@heroicons/react/20/solid';
+export { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';

@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import { CatalogEntry } from '../../../../main/catalog/types';
 import { Modal } from '../../Modal';
 
@@ -7,18 +8,6 @@ type EntryDetailModalProps = {
 	onRequestClose?: () => void;
 	entry: CatalogEntry;
 };
-
-function GridHeader({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="bg-blue-800 text-white px-2 py-1 text-right">
-			{children}
-		</div>
-	);
-}
-
-function GridContent({ children }: { children: React.ReactNode }) {
-	return <div className="bg-gray-200 text-gray-800 px-2 py-1">{children}</div>;
-}
 
 function EntryDetailModal({
 	isOpen,
@@ -78,19 +67,52 @@ function EntryDetailModal({
 					</div>
 					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">MRA</dt>
-						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+						<dd
+							className={clsx(
+								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
+								{
+									italic: !entry.files.mra,
+								}
+							)}
+						>
 							{entry.files.mra?.fileName ?? 'missing'}
 						</dd>
 					</div>
 					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt className="text-sm font-medium text-gray-500">Core (RBF)</dt>
-						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+						<dt
+							className={clsx('text-sm font-medium text-gray-500', {
+								'text-red-700': !entry.files.rbf,
+							})}
+						>
+							Core (RBF)
+						</dt>
+						<dd
+							className={clsx(
+								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
+								{
+									'italic text-gray-400': !entry.files.rbf,
+								}
+							)}
+						>
 							{entry.files.rbf?.fileName ?? 'missing'}
 						</dd>
 					</div>
 					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt className="text-sm font-medium text-gray-500">ROM</dt>
-						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+						<dt
+							className={clsx('text-sm font-medium text-gray-500', {
+								'text-red-700': !entry.files.rom,
+							})}
+						>
+							ROM
+						</dt>
+						<dd
+							className={clsx(
+								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
+								{
+									'italic text-gray-400': !entry.files.rom,
+								}
+							)}
+						>
 							{entry.files.rom?.fileName ?? 'missing'}
 						</dd>
 					</div>

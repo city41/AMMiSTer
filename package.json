@@ -63,6 +63,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"@atlaskit/tree": "^8.6.3",
+		"@heroicons/react": "^2.0.13",
 		"axios": "^1.2.1",
 		"axios-retry": "^3.3.1",
 		"clsx": "^1.2.1",
@@ -74,7 +75,6 @@
 		"mkdirp": "^1.0.4",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"react-icons": "^4.7.1",
 		"react-modal": "^3.16.1",
 		"react-redux": "^8.0.5",
 		"redux-thunk": "^2.4.2",
@@ -99,7 +99,6 @@
 		"@types/mkdirp": "^1.0.2",
 		"@types/react": "^18.0.21",
 		"@types/react-dom": "^18.0.6",
-		"@types/react-icons": "^3.0.0",
 		"@types/react-modal": "^3.13.1",
 		"@types/ssh2-sftp-client": "^9.0.0",
 		"@typescript-eslint/eslint-plugin": "^5.40.0",

@@ -5,6 +5,7 @@
 html,
 body {
 	height: 100%;
+	@apply bg-gray-100;
 }
 
 .ReactModal__Overlay {
@@ -16,4 +17,17 @@ body {
 	@apply shadow-lg w-auto h-auto;
 	max-width: 90vw;
 	max-height: 90vh;
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+	background-color: #aaaaaa77;
+}
+
+*::-webkit-scrollbar-thumb {
+	background-color: #aaa;
 }

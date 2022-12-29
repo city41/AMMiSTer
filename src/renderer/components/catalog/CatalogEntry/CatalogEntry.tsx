@@ -1,7 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
-import { FavoriteIcon, NotFavoriteIcon, ScreenIcon } from '../../../icons';
+import { FavoriteIcon, NotFavoriteIcon, DangerIcon } from '../../../icons';
 
 type PublicCatalogEntryProps = {
 	className?: string;
@@ -12,13 +12,24 @@ type InternalCatalogEntryProps = {
 	onClick?: () => void;
 };
 
-type FileKey = keyof CatalogEntryType['files'];
+function Monitor({
+	orientation,
+}: {
+	orientation: 'vertical' | 'horizontal' | null;
+}) {
+	if (orientation === null) {
+		return null;
+	}
 
-const filesToKey: Record<FileKey, string> = {
-	mra: 'M',
-	rbf: 'C',
-	rom: 'R',
-};
+	return (
+		<div
+			className={clsx('w-4 h-3 rounded border border-black', {
+				'w-3 h-4': orientation === 'vertical',
+				'w-4 h-3': orientation === 'horizontal',
+			})}
+		/>
+	);
+}
 
 function CatalogEntry({
 	className,
@@ -26,51 +37,23 @@ function CatalogEntry({
 	onClick,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
+	const missingFile = Object.keys(entry.files).length < 3;
+
 	return (
-		<div
-			className={clsx(
-				className,
-				'bg-gray-300 p-1 border border-l-gray-400 border-b-gray-400 border-t-white border-r-white'
-			)}
-		>
+		<div className={clsx(className, 'px-2 py-1')}>
 			<h3
-				className="whitespace-nowrap text-ellipsis overflow-hidden text-base font-bold hover:underline cursor-pointer"
+				className="whitespace-nowrap text-ellipsis overflow-hidden font-medium hover:underline cursor-pointer"
 				onClick={onClick}
 			>
 				{entry.gameName}
 			</h3>
 			<div className="flex flex-row justify-between">
-				<div className="text-xs text-gray-500">
-					{entry.manufacturer.join(',')} {entry.yearReleased} {entry.category}{' '}
+				<div className="flex flex-row items-center gap-x-2 text-xs text-gray-500">
+					{entry.manufacturer.join(',')} {entry.yearReleased}
 				</div>
 				<div className="text-xs pr-1 flex flex-row items-center gap-x-0.5">
-					{entry.orientation && (
-						<div className="relative w-5 h-5">
-							<ScreenIcon
-								className={clsx('w-full h-full', {
-									'transform rotate-90': entry.orientation === 'vertical',
-								})}
-							/>
-							<div
-								className="absolute top-0 left-0 w-5 h-5 grid place-items-center"
-								style={{ fontSize: entry.orientation === 'vertical' ? 11 : 10 }}
-							>
-								{entry.orientation[0]}
-							</div>
-						</div>
-					)}
-					{Object.entries(filesToKey).map((e) => {
-						return (
-							<div
-								className={clsx('px-0.5', {
-									'bg-green-400 text-green-800': !!entry.files[e[0] as FileKey],
-									'bg-red-400 text-red-800': !entry.files[e[0] as FileKey],
-								})}
-							>
-								{e[1]}
-							</div>
-						);
-					})}
+					{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
+					<Monitor orientation={entry.orientation} />
 					<FavIcon
 						className={clsx('w-5 h-5', {
 							'text-gray-500': !entry.favorite,
