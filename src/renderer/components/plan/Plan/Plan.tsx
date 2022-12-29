@@ -77,15 +77,15 @@ function getTreeItems(
 }
 
 function convertPlanToTree(plan: Plan): TreeData {
-	const items = getTreeItems(plan.games, '_Arcade');
+	const items = getTreeItems(plan.games, 'root');
 
-	const _arcadeItem: TreeItem = {
-		id: '_Arcade',
+	const rootItem: TreeItem = {
+		id: 'root',
 		children: plan.games.map((childEntry, i) => {
 			if (isPlanGameDirectoryEntry(childEntry)) {
-				return `_Arcade-${childEntry.directoryName}`;
+				return `root-${childEntry.directoryName}`;
 			} else {
-				return `_Arcade-${i}`;
+				return `root-${i}`;
 			}
 		}),
 		hasChildren: plan.games.length > 0,
@@ -98,22 +98,10 @@ function convertPlanToTree(plan: Plan): TreeData {
 		},
 	};
 
-	const rootItem: TreeItem = {
-		id: 'root',
-		children: ['_Arcade'],
-		hasChildren: true,
-		isExpanded: true,
-		isChildrenLoading: false,
-		data: {
-			root: true,
-		},
-	};
-
 	return {
 		rootId: 'root',
 		items: {
 			...items,
-			_Arcade: _arcadeItem,
 			root: rootItem,
 		},
 	};
@@ -150,7 +138,7 @@ function Plan({ plan }: InternalPlanProps) {
 			const Icon = item.isExpanded ? ChevronDownIcon : ChevronRightIcon;
 			content = (
 				<div className="flex flex-row items-center">
-					<Icon />
+					<Icon className="w-5 h-5" />
 					<div>
 						{item.data?.entry?.directoryName} ({countDescendants(item, tree)}{' '}
 						games)
@@ -165,7 +153,7 @@ function Plan({ plan }: InternalPlanProps) {
 			<div
 				style={{ paddingLeft: depth * 30 }}
 				className={clsx({
-					'p-2 border border-gray-500': isDir,
+					'p-2 border-b border-gray-200': isDir,
 				})}
 				ref={provided.innerRef}
 				onClick={
@@ -194,12 +182,24 @@ function Plan({ plan }: InternalPlanProps) {
 	}
 
 	return (
-		<Tree
-			tree={tree}
-			renderItem={renderItem}
-			onExpand={handleExpand}
-			onCollapse={handleCollapse}
-		/>
+		<div className="w-full h-full p-8">
+			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
+				<div
+					className="px-4 py-5 sm:px-6 border-b border-gray-200"
+					style={{ minWidth: '80vw', maxWidth: '90vw' }}
+				>
+					<h1 className="text-lg font-medium leading-6 text-gray-900">
+						{plan.name}
+					</h1>
+				</div>
+				<Tree
+					tree={tree}
+					renderItem={renderItem}
+					onExpand={handleExpand}
+					onCollapse={handleCollapse}
+				/>
+			</div>
+		</div>
 	);
 }
 

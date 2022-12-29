@@ -6,6 +6,11 @@ type InternalCatalogProps = {
 	catalog: CatalogType;
 };
 
+const DbIdToDisplay: Record<string, string> = {
+	distribution_mister: 'MiSTer main',
+	jtcores: 'Jotego Cores',
+};
+
 function Catalog({ catalog }: InternalCatalogProps) {
 	const { updatedAt, ...restOfCatalog } = catalog;
 
@@ -14,7 +19,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 	return (
 		<ul>
 			{dbs.flatMap((db) => {
-				const [dbName, gameEntries] = db;
+				const [db_id, gameEntries] = db;
 				const games = gameEntries.map((ge, i) => {
 					return (
 						<li
@@ -28,10 +33,10 @@ function Catalog({ catalog }: InternalCatalogProps) {
 
 				return [
 					<li
-						key={dbName}
-						className="py-2 pl-1.5 font-bold sticky top-0 z-50 bg-white"
+						key={db_id}
+						className="py-2 pl-1.5 font-bold sticky top-0 z-50 bg-white text-indigo-600"
 					>
-						{dbName}
+						{DbIdToDisplay[db_id]}
 					</li>,
 					...games,
 				];

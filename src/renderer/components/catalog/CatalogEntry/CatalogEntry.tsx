@@ -23,7 +23,7 @@ function Monitor({
 
 	return (
 		<div
-			className={clsx('w-4 h-3 rounded border border-black', {
+			className={clsx('w-4 h-3 rounded-sm border border-indigo-500', {
 				'w-3 h-4': orientation === 'vertical',
 				'w-4 h-3': orientation === 'horizontal',
 			})}
@@ -51,7 +51,7 @@ function CatalogEntry({
 				<div className="flex flex-row items-center gap-x-2 text-xs text-gray-500">
 					{entry.manufacturer.join(',')} {entry.yearReleased}
 				</div>
-				<div className="text-xs pr-1 flex flex-row items-center gap-x-0.5">
+				<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
 					{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
 					<Monitor orientation={entry.orientation} />
 					<FavIcon
