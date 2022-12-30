@@ -198,7 +198,7 @@ function Plan({ plan }: InternalPlanProps) {
 	}
 
 	return (
-		<div className="w-full h-full p-8">
+		<div className="w-full xh-full p-8">
 			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
 				<div className="px-4 py-5 sm:px-6 border-b border-gray-200">
 					<h1 className="text-lg font-medium leading-6 text-gray-900">
