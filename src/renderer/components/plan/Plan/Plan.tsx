@@ -171,14 +171,16 @@ function Plan({ plan }: InternalPlanProps) {
 			<div
 				style={{
 					paddingLeft: depth * 30 + 5,
-					backgroundColor: isDir
-						? `rgb(0, 0, 0, ${0.3 - 0.1 * depth})`
-						: undefined,
 				}}
 				className={clsx(
 					'p-2 border-b border-gray-200 flex flex-row items-center justify-between group',
 					{
 						'even:bg-gray-50': !isDir,
+						'bg-indigo-50': isDir && depth > 2,
+						'bg-indigo-100': isDir && depth === 2,
+						'bg-indigo-200': isDir && depth === 1,
+						'bg-indigo-300': isDir && depth === 0,
+						'border-b border-indigo-300 text-indigo-900': isDir,
 					}
 				)}
 				ref={provided.innerRef}
@@ -200,10 +202,12 @@ function Plan({ plan }: InternalPlanProps) {
 	return (
 		<div className="w-full xh-full p-8">
 			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
-				<div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-					<h1 className="text-lg font-medium leading-6 text-gray-900">
+				<div className="px-4 py-5 sm:px-6 border-b border-gray-200 group flex flex-row justify-between items-center">
+					<h1 className="text-lg font-medium leading-6 text-gray-900 flex-1">
 						{plan.name}
 					</h1>
+					<DirectoryAddIcon className="w-5 h-5 invisible group-hover:visible cursor-pointer" />
+					<TrashIcon className="w-5 h-5 invisible" />
 				</div>
 				<Tree
 					tree={tree}
