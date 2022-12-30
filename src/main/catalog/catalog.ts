@@ -639,12 +639,11 @@ async function updateCatalog(
 		finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
 	} else {
 		finalCatalog = catalog;
+		finalCatalog.updatedAt = Date.now();
 	}
 
-	if (catalogUpdated) {
-		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
-		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
-	}
+	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
 
 	const message = catalogUpdated ? 'Update finished' : 'No updates available';
 
