@@ -35,7 +35,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 				return [
 					<li
 						key={db_id}
-						className="py-2 pl-1.5 font-bold sticky top-0 z-50 bg-white text-indigo-600"
+						className="py-2 pl-1.5 font-bold sticky top-0 z-40 bg-white text-indigo-600"
 					>
 						{DbIdToDisplay[db_id]}
 					</li>,

@@ -9,7 +9,7 @@ body {
 }
 
 .ReactModal__Overlay {
-	@apply flex flex-col items-center justify-start pt-16;
+	@apply flex flex-col items-center justify-start pt-16 z-50;
 	background-color: rgb(0, 0, 0, 0.3);
 }
 

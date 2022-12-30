@@ -295,14 +295,15 @@ async function parseMraToCatalogEntry(
 			debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
 		}
 
+		let romSlug;
 		let romData = null;
 		for (const r of romFile.split('|')) {
 			try {
-				if (r) {
-					romData = await fsp.readFile(
-						path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
-					);
-				}
+				romData = await fsp.readFile(
+					path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
+				);
+				romSlug = r;
+				break;
 			} catch (e) {}
 		}
 
@@ -311,13 +312,11 @@ async function parseMraToCatalogEntry(
 			: {
 					db_id,
 					type: 'rom',
-					fileName: `${rom}.zip`,
-					relFilePath: `games/mame/${rom}.zip`,
+					fileName: `${romSlug}.zip`,
+					relFilePath: `games/mame/${romSlug}.zip`,
 					hash: getFileHash(romData),
 					size: romData.byteLength,
 			  };
-
-		const romSlug = romFile?.split('|')[0];
 
 		const catalogEntry: CatalogEntry = {
 			db_id,
