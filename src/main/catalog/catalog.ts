@@ -589,7 +589,7 @@ async function updateCatalog(
 	};
 
 	for (const [dbId, dbUrl] of Object.entries(dbs)) {
-		callback({ message: `Getting latest for ${dbId}` });
+		callback({ message: `Checking for anything new in ${dbId}` });
 
 		const dbResult = await getDbJson(dbUrl);
 		const dbUpdates = await downloadUpdatesForDb(dbResult, (update) => {
