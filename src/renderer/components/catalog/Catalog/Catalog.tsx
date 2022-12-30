@@ -8,7 +8,8 @@ type InternalCatalogProps = {
 
 const DbIdToDisplay: Record<string, string> = {
 	distribution_mister: 'MiSTer main',
-	jtcores: 'Jotego Cores',
+	jtcores: 'Jotego',
+	theypsilon_unofficial_distribution: 'Ypsilon Unofficial',
 };
 
 function Catalog({ catalog }: InternalCatalogProps) {

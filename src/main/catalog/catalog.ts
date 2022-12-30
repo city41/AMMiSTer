@@ -441,6 +441,8 @@ const dbs: Record<string, string> = {
 		'https://raw.githubusercontent.com/MiSTer-devel/Distribution_MiSTer/main/db.json.zip',
 	jtcores:
 		'https://raw.githubusercontent.com/jotego/jtcores_mister/main/jtbindb.json.zip',
+	theypsilon_unofficial_distribution:
+		'https://raw.githubusercontent.com/theypsilon/Distribution_Unofficial_MiSTer/main/unofficialdb.json.zip',
 };
 
 async function determineMissingRoms(
