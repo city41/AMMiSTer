@@ -17,7 +17,7 @@ function EntryDetailModal({
 	const mameRoms = entry.rom.split('|');
 
 	return (
-		<Modal isOpen={isOpen} onRequestClose={onRequestClose}>
+		<Modal isOpen={isOpen} closeButton onRequestClose={onRequestClose}>
 			<div
 				className="px-4 py-5 sm:px-6"
 				style={{ minWidth: '80vw', maxWidth: '90vw' }}

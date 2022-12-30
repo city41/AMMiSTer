@@ -1,9 +1,12 @@
 import React from 'react';
 import ReactModal, { Props as ReactModalProps } from 'react-modal';
+import { CloseIcon } from '../icons';
 
-type ModalProps = ReactModalProps;
+type ModalProps = ReactModalProps & {
+	closeButton?: boolean;
+};
 
-function Modal({ children, ...rest }: ModalProps) {
+function Modal({ children, closeButton, ...rest }: ModalProps) {
 	return (
 		// @ts-expect-error
 		<ReactModal
@@ -19,7 +22,15 @@ function Modal({ children, ...rest }: ModalProps) {
 			}}
 			{...rest}
 		>
-			{children}
+			<div className="relative">
+				{closeButton && (
+					<CloseIcon
+						className="w-5 h-5 absolute top-2 right-2 cursor-pointer"
+						onClick={rest.onRequestClose}
+					/>
+				)}
+				{children}
+			</div>
 		</ReactModal>
 	);
 }
