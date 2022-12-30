@@ -204,7 +204,8 @@ function Plan({ plan }: InternalPlanProps) {
 			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
 				<div className="px-4 py-5 sm:px-6 border-b border-gray-200 group flex flex-row justify-between items-center">
 					<h1 className="text-lg font-medium leading-6 text-gray-900 flex-1">
-						{plan.name}
+						{plan.name} ({countDescendants(tree.items[tree.rootId], tree)}{' '}
+						games)
 					</h1>
 					<DirectoryAddIcon className="w-5 h-5 invisible group-hover:visible cursor-pointer" />
 					<TrashIcon className="w-5 h-5 invisible" />

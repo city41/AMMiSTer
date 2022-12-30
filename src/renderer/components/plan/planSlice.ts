@@ -43,10 +43,18 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				ce.manufacturer.includes('Capcom') && ce.orientation === 'horizontal'
 		);
 
-		const fighters = horizontalCapcomEntries.filter((ce) =>
+		const horizontalSegaEntries = allCatalogEntries.filter(
+			(ce) =>
+				ce.manufacturer.includes('Sega') && ce.orientation === 'horizontal'
+		);
+
+		const capcomFighters = horizontalCapcomEntries.filter((ce) =>
 			ce.category?.includes('Fight')
 		);
-		const shooters = horizontalCapcomEntries.filter((ce) =>
+		const capcomShooters = horizontalCapcomEntries.filter((ce) =>
+			ce.category?.includes('Shoot')
+		);
+		const segaShooters = horizontalSegaEntries.filter((ce) =>
 			ce.category?.includes('Shoot')
 		);
 
@@ -57,11 +65,20 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				games: [
 					{
 						directoryName: 'Fighters',
-						games: fighters,
+						games: capcomFighters,
 					},
 					{
 						directoryName: 'Horizontal Shooters',
-						games: shooters,
+						games: capcomShooters,
+					},
+				],
+			},
+			{
+				directoryName: 'Sega',
+				games: [
+					{
+						directoryName: 'Horizontal Shooters',
+						games: segaShooters,
 					},
 				],
 			},
