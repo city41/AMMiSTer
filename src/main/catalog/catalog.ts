@@ -198,19 +198,21 @@ async function determineOrientationAndRomSlug(
 		slugs.push(fallbackSlug);
 	}
 
-	debug(`determineOrientationAndRomSlug(${slugs.join(',')})`);
+	const debugHeader = `determineOrientationAndRomSlug(${slugs.join(',')})`;
+	debug(debugHeader);
 
 	for (const slug of slugs) {
 		const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${slug}.png`;
 		const tmpDir = path.resolve(os.tmpdir(), 'ammister');
-		const tmpPath = path.resolve(tmpDir, `orientation-image-${Date.now()}.png`);
+		const tmpPath = path.resolve(tmpDir, `orientation-image-${slug}.png`);
+		debug(`${debugHeader}: tmpPath: ${tmpPath}`);
 		await mkdirp(tmpDir);
 		try {
 			await downloadFile(imageUrl, tmpPath, 'image/png');
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
 			debug(
-				`determineOrientationAndRomSlug: downloadFile for ${imageUrl} failed with: ${message}`
+				`${debugHeader}: downloadFile for ${imageUrl} failed with: ${message}`
 			);
 			continue;
 		}
@@ -220,19 +222,18 @@ async function determineOrientationAndRomSlug(
 			dimension = await imageSize(tmpPath);
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			debug(
-				`determineOrientationAndRomSlug: imageSize failed with: ${message}`
-			);
+			debug(`${debugHeader}: imageSize failed with: ${message}`);
 			return { orientation: null, romSlug: slug };
 		}
 
 		if (!dimension || !dimension.width || !dimension.height) {
-			debug(
-				`determineOrientationAndRomSlug: imageSize failed to get the dimensions`
-			);
+			debug(`${debugHeader}: imageSize failed to get the dimensions`);
 			return { orientation: null, romSlug: slug };
 		}
 
+		debug(
+			`${debugHeader}: dimension, w: ${dimension.width} h: ${dimension.height}`
+		);
 		if (dimension.height > dimension.width) {
 			return { orientation: 'vertical', romSlug: slug };
 		} else {
