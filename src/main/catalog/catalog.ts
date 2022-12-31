@@ -616,7 +616,7 @@ async function updateCatalog(
 
 	if (!catalog) {
 		catalogUpdated = true;
-		callback({ message: 'Building catalog...' });
+		callback({ message: 'Building catalog... (this may take a bit)' });
 		catalog = await buildGameCatalog();
 	}
 
