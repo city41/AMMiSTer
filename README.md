@@ -1,9 +1,14 @@
 # AMMiSTer
 
+<<<<<<< HEAD
 ![screenshot-plan](https://github.com/city41/AMMiSTer/blob/main/screenshot-plan.png?raw=true)
 
 ![screenshot-detail](https://github.com/city41/AMMiSTer/blob/main/screenshot-detail.png?raw=true)
 
+=======
+![screenshot](https://github.com/city41/AMMiSTer/blob/main/screenshot.png?raw=true)
+
+>>>>>>> Update README
 An app for managing arcade cores. Download all of the arcade cores and their ROMs to your PC. Then decide what games will go onto your MiSTer, organized anyway you like.
 
 Slated features for the first alpha version:

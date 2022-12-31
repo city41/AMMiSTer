@@ -6,15 +6,20 @@ import * as nodeEnv from '../utils/node-env';
 
 import * as catalog from './catalog';
 import * as plan from './plan';
+import * as exportPlan from './export';
+
 import { DBJSON } from './catalog/types';
+import { Plan } from './plan/types';
 
 const SETTINGS_FILE = 'ammister.json';
 
 const debug = Debug('main/main.ts');
 
+let mainWindow: BrowserWindow;
+
 function createWindow() {
 	// Create the browser window.
-	const mainWindow = new BrowserWindow({
+	mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
 		webPreferences: {
@@ -31,7 +36,7 @@ function createWindow() {
 				{
 					label: 'New Plan',
 					accelerator: 'Ctrl+n',
-					click: () => mainWindow.webContents.send('loadNewPlan'),
+					click: () => mainWindow.webContents.send('menu:loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
@@ -45,7 +50,7 @@ function createWindow() {
 							const openedPlan = await plan.openPlan(result.filePaths[0]);
 							if (openedPlan) {
 								debug('Open Plan: sending opened plan to mainWindow');
-								mainWindow.webContents.send('loadOpenedPlan', openedPlan);
+								mainWindow.webContents.send('menu:loadOpenedPlan', openedPlan);
 							} else {
 								debug(
 									'Open Plan: plan.openPlan returned null, nothing to send to mainWindow'
@@ -56,7 +61,7 @@ function createWindow() {
 				},
 				{
 					label: 'Load Demo Plan...',
-					click: () => mainWindow.webContents.send('loadDemoPlan'),
+					click: () => mainWindow.webContents.send('menu:loadDemoPlan'),
 				},
 			],
 		},
@@ -65,8 +70,24 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'Check For Updates...',
-					id: 'update-menu-item',
-					click: () => mainWindow.webContents.send('kickOffCatalogUpdate'),
+					id: 'catalog-check-for-updates',
+					click: () => mainWindow.webContents.send('menu:kickOffCatalogUpdate'),
+				},
+			],
+		},
+		{
+			label: 'Export',
+			submenu: [
+				{
+					label: 'Export to Directory...',
+					click: () => {
+						debug('Export to Directory click callback invoked');
+						mainWindow.webContents.send('menu:exportToDirectory');
+					},
+					id: 'export-export-to-directory',
+				},
+				{
+					label: 'Export to MiSTer...',
 				},
 			],
 		},
@@ -158,8 +179,9 @@ ipcMain.handle('catalog:buildGameCatalog', async () => {
 });
 
 ipcMain.on('catalog:updateCatalog', async (event) => {
-	const menuItem =
-		Menu.getApplicationMenu()?.getMenuItemById('update-menu-item');
+	const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
+		'catalog-check-for-updates'
+	);
 
 	if (menuItem) {
 		menuItem.enabled = false;
@@ -182,6 +204,32 @@ ipcMain.handle('catalog:getCurrentCatalog', async () => {
 
 ipcMain.handle('plan:newPlan', () => {
 	return plan.newPlan();
+});
+
+ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
+	const result = await dialog.showOpenDialog(mainWindow, {
+		properties: ['openDirectory', 'createDirectory'],
+	});
+
+	if (result && !result.canceled && result.filePaths?.[0]) {
+		const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
+			'export-export-to-directory'
+		);
+
+		if (menuItem) {
+			menuItem.enabled = false;
+		}
+
+		exportPlan
+			.exportToDirectory(plan, result.filePaths[0], (status) => {
+				event.reply('export:exportToDirectory-status', status);
+			})
+			.finally(() => {
+				if (menuItem) {
+					menuItem.enabled = true;
+				}
+			});
+	}
 });
 
 // In this file you can include the rest of your app"s specific main process

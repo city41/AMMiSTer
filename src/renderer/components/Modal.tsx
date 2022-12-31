@@ -36,3 +36,4 @@ function Modal({ children, closeButton, ...rest }: ModalProps) {
 }
 
 export { Modal };
+export type { ModalProps };

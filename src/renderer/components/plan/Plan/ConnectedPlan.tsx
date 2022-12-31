@@ -19,7 +19,7 @@ function ConnectedPlan() {
 	}
 
 	useEffect(() => {
-		window.ipcAPI.loadDemoPlan(async () => {
+		window.ipcAPI.menu_loadDemoPlan(async () => {
 			const catalog = await window.ipcAPI.getCurrentCatalog();
 			if (!catalog) {
 				alert('Please update first');
@@ -28,9 +28,9 @@ function ConnectedPlan() {
 			}
 		});
 
-		window.ipcAPI.loadNewPlan(handleNewPlan);
+		window.ipcAPI.menu_loadNewPlan(handleNewPlan);
 
-		window.ipcAPI.loadOpenedPlan(async (plan: Plan) => {
+		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
 			dispatch(setPlan(plan));
 		});
 	}, []);

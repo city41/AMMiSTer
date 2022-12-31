@@ -15,7 +15,7 @@ function ConnectedUpdateModal() {
 	const updates = useSelector((state: AppState) => state.catalog.updates);
 
 	useEffect(() => {
-		window.ipcAPI.kickOffCatalogUpdate(() => {
+		window.ipcAPI.menu_kickOffCatalogUpdate(() => {
 			dispatch(updateCatalog());
 		});
 	}, []);

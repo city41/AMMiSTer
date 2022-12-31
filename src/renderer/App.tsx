@@ -2,6 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Catalog } from './components/catalog/Catalog';
 import { EntryDetailModal } from './components/catalog/EntryDetailModal';
+import { ExportModal } from './components/export/ExportModal';
 import { Footer } from './components/Footer';
 import { Plan } from './components/plan/Plan';
 import { UpdateModal } from './components/update/UpdateModal';
@@ -23,6 +24,7 @@ function App(): JSX.Element {
 				<Footer className="col-span-3" />
 			</div>
 			<UpdateModal />
+			<ExportModal />
 			<EntryDetailModal />
 		</Provider>
 	);

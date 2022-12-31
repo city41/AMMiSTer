@@ -10,7 +10,7 @@ const ipcAPI = {
 	updateCatalog(statusCallback: UpdateCallback) {
 		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
 			statusCallback(status);
-			if (status.done) {
+			if (status.complete) {
 				ipcRenderer.removeListener(
 					'catalog:updateCatalog-status',
 					onUpdateStatus
@@ -18,30 +18,48 @@ const ipcAPI = {
 			}
 		};
 		ipcRenderer.on('catalog:updateCatalog-status', onUpdateStatus);
-
 		ipcRenderer.send('catalog:updateCatalog');
-	},
-
-	kickOffCatalogUpdate(callback: () => void) {
-		ipcRenderer.on('kickOffCatalogUpdate', callback);
-	},
-
-	loadDemoPlan(callback: () => void) {
-		ipcRenderer.on('loadDemoPlan', callback);
-	},
-
-	loadNewPlan(callback: () => void) {
-		ipcRenderer.on('loadNewPlan', callback);
-	},
-
-	loadOpenedPlan(callback: (plan: Plan) => void) {
-		ipcRenderer.on('loadOpenedPlan', (_event, plan) => {
-			callback(plan);
-		});
 	},
 
 	newPlan(): Promise<Plan> {
 		return ipcRenderer.invoke('plan:newPlan');
+	},
+
+	exportToDirectory(plan: Plan, statusCallback: UpdateCallback) {
+		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
+			statusCallback(status);
+			if (status.complete) {
+				ipcRenderer.removeListener(
+					'export:exportToDirectory-status',
+					onUpdateStatus
+				);
+			}
+		};
+
+		ipcRenderer.on('export:exportToDirectory-status', onUpdateStatus);
+		ipcRenderer.send('export:exportToDirectory', plan);
+	},
+
+	menu_kickOffCatalogUpdate(callback: () => void) {
+		ipcRenderer.on('menu:kickOffCatalogUpdate', callback);
+	},
+
+	menu_loadDemoPlan(callback: () => void) {
+		ipcRenderer.on('menu:loadDemoPlan', callback);
+	},
+
+	menu_loadNewPlan(callback: () => void) {
+		ipcRenderer.on('menu:loadNewPlan', callback);
+	},
+
+	menu_loadOpenedPlan(callback: (plan: Plan) => void) {
+		ipcRenderer.on('menu:loadOpenedPlan', (_event, plan) => {
+			callback(plan);
+		});
+	},
+
+	menu_exportToDirectory(callback: () => void) {
+		ipcRenderer.on('menu:exportToDirectory', callback);
 	},
 };
 

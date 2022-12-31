@@ -6,7 +6,6 @@ import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import { promisify } from 'node:util';
 import mkdirp from 'mkdirp';
-import settings from 'electron-settings';
 import { XMLParser } from 'fast-xml-parser';
 import _imageSize from 'image-size';
 
@@ -23,14 +22,10 @@ import {
 	UpdateCallback,
 	UpdateReason,
 } from './types';
+import { getGameCacheDir } from '../util/fs';
 
 const imageSize = promisify(_imageSize);
 
-/**
- * Located at settings.get('rootDir'), this is the root
- * dir of all local AMMister game files
- */
-const GAME_CACHE_DIR = 'gameCache';
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
 
@@ -38,20 +33,6 @@ const xmlParser = new XMLParser({
 	ignoreAttributes: false,
 	numberParseOptions: { leadingZeros: false, hex: false },
 });
-
-/**
- * Returns the root directory of the game cache, or throws
- * if called before it has been established
- */
-async function getGameCacheDir(): Promise<string> {
-	const rootDir = await settings.get('rootDir');
-
-	if (!rootDir) {
-		throw new Error('db#getGameCacheDir: rootDir is not set in settings');
-	}
-
-	return path.resolve(rootDir.toString(), GAME_CACHE_DIR);
-}
 
 /**
  * Pulls down the db file from the given url. Most db files are zipped,
