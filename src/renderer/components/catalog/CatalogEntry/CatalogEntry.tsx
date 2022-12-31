@@ -40,8 +40,9 @@ function CatalogEntry({
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
 	const missingFile =
-		Object.keys(entry.files).length < 3 ||
-		entry.files.roms.every((r) => !r.md5);
+		!entry.files.mra ||
+		!entry.files.rbf ||
+		(entry.files.roms.length > 0 && entry.files.roms.every((r) => !r.md5));
 
 	return (
 		<div className={clsx(className, 'px-2 py-1')}>

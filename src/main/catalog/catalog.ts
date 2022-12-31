@@ -186,12 +186,17 @@ async function downloadUpdatesForDb(
 }
 
 async function determineOrientationAndRomSlug(
-	romEntries: CatalogFileEntry[]
+	romEntries: CatalogFileEntry[],
+	fallbackSlug?: string | null
 ): Promise<{
 	orientation: 'vertical' | 'horizontal' | null;
 	romSlug: string | null;
 }> {
 	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
+
+	if (fallbackSlug) {
+		slugs.push(fallbackSlug);
+	}
 
 	debug(`determineOrientationAndRomSlug(${slugs.join(',')})`);
 
@@ -276,38 +281,37 @@ async function parseMraToCatalogEntry(
 
 		const romEntries = Array.isArray(rom) ? rom : [rom];
 		const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
-		const romFile =
-			romEntryWithZip?.['@_zip']?.replaceAll('.zip', '') ||
-			setname ||
-			parent ||
-			rbf;
+		const romFile = romEntryWithZip?.['@_zip'];
 
 		if (!romFile) {
-			debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
+			debug(`parseMraToCatalogEntry, ${name} has no rom zip specified`);
 		}
 
-		const romCatalogFileEntries: CatalogFileEntry[] = [];
-		for (const r of romFile.split('|')) {
-			let rData;
-			try {
-				rData = await fsp.readFile(
-					path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
-				);
-			} catch (e) {
-				rData = null;
-			}
+		let romCatalogFileEntries: CatalogFileEntry[] = [];
+		if (romFile) {
+			for (const r of romFile.split('|')) {
+				let rData;
+				try {
+					rData = await fsp.readFile(
+						path.resolve(gameCacheDir, db_id, 'games', 'mame', r)
+					);
+				} catch (e) {
+					rData = null;
+				}
 
-			romCatalogFileEntries.push({
-				db_id,
-				fileName: `${r}.zip`,
-				relFilePath: `games/mame/${r}.zip`,
-				type: 'rom',
-				md5: rData ? getFileMd5Hash(rData) : undefined,
-			});
+				romCatalogFileEntries.push({
+					db_id,
+					fileName: r,
+					relFilePath: `games/mame/${r}`,
+					type: 'rom',
+					md5: rData ? getFileMd5Hash(rData) : undefined,
+				});
+			}
 		}
 
 		const { romSlug, orientation } = await determineOrientationAndRomSlug(
-			romCatalogFileEntries
+			romCatalogFileEntries,
+			setname || parent
 		);
 
 		const catalogEntry: CatalogEntry = {
@@ -317,7 +321,6 @@ async function parseMraToCatalogEntry(
 			yearReleased: Number(year),
 			category: category ?? null,
 			orientation,
-			rom: romFile,
 			mameVersion: mameversion,
 			titleScreenshotUrl: romSlug
 				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romSlug}.png`
@@ -678,10 +681,6 @@ function isCatalogEntry(obj: unknown): obj is CatalogEntry {
 	}
 
 	if (typeof ce.gameName !== 'string') {
-		return false;
-	}
-
-	if (typeof ce.rom !== 'string') {
 		return false;
 	}
 

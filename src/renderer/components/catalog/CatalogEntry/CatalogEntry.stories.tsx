@@ -14,7 +14,6 @@ const completeEntry: CatalogEntryType = {
 	db_id: 'jtcores',
 	gameName: 'Street Fighter Alpha 2 (Euro 960229)',
 	category: 'Fighting',
-	rom: 'sfa2',
 	titleScreenshotUrl:
 		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/sfa2.png',
 	gameplayScreenshotUrl:
