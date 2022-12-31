@@ -28,26 +28,32 @@ const completeEntry: CatalogEntryType = {
 			type: 'mra',
 			db_id: 'jtcores',
 			fileName: 'Street Fighter Alpha 2 (Euro 960229).mra',
-			hash: 'dummy hash',
-			size: 100,
+			md5: 'dummy hash',
 			relFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 		},
 		rbf: {
 			type: 'rbf',
 			db_id: 'jtcores',
 			fileName: 'jtcps2_20220819.rbf',
-			hash: 'dummy hash',
-			size: 100,
+			md5: 'dummy hash',
 			relFilePath: '_Arcade/cores/jtcps2_20220819.rbf',
 		},
-		rom: {
-			type: 'rom',
-			db_id: 'jtcores',
-			fileName: 'sfa2.zip',
-			hash: 'dummy hash',
-			size: 100,
-			relFilePath: 'games/mame/sfa2.zip',
-		},
+		roms: [
+			{
+				type: 'rom',
+				db_id: 'jtcores',
+				fileName: 'sfa2.zip',
+				md5: 'dummy hash',
+				relFilePath: 'games/mame/sfa2.zip',
+			},
+			{
+				type: 'rom',
+				db_id: 'jtcores',
+				fileName: 'qsound.zip',
+				md5: 'dummy hash',
+				relFilePath: 'games/mame/qsound.zip',
+			},
+		],
 	},
 };
 
@@ -63,7 +69,7 @@ export const MissingRom = () => {
 		},
 	};
 
-	delete entry.files.rom;
+	entry.files.roms[0].md5 = undefined;
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };
@@ -76,7 +82,7 @@ export const MissingRomAndCore = () => {
 		},
 	};
 
-	delete entry.files.rom;
+	entry.files.roms[0].md5 = undefined;
 	delete entry.files.rbf;
 
 	return <EntryDetailModal isOpen entry={entry} />;

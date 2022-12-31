@@ -74,7 +74,7 @@ function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 			relFilePath,
 			fileName: path.basename(relFilePath),
 			remoteUrl: db.base_files_url + relFilePath,
-			hash,
+			md5: hash,
 			size,
 		};
 	});
@@ -83,7 +83,7 @@ function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 /**
  * Returns the md5 hash of the provided data
  */
-function getFileHash(data: Buffer | string): string {
+function getFileMd5Hash(data: Buffer | string): string {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
@@ -103,13 +103,13 @@ async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
 
 	try {
 		const fileData = await fsp.readFile(fullPath);
-		const hash = await getFileHash(fileData);
+		const md5 = await getFileMd5Hash(fileData);
 
 		debug(
-			`determineUpdate for ${fileEntry.fileName}, local hash: ${hash} versus db hash: ${fileEntry.hash}`
+			`determineUpdate for ${fileEntry.fileName}, local hash: ${md5} versus db hash: ${fileEntry.md5}`
 		);
 
-		if (hash === fileEntry.hash) {
+		if (md5 === fileEntry.md5) {
 			debug(`determineUpdate, no update needed for ${fileEntry.fileName}`);
 			return null;
 		}
@@ -185,47 +185,57 @@ async function downloadUpdatesForDb(
 	return updates;
 }
 
-async function determineOrientation(
-	romFile: string
-): Promise<'vertical' | 'horizontal' | null> {
-	debug(`determineOrientation(${romFile})`);
-	const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romFile}.png`;
-	const tmpDir = path.resolve(os.tmpdir(), 'ammister');
-	const tmpPath = path.resolve(tmpDir, `orientation-image-${Date.now()}.png`);
-	await mkdirp(tmpDir);
-	try {
-		await downloadFile(imageUrl, tmpPath, 'image/png');
-	} catch (e) {
-		const message = e instanceof Error ? e.message : String(e);
-		debug(
-			`determineOrientation(${romFile}): downloadFile failed with: ${message}`
-		);
-		return null;
+async function determineOrientationAndRomSlug(
+	romEntries: CatalogFileEntry[]
+): Promise<{
+	orientation: 'vertical' | 'horizontal' | null;
+	romSlug: string | null;
+}> {
+	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
+
+	debug(`determineOrientationAndRomSlug(${slugs.join(',')})`);
+
+	for (const slug of slugs) {
+		const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${slug}.png`;
+		const tmpDir = path.resolve(os.tmpdir(), 'ammister');
+		const tmpPath = path.resolve(tmpDir, `orientation-image-${Date.now()}.png`);
+		await mkdirp(tmpDir);
+		try {
+			await downloadFile(imageUrl, tmpPath, 'image/png');
+		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
+			debug(
+				`determineOrientationAndRomSlug: downloadFile for ${imageUrl} failed with: ${message}`
+			);
+			continue;
+		}
+
+		let dimension;
+		try {
+			dimension = await imageSize(tmpPath);
+		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
+			debug(
+				`determineOrientationAndRomSlug: imageSize failed with: ${message}`
+			);
+			return { orientation: null, romSlug: slug };
+		}
+
+		if (!dimension || !dimension.width || !dimension.height) {
+			debug(
+				`determineOrientationAndRomSlug: imageSize failed to get the dimensions`
+			);
+			return { orientation: null, romSlug: slug };
+		}
+
+		if (dimension.height > dimension.width) {
+			return { orientation: 'vertical', romSlug: slug };
+		} else {
+			return { orientation: 'horizontal', romSlug: slug };
+		}
 	}
 
-	let dimension;
-	try {
-		dimension = await imageSize(tmpPath);
-	} catch (e) {
-		const message = e instanceof Error ? e.message : String(e);
-		debug(
-			`determineOrientation(${romFile}): imageSize failed with: ${message}`
-		);
-		return null;
-	}
-
-	if (!dimension || !dimension.width || !dimension.height) {
-		debug(
-			`determineOrientation(${romFile}): imageSize failed to get the dimensions`
-		);
-		return null;
-	}
-
-	if (dimension.height > dimension.width) {
-		return 'vertical';
-	}
-
-	return 'horizontal';
+	return { orientation: null, romSlug: null };
 }
 
 /**
@@ -276,28 +286,29 @@ async function parseMraToCatalogEntry(
 			debug(`parseMraToCatalogEntry, failed to determine rom for ${name}`);
 		}
 
-		let romSlug;
-		let romData = null;
+		const romCatalogFileEntries: CatalogFileEntry[] = [];
 		for (const r of romFile.split('|')) {
+			let rData;
 			try {
-				romData = await fsp.readFile(
+				rData = await fsp.readFile(
 					path.resolve(gameCacheDir, db_id, 'games', 'mame', r + '.zip')
 				);
-				romSlug = r;
-				break;
-			} catch (e) {}
+			} catch (e) {
+				rData = null;
+			}
+
+			romCatalogFileEntries.push({
+				db_id,
+				fileName: `${r}.zip`,
+				relFilePath: `games/mame/${r}.zip`,
+				type: 'rom',
+				md5: rData ? getFileMd5Hash(rData) : undefined,
+			});
 		}
 
-		const romEntry: CatalogFileEntry | undefined = !romData
-			? undefined
-			: {
-					db_id,
-					type: 'rom',
-					fileName: `${romSlug}.zip`,
-					relFilePath: `games/mame/${romSlug}.zip`,
-					hash: getFileHash(romData),
-					size: romData.byteLength,
-			  };
+		const { romSlug, orientation } = await determineOrientationAndRomSlug(
+			romCatalogFileEntries
+		);
 
 		const catalogEntry: CatalogEntry = {
 			db_id,
@@ -305,7 +316,7 @@ async function parseMraToCatalogEntry(
 			manufacturer: manufacturerA,
 			yearReleased: Number(year),
 			category: category ?? null,
-			orientation: romSlug ? await determineOrientation(romSlug) : null,
+			orientation,
 			rom: romFile,
 			mameVersion: mameversion,
 			titleScreenshotUrl: romSlug
@@ -320,15 +331,11 @@ async function parseMraToCatalogEntry(
 					type: 'mra',
 					fileName: path.basename(mraFilePath),
 					relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
-					hash: getFileHash(mraData),
-					size: mraData.length,
+					md5: getFileMd5Hash(mraData),
 				},
+				roms: romCatalogFileEntries,
 			},
 		};
-
-		if (romEntry) {
-			catalogEntry.files.rom = romEntry;
-		}
 
 		if (rbfData && rbfFilePath) {
 			catalogEntry.files.rbf = {
@@ -336,8 +343,7 @@ async function parseMraToCatalogEntry(
 				type: 'rbf',
 				fileName: path.basename(rbfFilePath),
 				relFilePath: rbfFilePath.substring(rbfFilePath.indexOf('_Arcade')),
-				hash: getFileHash(rbfData),
-				size: rbfData.byteLength,
+				md5: getFileMd5Hash(rbfData),
 			};
 		}
 
@@ -436,14 +442,14 @@ async function determineMissingRoms(
 		[]
 	);
 
-	const entriesMissingTheirRom = catalogEntries.filter((ce) => !ce.files.rom);
+	const entriesMissingTheirRom = catalogEntries.filter((ce) =>
+		ce.files.roms?.some((r) => !r.md5)
+	);
 
 	return entriesMissingTheirRom.map<MissingRomEntry>((ce) => {
 		const mre: MissingRomEntry = {
 			db_id: ce.db_id,
-			romFiles: ce.rom
-				.split('|')
-				.map((r) => r.toLowerCase().replace('.zip', '')),
+			romFiles: ce.files.roms.map((r) => r.fileName),
 			mameVersion: ce.mameVersion,
 		};
 
@@ -454,22 +460,18 @@ async function determineMissingRoms(
 async function downloadRom(
 	romEntry: MissingRomEntry,
 	overrideMameVersion?: string
-): Promise<Update | null> {
-	debug(
-		`downloadRom, getting ${romEntry.romFiles.join('|')} with mameVersion ${
-			overrideMameVersion || romEntry.mameVersion
-		}`
-	);
+): Promise<Update[]> {
 	const gameCacheDir = await getGameCacheDir();
+	const updates: Update[] = [];
 
 	for (const romFile of romEntry.romFiles) {
-		if (romFile.toLowerCase().includes('.zip')) {
-			throw new Error('MissingRomEntry has bad romFile name: ' + romFile);
-		}
-
 		const mameVersionToUse =
 			overrideMameVersion || romEntry.mameVersion || DEFAULT_MAME_VERSION;
-		const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romFile}.zip`;
+
+		debug(
+			`downloadRom, getting ${romFile} with mameVersion ${mameVersionToUse}`
+		);
+		const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romFile}`;
 
 		try {
 			const fileName = path.basename(remoteUrl);
@@ -489,49 +491,54 @@ async function downloadRom(
 				updateReason = 'missing';
 			}
 
-			return {
+			updates.push({
 				fileEntry: {
 					db_id: romEntry.db_id,
 					type: 'rom',
 					relFilePath,
 					fileName,
 					remoteUrl,
-					hash: getFileHash(romData),
-					size: romData.byteLength,
+					md5: getFileMd5Hash(romData),
 				},
 				updateReason,
-			};
+			});
 		} catch (e) {
 			// @ts-expect-error
 			debug(`downloadRom, error`, e.message);
 		}
 	}
 
-	return null;
+	return updates;
 }
 
 async function downloadRoms(
 	romEntries: MissingRomEntry[],
 	cb: (update: Update) => void
 ): Promise<Update[]> {
-	const updates: Update[] = [];
+	const allRomUpdates: Update[] = [];
 
 	for (const romEntry of romEntries) {
-		const update =
-			(await downloadRom(romEntry)) ??
-			(await downloadRom(romEntry, DEFAULT_MAME_VERSION));
+		let updates = await downloadRom(romEntry);
 
-		// we will quietly ignore fulfilled updates as the user doesn't need to know
-		if (update && update.updateReason !== 'fulfilled') {
-			updates.push(update);
-			cb(update);
-		} else {
-			debug(`downloadRoms: failed to download ${romEntry.romFiles.join('|')}`);
-			// TODO: updates should support errors for repoting
+		if (updates.length === 0) {
+			updates = await downloadRom(romEntry, DEFAULT_MAME_VERSION);
+		}
+
+		for (const update of updates) {
+			// we will quietly ignore fulfilled updates as the user doesn't need to know
+			if (update.updateReason !== 'fulfilled') {
+				allRomUpdates.push(update);
+				cb(update);
+			} else {
+				debug(
+					`downloadRoms: failed to download ${romEntry.romFiles.join('|')}`
+				);
+				// TODO: updates should support errors for repoting
+			}
 		}
 	}
 
-	return updates;
+	return allRomUpdates;
 }
 
 function addMisingRomsToCatalog(
@@ -541,13 +548,18 @@ function addMisingRomsToCatalog(
 	for (const romUpdate of romUpdates) {
 		const db = catalog[romUpdate.fileEntry.db_id];
 		const gameEntry = db.find((ce) => {
-			const allRoms = ce.rom.split('|');
-			return allRoms.some((r) =>
-				romUpdate.fileEntry.relFilePath.toLowerCase().includes(r.toLowerCase())
+			return ce.files.roms.some(
+				(r) => romUpdate.fileEntry.fileName === r.fileName
 			);
 		});
 
-		gameEntry!.files.rom = romUpdate.fileEntry;
+		if (gameEntry) {
+			gameEntry.files.roms.forEach((r) => {
+				if (r.fileName === romUpdate.fileEntry.fileName) {
+					r.md5 = romUpdate.fileEntry.md5;
+				}
+			});
+		}
 	}
 
 	return catalog;
@@ -608,6 +620,9 @@ async function updateCatalog(
 	const missingRoms = await determineMissingRoms(catalog);
 	debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
 
+	if (missingRoms.length > 0) {
+		callback({ message: 'Downloading potentially missing ROMs' });
+	}
 	const romUpdates = await downloadRoms(missingRoms, (update) => {
 		callback({ message: `Downloaded ROM ${update.fileEntry.fileName}` });
 	});

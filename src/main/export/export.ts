@@ -72,22 +72,20 @@ function buildFileOperationsForDirectory(
 			});
 
 			// ROM
-			operations.push({
-				action: 'copy',
-				srcPath: path.resolve(
-					srcRootDir,
-					entry.files.rom!.db_id,
-					'games',
-					'mame',
-					entry.files.rom!.fileName
-				),
-				destPath: path.resolve(
-					destRootDir,
-					'games',
-					'mame',
-					entry.files.rom!.fileName
-				),
+			const romOperations = entry.files.roms.map((r) => {
+				return {
+					action: 'copy',
+					srcPath: path.resolve(
+						srcRootDir,
+						r.db_id,
+						'games',
+						'mame',
+						r.fileName
+					),
+					destPath: path.resolve(destRootDir, 'games', 'mame', r.fileName),
+				} as const;
 			});
+			operations.push(...romOperations);
 		}
 	}
 

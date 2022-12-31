@@ -24,7 +24,7 @@ export type DBJSON = {
  * A struct representing a mister file, mostly used
  * in local situations away from a db.json
  */
-export type MissingFileEntry = {
+export type FileEntry = {
 	/**
 	 * the db.json file it came from
 	 */
@@ -43,6 +43,11 @@ export type MissingFileEntry = {
 	 * the latest version of it. Basically just base_file_url/<relFilePath>
 	 */
 	remoteUrl: string;
+
+	/**
+	 * The md5 hash of the file. If not present, that means the file is missing
+	 */
+	md5?: string;
 };
 
 /**
@@ -53,11 +58,6 @@ export type MissingRomEntry = {
 	db_id: string;
 	romFiles: string[];
 	mameVersion: string;
-};
-
-export type FileEntry = MissingFileEntry & {
-	hash: string;
-	size: number;
 };
 
 /**
@@ -109,7 +109,7 @@ export type CatalogEntry = {
 	files: {
 		mra?: CatalogFileEntry;
 		rbf?: CatalogFileEntry;
-		rom?: CatalogFileEntry;
+		roms: CatalogFileEntry[];
 	};
 };
 

@@ -101,25 +101,29 @@ function EntryDetailModal({
 							{entry.files.rbf?.relFilePath ?? 'missing'}
 						</dd>
 					</div>
-					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt
-							className={clsx('text-sm font-medium text-gray-500', {
-								'text-red-700': !entry.files.rom,
-							})}
-						>
-							ROM
-						</dt>
-						<dd
-							className={clsx(
-								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
-								{
-									'italic text-gray-400': !entry.files.rom,
-								}
-							)}
-						>
-							{entry.files.rom?.relFilePath ?? 'missing'}
-						</dd>
-					</div>
+					{entry.files.roms.map((r) => {
+						return (
+							<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+								<dt
+									className={clsx('text-sm font-medium text-gray-500', {
+										'text-red-700': !r.md5,
+									})}
+								>
+									ROM
+								</dt>
+								<dd
+									className={clsx(
+										'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
+										{
+											'italic text-gray-400': !r.md5,
+										}
+									)}
+								>
+									{r.relFilePath} {r.md5 ? '' : '(missing)'}
+								</dd>
+							</div>
+						);
+					})}
 				</dl>
 			</div>
 		</Modal>
