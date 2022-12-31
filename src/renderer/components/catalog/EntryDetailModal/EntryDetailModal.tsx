@@ -28,18 +28,20 @@ function EntryDetailModal({
 				</p>
 			</div>
 			<div className="flex flex-col items-stretch">
-				<div className="p-4 bg-gray-100 flex flex-row gap-x-4 justify-evenly border-t border-b border-gray-200">
-					<img
-						className="max-h-72"
-						alt={`Title Screen of ${entry.gameName}`}
-						src={entry.titleScreenshotUrl ?? ''}
-					/>
-					<img
-						className="max-h-72"
-						alt={`Gameplay of ${entry.gameName}`}
-						src={entry.gameplayScreenshotUrl ?? ''}
-					/>
-				</div>
+				{entry.titleScreenshotUrl && entry.gameplayScreenshotUrl && (
+					<div className="p-4 bg-gray-100 flex flex-row gap-x-4 justify-evenly border-t border-b border-gray-200">
+						<img
+							className="max-h-72"
+							alt={`Title Screen of ${entry.gameName}`}
+							src={entry.titleScreenshotUrl ?? ''}
+						/>
+						<img
+							className="max-h-72"
+							alt={`Gameplay of ${entry.gameName}`}
+							src={entry.gameplayScreenshotUrl ?? ''}
+						/>
+					</div>
+				)}
 				<dl>
 					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">Category</dt>

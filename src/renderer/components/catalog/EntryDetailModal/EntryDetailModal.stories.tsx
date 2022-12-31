@@ -86,3 +86,13 @@ export const MissingRomAndCore = () => {
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };
+
+export const MissingScreenshots = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		titleScreenshotUrl: null,
+		gameplayScreenshotUrl: null,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
