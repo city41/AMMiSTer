@@ -73,9 +73,9 @@ const planSlice = createSlice({
 			if (state.plan) {
 				const { parentPath, catalogEntry } = action.payload;
 
-				console.log({ parentPath });
 				const parent = getNode(state.plan, parentPath);
 				parent.games.push(catalogEntry);
+				parent.games = parent.games.slice().sort();
 			}
 		},
 		moveItem(
@@ -101,7 +101,15 @@ const planSlice = createSlice({
 				});
 
 				const [movingNode] = prevParent.games.splice(prevIndex, 1);
-				newParent.games.push(movingNode);
+				const movingNodeName =
+					'gameName' in movingNode
+						? movingNode.gameName
+						: movingNode.directoryName;
+				const destIndex = newParent.games.findIndex((g) => {
+					const name = 'gameName' in g ? g.gameName : g.directoryName;
+					return movingNodeName.localeCompare(name) <= 0;
+				});
+				newParent.games.splice(destIndex, 0, movingNode);
 			}
 		},
 		toggleDirectoryExpansion(
