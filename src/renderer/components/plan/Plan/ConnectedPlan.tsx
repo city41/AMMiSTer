@@ -1,6 +1,13 @@
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { loadDemoPlan, loadNewPlan, setPlan } from '../../plan/planSlice';
+import {
+	loadDemoPlan,
+	loadNewPlan,
+	setPlan,
+	addItem,
+	moveItem,
+	toggleDirectoryExpansion,
+} from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
 
 import { Plan } from './Plan';
@@ -35,8 +42,35 @@ function ConnectedPlan() {
 		});
 	}, []);
 
+	function handleItemMove(args: {
+		prevParentPath: string[];
+		newParentPath: string[];
+		name: string;
+	}) {
+		dispatch(moveItem(args));
+	}
+
+	function handleToggleDirectoryExpansion(path: string[]) {
+		dispatch(toggleDirectoryExpansion({ path }));
+	}
+
+	function handleAddItem(args: {
+		parentPath: string[];
+		db_id: string;
+		mraFileName: string;
+	}) {
+		dispatch(addItem(args));
+	}
+
 	if (plan) {
-		return <Plan key={plan.name + plan.createdAt} plan={plan} />;
+		return (
+			<Plan
+				plan={plan}
+				onItemAdd={handleAddItem}
+				onItemMove={handleItemMove}
+				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
+			/>
+		);
 	} else {
 		return <PlanEmptyState onClick={handleNewPlan} />;
 	}

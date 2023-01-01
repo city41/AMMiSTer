@@ -4,11 +4,13 @@ export type PlanGameDirectory = Array<CatalogEntry | PlanGameDirectoryEntry>;
 
 export type PlanGameDirectoryEntry = {
 	directoryName: string;
+	isExpanded: boolean;
 	games: PlanGameDirectory;
 };
 
 export type Plan = {
-	name: string;
+	directoryName: string;
+	isExpanded: boolean;
 	createdAt: number;
 	updatedAt: number;
 	games: PlanGameDirectory;

@@ -9,6 +9,12 @@ type CopyFileOperation = {
 	destPath: string;
 };
 
+type CopyIfExistsFileOperation = {
+	action: 'copy-if-exists';
+	srcPath: string;
+	destPath: string;
+};
+
 type DeleteFileOperation = {
 	action: 'delete';
 	destPath: string;
@@ -22,5 +28,6 @@ type MoveFileOperation = {
 
 export type FileOperation =
 	| CopyFileOperation
+	| CopyIfExistsFileOperation
 	| DeleteFileOperation
 	| MoveFileOperation;

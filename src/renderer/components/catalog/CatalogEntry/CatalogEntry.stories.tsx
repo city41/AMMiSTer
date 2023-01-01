@@ -1,4 +1,6 @@
 import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Meta } from '@storybook/react';
 import { CatalogEntry } from './CatalogEntry';
 import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
@@ -58,9 +60,11 @@ const completeEntry: CatalogEntryType = {
 
 export const CompleteEntry = () => {
 	return (
-		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-			<CatalogEntry entry={completeEntry} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={completeEntry} />
+			</div>
+		</DndProvider>
 	);
 };
 
@@ -75,9 +79,11 @@ export const MissingAFile = () => {
 	delete entry.files.rbf;
 
 	return (
-		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-			<CatalogEntry entry={entry} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} />
+			</div>
+		</DndProvider>
 	);
 };
 
@@ -88,9 +94,11 @@ export const Favorited = () => {
 	};
 
 	return (
-		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-			<CatalogEntry entry={entry} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} />
+			</div>
+		</DndProvider>
 	);
 };
 
@@ -101,9 +109,11 @@ export const Vertical = () => {
 	} as const;
 
 	return (
-		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-			<CatalogEntry entry={entry} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} />
+			</div>
+		</DndProvider>
 	);
 };
 
@@ -114,8 +124,10 @@ export const orientationUnknown = () => {
 	} as const;
 
 	return (
-		<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-			<CatalogEntry entry={entry} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} />
+			</div>
+		</DndProvider>
 	);
 };

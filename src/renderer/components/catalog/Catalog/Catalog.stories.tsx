@@ -1,4 +1,6 @@
 import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Meta } from '@storybook/react';
 import { Catalog } from './Catalog';
 import type {
@@ -67,8 +69,10 @@ const catalog: CatalogType = {
 
 export const Basic = () => {
 	return (
-		<div style={{ width: 240 }}>
-			<Catalog catalog={catalog} />
-		</div>
+		<DndProvider backend={HTML5Backend}>
+			<div style={{ width: 240 }}>
+				<Catalog catalog={catalog} />
+			</div>
+		</DndProvider>
 	);
 };

@@ -1,6 +1,11 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { Plan } from '../../../main/plan/types';
+import { CatalogEntry } from 'src/main/catalog/types';
+import {
+	Plan,
+	PlanGameDirectory,
+	PlanGameDirectoryEntry,
+} from '../../../main/plan/types';
 import { AppState } from '../../store';
 
 type PlanState = {
@@ -11,6 +16,46 @@ const initialState: PlanState = {
 	plan: null,
 };
 
+function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
+	let dir: PlanGameDirectory = [plan];
+	let foundDirEntry: PlanGameDirectoryEntry | undefined = undefined;
+
+	for (const segment of path) {
+		const dirEntry = dir.find((e) => {
+			return 'directoryName' in e && e.directoryName === segment;
+		});
+
+		if (!dirEntry) {
+			throw new Error(
+				`planSlice, getNode: failed to find a directory while traversing: ${path.join(
+					'/'
+				)}`
+			);
+		}
+
+		if ('gameName' in dirEntry) {
+			throw new Error(
+				`planSlice, getNode: get a game instead of a directory while traversing: ${path.join(
+					'/'
+				)}`
+			);
+		}
+
+		foundDirEntry = dirEntry;
+		dir = dirEntry.games;
+	}
+
+	if (!foundDirEntry) {
+		throw new Error(
+			`planSlice, getNode: failed to find a directory after traversing entire path: ${path.join(
+				'/'
+			)}`
+		);
+	}
+
+	return foundDirEntry;
+}
+
 const planSlice = createSlice({
 	name: 'plan',
 	initialState,
@@ -18,14 +63,96 @@ const planSlice = createSlice({
 		setPlan(state: PlanState, action: PayloadAction<Plan>) {
 			state.plan = action.payload;
 		},
+		addCatalogEntry(
+			state: PlanState,
+			action: PayloadAction<{
+				parentPath: string[];
+				catalogEntry: CatalogEntry;
+			}>
+		) {
+			if (state.plan) {
+				const { parentPath, catalogEntry } = action.payload;
+
+				console.log({ parentPath });
+				const parent = getNode(state.plan, parentPath);
+				parent.games.push(catalogEntry);
+			}
+		},
+		moveItem(
+			state: PlanState,
+			action: PayloadAction<{
+				prevParentPath: string[];
+				newParentPath: string[];
+				name: string;
+			}>
+		) {
+			if (state.plan) {
+				const { prevParentPath, newParentPath, name } = action.payload;
+
+				const prevParent = getNode(state.plan, prevParentPath);
+				const newParent = getNode(state.plan, newParentPath);
+
+				const prevIndex = prevParent.games.findIndex((g) => {
+					if ('directoryName' in g) {
+						return g.directoryName === name;
+					} else {
+						return g.gameName === name;
+					}
+				});
+
+				const [movingNode] = prevParent.games.splice(prevIndex, 1);
+				newParent.games.push(movingNode);
+			}
+		},
+		toggleDirectoryExpansion(
+			state: PlanState,
+			action: PayloadAction<{ path: string[] }>
+		) {
+			if (state.plan) {
+				const { path } = action.payload;
+				const node = getNode(state.plan, path);
+				node.isExpanded = !node.isExpanded;
+			}
+		},
 	},
 });
 
 type PlanSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 
+const addItem =
+	({
+		parentPath,
+		db_id,
+		mraFileName,
+	}: {
+		parentPath: string[];
+		db_id: string;
+		mraFileName: string;
+	}): PlanSliceThunk =>
+	(dispatch, getState) => {
+		const plan = getState().plan.plan;
+		const catalog = getState().catalog.catalog;
+
+		if (plan && catalog) {
+			const { updatedAt, ...restOfCatalog } = catalog;
+			const db = restOfCatalog[db_id];
+			const catalogEntry = db.find((e) => {
+				return e.files.mra?.fileName === mraFileName;
+			});
+
+			if (!catalogEntry) {
+				throw new Error(
+					`planSlice#addItem: failed to find a CatalogEntry for ${db_id}/${mraFileName}`
+				);
+			}
+
+			dispatch(planSlice.actions.addCatalogEntry({ parentPath, catalogEntry }));
+		}
+	};
+
 const loadNewPlan = (): PlanSliceThunk => async (dispatch) => {
 	const plan = await window.ipcAPI.newPlan();
-	plan.name = 'New Plan';
+	plan.directoryName = 'New Plan';
 	dispatch(planSlice.actions.setPlan(plan));
 };
 
@@ -58,26 +185,31 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 			ce.category?.includes('Shoot')
 		);
 
-		plan.name = 'Demo Plan';
+		plan.directoryName = 'Demo Plan';
 		plan.games = [
 			{
 				directoryName: 'Capcom',
+				isExpanded: true,
 				games: [
 					{
 						directoryName: 'Fighters',
+						isExpanded: false,
 						games: capcomFighters,
 					},
 					{
 						directoryName: 'Horizontal Shooters',
+						isExpanded: true,
 						games: capcomShooters,
 					},
 				],
 			},
 			{
 				directoryName: 'Sega',
+				isExpanded: true,
 				games: [
 					{
 						directoryName: 'Horizontal Shooters',
+						isExpanded: true,
 						games: segaShooters,
 					},
 				],
@@ -89,7 +221,15 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const reducer = planSlice.reducer;
-const { setPlan } = planSlice.actions;
+const { setPlan, moveItem, toggleDirectoryExpansion } = planSlice.actions;
 
-export { reducer, loadNewPlan, loadDemoPlan, setPlan };
+export {
+	reducer,
+	loadNewPlan,
+	loadDemoPlan,
+	setPlan,
+	addItem,
+	moveItem,
+	toggleDirectoryExpansion,
+};
 export type { PlanState };

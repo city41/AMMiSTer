@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
+import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import Debug from 'debug';
 import { Plan } from '../plan/types';
@@ -74,7 +75,7 @@ function buildFileOperationsForDirectory(
 			// ROM
 			const romOperations = entry.files.roms.map((r) => {
 				return {
-					action: 'copy',
+					action: 'copy-if-exists',
 					srcPath: path.resolve(
 						srcRootDir,
 						r.db_id,
@@ -117,24 +118,40 @@ async function performFileOperations(
 			case 'copy': {
 				await mkdirp(path.dirname(fileOp.destPath));
 				await fsp.copyFile(fileOp.srcPath, fileOp.destPath);
+				cb(fileOp);
+				break;
+			}
+			case 'copy-if-exists': {
+				const exists = !!fs.statSync(fileOp.srcPath, { throwIfNoEntry: false });
+				if (exists) {
+					await mkdirp(path.dirname(fileOp.destPath));
+					await fsp.copyFile(fileOp.srcPath, fileOp.destPath);
+					cb(fileOp);
+				} else {
+					debug(
+						`performFileOperations: copy-if-exists but doesnt exist: ${fileOp.srcPath}`
+					);
+				}
 				break;
 			}
 			case 'delete': {
 				await fsp.unlink(fileOp.destPath);
+				cb(fileOp);
 				break;
 			}
 			case 'move': {
 				await mkdirp(path.dirname(fileOp.destPath));
 				await fsp.rename(fileOp.srcPath, fileOp.destPath);
+				cb(fileOp);
 				break;
 			}
 		}
-		cb(fileOp);
 	}
 }
 
 const actionToVerb: Record<FileOperation['action'], string> = {
 	copy: 'Copied',
+	'copy-if-exists': 'Copied',
 	delete: 'Deleted',
 	move: 'Moved',
 };
@@ -155,7 +172,7 @@ async function exportToDirectory(
 	});
 
 	callback({
-		message: `Export of "${plan.name}" to ${destDirPath} complete`,
+		message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
 		complete: true,
 	});
 }

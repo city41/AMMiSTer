@@ -34,7 +34,7 @@ function isPlan(obj: unknown): obj is Plan {
 
 	const plan = obj as Plan;
 
-	if (typeof plan.name !== 'string') {
+	if (typeof plan.directoryName !== 'string') {
 		debug('isPlan: plan.name !== string');
 		return false;
 	}
@@ -69,7 +69,8 @@ function isPlan(obj: unknown): obj is Plan {
 function newPlan(): Plan {
 	const now = Date.now();
 	return {
-		name: '',
+		directoryName: '',
+		isExpanded: true,
 		createdAt: now,
 		updatedAt: now,
 		games: [],
