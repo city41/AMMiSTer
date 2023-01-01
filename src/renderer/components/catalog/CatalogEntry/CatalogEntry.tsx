@@ -46,12 +46,14 @@ function CatalogEntry({
 
 	return (
 		<div className={clsx(className, 'px-2 py-1')}>
-			<h3
-				className="whitespace-nowrap text-ellipsis overflow-hidden font-medium hover:underline cursor-pointer"
-				onClick={onClick}
-			>
-				{entry.gameName}
-			</h3>
+			<div className="whitespace-nowrap text-ellipsis overflow-hidden">
+				<h3
+					className="inline font-medium hover:underline cursor-pointer"
+					onClick={onClick}
+				>
+					{entry.gameName}
+				</h3>
+			</div>
 			<div className="flex flex-row justify-between">
 				<div className="flex flex-row items-center gap-x-2 text-xs text-gray-500">
 					{entry.manufacturer.join(',')} {entry.yearReleased}
