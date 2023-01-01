@@ -81,25 +81,23 @@ function Plan({
 					treeData={createTreeData([plan], [])}
 					onChange={() => {}}
 					onMoveNode={({ node, nextParentNode }) => {
-						if (nextParentNode) {
-							const newParentPath = nextParentNode.parentPath.concat(
-								nextParentNode.title as string
-							);
+						const newParentPath = nextParentNode?.parentPath.concat(
+							nextParentNode.title as string
+						) ?? [plan.directoryName];
+
+						if (node.parentPath) {
 							const name = node.title as string;
+							const prevParentPath = node.parentPath;
 
-							if (node.parentPath) {
-								const prevParentPath = node.parentPath;
-
-								onItemMove({ prevParentPath, newParentPath, name });
-							} else {
-								if (node.mraFileName && node.db_id) {
-									// TODO: emit an error if the entry lacks an mra
-									onItemAdd({
-										parentPath: newParentPath,
-										db_id: node.db_id,
-										mraFileName: node.mraFileName,
-									});
-								}
+							onItemMove({ prevParentPath, newParentPath, name });
+						} else {
+							if (node.mraFileName && node.db_id) {
+								// TODO: emit an error if the entry lacks an mra
+								onItemAdd({
+									parentPath: newParentPath,
+									db_id: node.db_id,
+									mraFileName: node.mraFileName,
+								});
 							}
 						}
 					}}
