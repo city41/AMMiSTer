@@ -24,7 +24,7 @@ function App(): JSX.Element {
 						<Catalog />
 					</div>
 					<div className="col-span-2 h-full overflow-auto">
-						<Welcome className="mx-6 my-10" />
+						<Welcome className="mx-8 my-10" />
 						<Plan />
 					</div>
 					<Footer className="col-span-3" />

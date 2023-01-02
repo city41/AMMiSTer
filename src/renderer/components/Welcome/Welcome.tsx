@@ -15,15 +15,15 @@ function Welcome({
 }: InternalWelcomeProps & PublicWelcomeProps) {
 	return (
 		<div
-			className={clsx(className, 'rounded p-4 bg-indigo-300 text-sm')}
+			className={clsx(className, 'rounded p-4 bg-yellow-100 text-sm shadow-lg')}
 			style={{ maxWidth: 900 }}
 		>
 			<h1 className="flex flex-row justify-between">
-				<div className="text-xl font-medium text-indigo-800">
+				<div className="text-xl font-medium text-yellow-800">
 					Welcome to AMMiSTer!
 				</div>
 				<a
-					className="text-white text-sm cursor-pointer hover:underline"
+					className="text-blue-600 text-sm cursor-pointer hover:underline"
 					onClick={onDismiss}
 				>
 					Don't show this again
@@ -32,7 +32,7 @@ function Welcome({
 			<p className="mt-4 mb-4">
 				Before you get started, make sure your MiSTer ...
 			</p>
-			<div className="rounded p-2 -m-2 bg-indigo-50 flex flex-col gap-y-2">
+			<div className="rounded p-2 pb-4 -m-2 bg-white flex flex-col gap-y-2">
 				<h2 className="text-lg font-medium">Has samba enabled</h2>
 				<p>
 					Samba is used to copy the games from your PC to the MiSTer. To enable
@@ -67,7 +67,7 @@ function Welcome({
 				</p>
 				<p>Don't forget to reboot the MiSTer after making these changes.</p>
 			</div>
-			<div className="mt-6 rounded p-2 -m-2 bg-indigo-50 flex flex-col gap-y-2">
+			<div className="mt-6 rounded p-2 pb-4 -m-2 bg-white flex flex-col gap-y-2">
 				<h2 className="text-lg font-medium ">
 					Has arcade updates disabled for update_all
 				</h2>
