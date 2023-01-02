@@ -1,7 +1,7 @@
 import path from 'node:path';
 import Debug from 'debug';
 import settings from 'electron-settings';
-import { BrowserWindow, app, dialog, ipcMain, Menu } from 'electron';
+import { BrowserWindow, app, dialog, ipcMain, Menu, shell } from 'electron';
 import * as nodeEnv from '../utils/node-env';
 
 import * as catalog from './catalog';
@@ -12,7 +12,7 @@ import { DBJSON } from './catalog/types';
 import { Plan } from './plan/types';
 import { SambaConfig } from './export/types';
 
-const SETTINGS_FILE = 'ammister.json';
+const SETTINGS_FILE = 'ammister-settings.json';
 
 const debug = Debug('main/main.ts');
 
@@ -28,6 +28,11 @@ function createWindow() {
 			preload: path.join(__dirname, '../preload.bundle.js'),
 			webSecurity: nodeEnv.prod,
 		},
+	});
+
+	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		shell.openExternal(url);
+		return { action: 'deny' };
 	});
 
 	const menu = Menu.buildFromTemplate([
@@ -159,6 +164,15 @@ app
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
+});
+
+ipcMain.handle('settings:getWelcomeDismissed', async () => {
+	const result = await settings.get('welcome-dismissed');
+	return result?.toString() === 'true';
+});
+
+ipcMain.handle('settings:setWelcomeDismissed', () => {
+	return settings.set('welcome-dismissed', 'true');
 });
 
 ipcMain.on('renderer-ready', () => {

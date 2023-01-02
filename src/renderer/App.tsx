@@ -8,6 +8,7 @@ import { ExportModal } from './components/export/ExportModal';
 import { ExportSambaConfigModal } from './components/export/ExportSambaConfigModal';
 import { Footer } from './components/Footer';
 import { Plan } from './components/plan/Plan';
+import { Welcome } from './components/Welcome';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
 
@@ -23,6 +24,7 @@ function App(): JSX.Element {
 						<Catalog />
 					</div>
 					<div className="col-span-2 h-full overflow-auto">
+						<Welcome className="mx-6 my-10" />
 						<Plan />
 					</div>
 					<Footer className="col-span-3" />

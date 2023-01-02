@@ -4,6 +4,14 @@ import { SambaConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
+	getWelcomeDismissed(): Promise<boolean> {
+		return ipcRenderer.invoke('settings:getWelcomeDismissed');
+	},
+
+	setWelcomeDismissed(): Promise<boolean> {
+		return ipcRenderer.invoke('settings:setWelcomeDismissed');
+	},
+
 	getCurrentCatalog(): Promise<Catalog | null> {
 		return ipcRenderer.invoke('catalog:getCurrentCatalog');
 	},
