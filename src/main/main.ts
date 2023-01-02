@@ -10,6 +10,7 @@ import * as exportPlan from './export';
 
 import { DBJSON } from './catalog/types';
 import { Plan } from './plan/types';
+import { SambaConfig } from './export/types';
 
 const SETTINGS_FILE = 'ammister.json';
 
@@ -81,13 +82,15 @@ function createWindow() {
 				{
 					label: 'Export to Directory...',
 					click: () => {
-						debug('Export to Directory click callback invoked');
 						mainWindow.webContents.send('menu:exportToDirectory');
 					},
 					id: 'export-export-to-directory',
 				},
 				{
 					label: 'Export to MiSTer...',
+					click: () => {
+						mainWindow.webContents.send('menu:exportToMister');
+					},
 				},
 			],
 		},
@@ -231,6 +234,29 @@ ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 			});
 	}
 });
+
+ipcMain.on(
+	'export:exportToMister',
+	async (event, plan: Plan, config: SambaConfig) => {
+		const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
+			'export-export-to-mister'
+		);
+
+		if (menuItem) {
+			menuItem.enabled = false;
+		}
+
+		exportPlan
+			.exportToMister(plan, config, (status) => {
+				event.reply('export:exportToMister-status', status);
+			})
+			.finally(() => {
+				if (menuItem) {
+					menuItem.enabled = true;
+				}
+			});
+	}
+);
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.

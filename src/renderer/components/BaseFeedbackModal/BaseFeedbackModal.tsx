@@ -7,6 +7,7 @@ type BaseFeedbackModalProps = ModalProps & {
 	icon: IconType;
 	title: string;
 	okButtonEnabled?: boolean;
+	okButtonText?: string;
 	onOkClick: () => void;
 };
 
@@ -14,6 +15,7 @@ function BaseFeedbackModal({
 	icon,
 	title,
 	okButtonEnabled,
+	okButtonText,
 	onOkClick,
 	children,
 	className,
@@ -25,7 +27,11 @@ function BaseFeedbackModal({
 		<Modal {...rest}>
 			<div
 				className={clsx(className, 'rounded-lg bg-white grid')}
-				style={{ width: '55vw', gridTemplateRows: '1fr max-content' }}
+				style={{
+					width: '55vw',
+					maxWidth: 900,
+					gridTemplateRows: '1fr max-content',
+				}}
 			>
 				<div className="bg-white p-6 pb-4 h-full overflow-auto">
 					<div
@@ -56,7 +62,7 @@ function BaseFeedbackModal({
 							}
 						)}
 					>
-						Okay
+						{okButtonText ?? 'Okay'}
 					</button>
 				</div>
 			</div>

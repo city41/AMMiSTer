@@ -1,17 +1,18 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
+import { SambaConfig } from '../../../main/export/types';
 import { AppState } from '../../store';
 
 type ExportType = 'directory' | 'mister';
 
-type ExportToDirectoryStatus = {
+type ExportStatus = {
 	exportType: ExportType;
 	message: string;
 	complete?: boolean;
 };
 
 type ExportState = {
-	exportToDirectoryStatus?: ExportToDirectoryStatus;
+	exportStatus?: ExportStatus;
 };
 
 const initialState: ExportState = {};
@@ -20,18 +21,15 @@ const exportSlice = createSlice({
 	name: 'export',
 	initialState,
 	reducers: {
-		setExportToDirectoryStatus(
-			state: ExportState,
-			action: PayloadAction<ExportToDirectoryStatus>
-		) {
-			state.exportToDirectoryStatus = {
+		setExportStatus(state: ExportState, action: PayloadAction<ExportStatus>) {
+			state.exportStatus = {
 				exportType: action.payload.exportType,
 				message: action.payload.message,
 				complete: action.payload.complete ?? false,
 			};
 		},
-		resetExportToDirectoryStatus(state: ExportState) {
-			state.exportToDirectoryStatus = {
+		resetExportStatus(state: ExportState) {
+			state.exportStatus = {
 				exportType: 'directory',
 				message: '',
 				complete: undefined,
@@ -47,11 +45,11 @@ const exportToDirectory =
 		const plan = getState().plan.plan;
 
 		if (plan) {
-			dispatch(exportSlice.actions.resetExportToDirectoryStatus());
+			dispatch(exportSlice.actions.resetExportStatus());
 
 			window.ipcAPI.exportToDirectory(plan, (status) => {
 				dispatch(
-					exportSlice.actions.setExportToDirectoryStatus({
+					exportSlice.actions.setExportStatus({
 						...status,
 						exportType: 'directory',
 					})
@@ -60,7 +58,26 @@ const exportToDirectory =
 		}
 	};
 
+const exportToMister =
+	(config: SambaConfig): ExportSliceThunk =>
+	async (dispatch, getState) => {
+		const plan = getState().plan.plan;
+
+		if (plan) {
+			dispatch(exportSlice.actions.resetExportStatus());
+
+			window.ipcAPI.exportToMister(plan, config, (status) => {
+				dispatch(
+					exportSlice.actions.setExportStatus({
+						...status,
+						exportType: 'mister',
+					})
+				);
+			});
+		}
+	};
+
 const reducer = exportSlice.reducer;
 
-export { reducer, exportToDirectory };
+export { reducer, exportToDirectory, exportToMister };
 export type { ExportState, ExportType };

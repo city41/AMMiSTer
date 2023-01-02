@@ -31,3 +31,11 @@ export type FileOperation =
 	| CopyIfExistsFileOperation
 	| DeleteFileOperation
 	| MoveFileOperation;
+
+export type SambaConfig = {
+	host: string;
+	domain: string;
+	share: string;
+	username: string;
+	password: string;
+};

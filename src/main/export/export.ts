@@ -3,8 +3,9 @@ import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import Debug from 'debug';
+import SMB2 from '@marsaud/smb2';
 import { Plan } from '../plan/types';
-import { FileOperation, UpdateCallback } from './types';
+import { FileOperation, SambaConfig, UpdateCallback } from './types';
 import { PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import { CatalogEntry } from '../catalog/types';
 import { getGameCacheDir } from '../util/fs';
@@ -177,4 +178,26 @@ async function exportToDirectory(
 	});
 }
 
-export { exportToDirectory };
+async function exportToMister(
+	_plan: Plan,
+	config: SambaConfig,
+	callback: UpdateCallback
+) {
+	const client = new SMB2({
+		share: `\\\\${config.host}\\${config.share}`,
+		domain: config.domain,
+		username: config.username,
+		password: config.password,
+	});
+
+	callback({ message: 'smbTest...' });
+	const result = await client.readdir('_Arcade');
+
+	callback({ message: JSON.stringify(result, null, 2) });
+
+	await new Promise((resolve) => setTimeout(resolve, 10000));
+
+	callback({ message: 'Export complete', complete: true });
+}
+
+export { exportToDirectory, exportToMister };

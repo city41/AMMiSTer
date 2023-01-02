@@ -10,7 +10,7 @@ function ConnectedExportModal() {
 
 	const { message, exportType, complete } = useSelector(
 		(state: AppState) =>
-			state.export.exportToDirectoryStatus ??
+			state.export.exportStatus ??
 			({
 				message: '',
 				exportType: 'directory',
@@ -20,7 +20,6 @@ function ConnectedExportModal() {
 
 	useEffect(() => {
 		window.ipcAPI.menu_exportToDirectory(() => {
-			console.log('menu_exportToDirectoy callback called');
 			dispatch(exportToDirectory());
 		});
 	}, []);

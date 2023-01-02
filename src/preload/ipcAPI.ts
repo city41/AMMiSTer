@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
 import { Catalog, UpdateCallback } from 'src/main/catalog/types';
+import { SambaConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
@@ -40,6 +41,25 @@ const ipcAPI = {
 		ipcRenderer.send('export:exportToDirectory', plan);
 	},
 
+	exportToMister(
+		plan: Plan,
+		config: SambaConfig,
+		statusCallback: UpdateCallback
+	) {
+		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
+			statusCallback(status);
+			if (status.complete) {
+				ipcRenderer.removeListener(
+					'export:exportToMister-status',
+					onUpdateStatus
+				);
+			}
+		};
+
+		ipcRenderer.on('export:exportToMister-status', onUpdateStatus);
+		ipcRenderer.send('export:exportToMister', plan, config);
+	},
+
 	menu_kickOffCatalogUpdate(callback: () => void) {
 		ipcRenderer.on('menu:kickOffCatalogUpdate', callback);
 	},
@@ -60,6 +80,10 @@ const ipcAPI = {
 
 	menu_exportToDirectory(callback: () => void) {
 		ipcRenderer.on('menu:exportToDirectory', callback);
+	},
+
+	menu_exportToMister(callback: () => void) {
+		ipcRenderer.on('menu:exportToMister', callback);
 	},
 };
 

@@ -18,7 +18,7 @@ function EntryDetailModal({
 		<Modal isOpen={isOpen} closeButton onRequestClose={onRequestClose}>
 			<div
 				className="px-4 py-5 sm:px-6"
-				style={{ minWidth: '80vw', maxWidth: '90vw' }}
+				style={{ minWidth: '80vw', maxWidth: 900 }}
 			>
 				<h1 className="text-lg font-medium leading-6 text-gray-900">
 					{entry.gameName}
@@ -42,26 +42,26 @@ function EntryDetailModal({
 						/>
 					</div>
 				)}
-				<dl>
-					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+				<dl className="bg-white">
+					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">Category</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							{entry.category}
 						</dd>
 					</div>
-					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">MAME Version</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							{entry.mameVersion}
 						</dd>
 					</div>
-					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">Orientation</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							{entry.orientation}
 						</dd>
 					</div>
-					<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">MRA</dt>
 						<dd
 							className={clsx(
@@ -74,7 +74,7 @@ function EntryDetailModal({
 							{entry.files.mra?.fileName ?? 'missing'}
 						</dd>
 					</div>
-					<div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt
 							className={clsx('text-sm font-medium text-gray-500', {
 								'text-red-700': !entry.files.rbf,
@@ -95,7 +95,7 @@ function EntryDetailModal({
 					</div>
 					{entry.files.roms.map((r) => {
 						return (
-							<div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 								<dt
 									className={clsx('text-sm font-medium text-gray-500', {
 										'text-red-700': !r.md5,
