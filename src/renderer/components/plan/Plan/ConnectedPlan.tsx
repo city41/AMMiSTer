@@ -5,6 +5,7 @@ import {
 	loadNewPlan,
 	setPlan,
 	addItem,
+	deleteItem,
 	moveItem,
 	toggleDirectoryExpansion,
 } from '../../plan/planSlice';
@@ -50,11 +51,15 @@ function ConnectedPlan() {
 		dispatch(moveItem(args));
 	}
 
+	function handleItemDelete(args: { parentPath: string[]; name: string }) {
+		dispatch(deleteItem(args));
+	}
+
 	function handleToggleDirectoryExpansion(path: string[]) {
 		dispatch(toggleDirectoryExpansion({ path }));
 	}
 
-	function handleAddItem(args: {
+	function handleItemAdd(args: {
 		parentPath: string[];
 		db_id: string;
 		mraFileName: string;
@@ -66,7 +71,8 @@ function ConnectedPlan() {
 		return (
 			<Plan
 				plan={plan}
-				onItemAdd={handleAddItem}
+				onItemAdd={handleItemAdd}
+				onItemDelete={handleItemDelete}
 				onItemMove={handleItemMove}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
 			/>

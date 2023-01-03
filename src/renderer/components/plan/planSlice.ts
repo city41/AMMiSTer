@@ -112,6 +112,22 @@ const planSlice = createSlice({
 				newParent.games.splice(destIndex, 0, movingNode);
 			}
 		},
+		deleteItem(
+			state: PlanState,
+			action: PayloadAction<{ parentPath: string[]; name: string }>
+		) {
+			if (state.plan) {
+				const { parentPath, name } = action.payload;
+				const parent = getNode(state.plan, parentPath);
+				parent.games = parent.games.filter((g) => {
+					if ('directoryName' in g) {
+						return g.directoryName !== name;
+					} else {
+						return g.gameName !== name;
+					}
+				});
+			}
+		},
 		toggleDirectoryExpansion(
 			state: PlanState,
 			action: PayloadAction<{ path: string[] }>
@@ -229,7 +245,8 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const reducer = planSlice.reducer;
-const { setPlan, moveItem, toggleDirectoryExpansion } = planSlice.actions;
+const { setPlan, moveItem, deleteItem, toggleDirectoryExpansion } =
+	planSlice.actions;
 
 export {
 	reducer,
@@ -237,6 +254,7 @@ export {
 	loadDemoPlan,
 	setPlan,
 	addItem,
+	deleteItem,
 	moveItem,
 	toggleDirectoryExpansion,
 };

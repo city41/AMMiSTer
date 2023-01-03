@@ -1,5 +1,5 @@
 import React from 'react';
-import SortableTree, { TreeItem, removeNodeAtPath } from 'react-sortable-tree';
+import SortableTree, { TreeItem } from 'react-sortable-tree';
 import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 import {
 	Plan,
@@ -17,6 +17,7 @@ type InternalPlanProps = {
 		newParentPath: string[];
 		name: string;
 	}) => void;
+	onItemDelete: (args: { parentPath: string[]; name: string }) => void;
 	onItemAdd: (args: {
 		parentPath: string[];
 		db_id: string;
@@ -70,6 +71,7 @@ function createTreeData(
 function Plan({
 	plan,
 	onItemAdd,
+	onItemDelete,
 	onItemMove,
 	onToggleDirectoryExpansion,
 }: InternalPlanProps) {
@@ -118,7 +120,15 @@ function Plan({
 
 						if (path.length > 1) {
 							buttons.push(
-								<TrashIcon className="w-5 h-5" onClick={() => {}} />
+								<TrashIcon
+									className="w-5 h-5"
+									onClick={() => {
+										onItemDelete({
+											parentPath: node.parentPath,
+											name: node.title as string,
+										});
+									}}
+								/>
 							);
 						}
 
@@ -130,6 +140,7 @@ function Plan({
 						return node.isDirectory;
 					}}
 					canDrag={({ path }) => {
+						// prevent the root (which is realy just the plan's name) from dragging
 						return path.length > 1;
 					}}
 				/>

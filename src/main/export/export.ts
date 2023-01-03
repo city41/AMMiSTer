@@ -174,7 +174,15 @@ function buildFileOperations(
 			);
 		});
 
-		if (newerAtSrc) {
+		const inSrc = srcDatedPaths.some((srcOpPath) => {
+			return (
+				destOpPath.relDirPath === srcOpPath.relDirPath &&
+				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
+				destOpPath.extension === srcOpPath.extension
+			);
+		});
+
+		if (newerAtSrc || !inSrc) {
 			return [
 				{
 					action: 'delete',
