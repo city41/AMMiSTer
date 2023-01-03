@@ -128,6 +128,41 @@ const planSlice = createSlice({
 				});
 			}
 		},
+		addDirectory(
+			state: PlanState,
+			action: PayloadAction<{ parentPath: string[] }>
+		) {
+			if (state.plan) {
+				const { parentPath } = action.payload;
+				const parent = getNode(state.plan, parentPath);
+
+				let newDirSuffix = 0;
+				let newDirectoryName = 'New Directory';
+
+				while (
+					parent.games.some((g) => {
+						const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+						return `${newDirectoryName}${newDirSuffix || ''}` === entryName;
+					})
+				) {
+					newDirSuffix += 1;
+				}
+
+				newDirectoryName += (newDirSuffix || '').toString();
+
+				const newDirectoryNode: PlanGameDirectoryEntry = {
+					directoryName: newDirectoryName,
+					games: [],
+					isExpanded: true,
+				};
+
+				const destIndex = parent.games.findIndex((g) => {
+					const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+					return newDirectoryName.localeCompare(entryName) <= 0;
+				});
+				parent.games.splice(destIndex, 0, newDirectoryNode);
+			}
+		},
 		toggleDirectoryExpansion(
 			state: PlanState,
 			action: PayloadAction<{ path: string[] }>
@@ -245,8 +280,13 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const reducer = planSlice.reducer;
-const { setPlan, moveItem, deleteItem, toggleDirectoryExpansion } =
-	planSlice.actions;
+const {
+	setPlan,
+	moveItem,
+	deleteItem,
+	addDirectory,
+	toggleDirectoryExpansion,
+} = planSlice.actions;
 
 export {
 	reducer,
@@ -256,6 +296,7 @@ export {
 	addItem,
 	deleteItem,
 	moveItem,
+	addDirectory,
 	toggleDirectoryExpansion,
 };
 export type { PlanState };

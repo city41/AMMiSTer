@@ -7,6 +7,7 @@ import {
 	addItem,
 	deleteItem,
 	moveItem,
+	addDirectory,
 	toggleDirectoryExpansion,
 } from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
@@ -55,6 +56,10 @@ function ConnectedPlan() {
 		dispatch(deleteItem(args));
 	}
 
+	function handleDirectoryAdd(args: { parentPath: string[] }) {
+		dispatch(addDirectory(args));
+	}
+
 	function handleToggleDirectoryExpansion(path: string[]) {
 		dispatch(toggleDirectoryExpansion({ path }));
 	}
@@ -74,6 +79,7 @@ function ConnectedPlan() {
 				onItemAdd={handleItemAdd}
 				onItemDelete={handleItemDelete}
 				onItemMove={handleItemMove}
+				onDirectoryAdd={handleDirectoryAdd}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
 			/>
 		);

@@ -116,9 +116,14 @@ function TreeNodeRenderer({
 // }
 
 const depthToDirectoryClasses: Record<number, string> = {
-	1: 'bg-indigo-200 text-indigo-900',
-	2: 'bg-indigo-300 text-indigo-900',
-	3: 'bg-indigo-600 text-indigo-200',
+	// 1: 'bg-indigo-200 text-indigo-900',
+	1: '',
+	2: '',
+	3: '',
+	4: '',
+	// 2: 'bg-indigo-300 text-indigo-700',
+	// 3: 'bg-indigo-600 text-indigo-200',
+	// 4: 'bg-indigo-600 text-indigo-100',
 };
 
 function NodeContentRenderer({
@@ -163,7 +168,7 @@ function NodeContentRenderer({
 		>
 			{node.isDirectory && (
 				<Chevron
-					className="w-5 h-5"
+					className="w-5 h-5 cursor-pointer"
 					onClick={() => toggleChildrenVisibility?.({ node, path, treeIndex })}
 				/>
 			)}
@@ -176,9 +181,18 @@ function NodeContentRenderer({
 					})}
 					onClick={handleTitleClick}
 				>
-					<div>{titleContent}</div>
+					<div
+						className={clsx({
+							'px-2 border-b-2 bg-indigo-100 border-indigo-800':
+								node.isDirectory,
+						})}
+					>
+						{titleContent}
+					</div>
 					{typeof node.totalGameCount === 'number' && (
-						<div className="text-sm">{node.totalGameCount} games</div>
+						<div className="text-sm text-gray-500">
+							{node.totalGameCount} game{node.totalGameCount === 1 ? '' : 's'}
+						</div>
 					)}
 				</div>
 			</div>

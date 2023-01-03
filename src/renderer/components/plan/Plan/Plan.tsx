@@ -23,6 +23,7 @@ type InternalPlanProps = {
 		db_id: string;
 		mraFileName: string;
 	}) => void;
+	onDirectoryAdd: (args: { parentPath: string[] }) => void;
 	onToggleDirectoryExpansion: (path: string[]) => void;
 };
 
@@ -73,6 +74,7 @@ function Plan({
 	onItemAdd,
 	onItemDelete,
 	onItemMove,
+	onDirectoryAdd,
 	onToggleDirectoryExpansion,
 }: InternalPlanProps) {
 	return (
@@ -115,7 +117,16 @@ function Plan({
 						const buttons = [];
 
 						if (node.isDirectory) {
-							buttons.push(<DirectoryAddIcon className="w-5 h-5" />);
+							buttons.push(
+								<DirectoryAddIcon
+									className="w-5 h-5"
+									onClick={() => {
+										onDirectoryAdd({
+											parentPath: node.parentPath.concat(node.title as string),
+										});
+									}}
+								/>
+							);
 						}
 
 						if (path.length > 1) {
