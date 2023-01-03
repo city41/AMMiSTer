@@ -4,12 +4,18 @@ import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import Debug from 'debug';
 import SMB2 from '@marsaud/smb2';
-import { Plan } from '../plan/types';
-import { FileOperation, SambaConfig, UpdateCallback } from './types';
-import { PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
-import { CatalogEntry } from '../catalog/types';
-import { getGameCacheDir } from '../util/fs';
+import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
+import {
+	FileOperationPath,
+	FileOperation,
+	SambaConfig,
+	UpdateCallback,
+	ExactFileOperationPath,
+	DatedFilenameFileOperationPath,
+} from './types';
 import uniqBy from 'lodash/uniqBy';
+import { getGameCacheDir } from '../util/fs';
+import { CatalogEntry } from '../catalog/types';
 
 const debug = Debug('main/export/export.ts');
 
@@ -19,130 +25,201 @@ function isPlanGameDirectoryEntry(
 	return 'directoryName' in obj;
 }
 
-function buildFileOperationsForDirectory(
-	srcRootDir: string,
-	destRootDir: string,
-	mraParentDir: string,
-	dir: PlanGameDirectory
-): FileOperation[] {
-	const operations: FileOperation[] = [];
-
-	for (const entry of dir) {
-		if (isPlanGameDirectoryEntry(entry)) {
-			const subOperations = buildFileOperationsForDirectory(
-				srcRootDir,
-				destRootDir,
-				path.join(mraParentDir, entry.directoryName),
-				entry.games
-			);
-			operations.push(...subOperations);
-		} else {
-			// TODO: deal with the !'s
-			// MRA
-			operations.push({
-				action: 'copy',
-				srcPath: path.resolve(
-					srcRootDir,
-					entry.files.mra!.db_id,
-					'_Arcade',
-					entry.files.mra!.fileName
-				),
-				destPath: path.resolve(
-					destRootDir,
-					'_Arcade',
-					mraParentDir,
-					entry.files.mra!.fileName
-				),
-			});
-
-			// RBF
-			operations.push({
-				action: 'copy',
-				srcPath: path.resolve(
-					srcRootDir,
-					entry.files.rbf!.db_id,
-					'_Arcade',
-					'cores',
-					entry.files.rbf!.fileName
-				),
-				destPath: path.resolve(
-					destRootDir,
-					'_Arcade',
-					'cores',
-					entry.files.rbf!.fileName
-				),
-			});
-
-			// ROM
-			const romOperations = entry.files.roms.map((r) => {
-				return {
-					action: 'copy-if-exists',
-					srcPath: path.resolve(
-						srcRootDir,
-						r.db_id,
-						'games',
-						'mame',
-						r.fileName
-					),
-					destPath: path.resolve(destRootDir, 'games', 'mame', r.fileName),
-				} as const;
-			});
-			operations.push(...romOperations);
-		}
+function convertFileNameDate(str: string | null | undefined): Date | null {
+	if (!str || str.trim().length !== 8 || !str.startsWith('20')) {
+		return null;
 	}
 
-	return uniqBy(operations, JSON.stringify);
+	const chars = str.split('');
+	const withDashes = [
+		...chars.slice(0, 4),
+		'-',
+		...chars.slice(4, 6),
+		'-',
+		...chars.slice(6),
+	].join('');
+
+	const d = new Date(withDashes);
+	if (d.toString().toLowerCase() === 'invalid date') {
+		debugger;
+	}
+	return d;
 }
 
-async function buildFileOperations(
-	plan: Plan,
-	destDirPath: string
-): Promise<FileOperation[]> {
-	const gameCacheDir = await getGameCacheDir();
+function buildFileOperationPath(p: string): FileOperationPath {
+	const fileName = path.basename(p);
+	const split = path.parse(fileName).name.split('_');
+	const fileNameDate = convertFileNameDate(split[1]);
 
-	return buildFileOperationsForDirectory(
-		gameCacheDir,
-		destDirPath,
-		'',
-		plan.games
+	if (split.length === 2 && fileNameDate) {
+		return {
+			type: 'dated-filename',
+			extension: path.extname(fileName),
+			fileName,
+			fileNameBase: split[0],
+			relDirPath: path.dirname(p),
+			date: fileNameDate,
+		};
+	} else {
+		return {
+			type: 'exact',
+			relPath: p,
+		};
+	}
+}
+
+function isExactFileOperationPath(
+	p: FileOperationPath
+): p is ExactFileOperationPath {
+	return p.type === 'exact';
+}
+
+function isDatedFileOperationPath(
+	p: FileOperationPath
+): p is DatedFilenameFileOperationPath {
+	return p.type === 'dated-filename';
+}
+
+function buildFileOperations(
+	srcOpPaths: FileOperationPath[],
+	destOpPaths: FileOperationPath[]
+): FileOperation[] {
+	const srcExactPaths = srcOpPaths.filter(isExactFileOperationPath);
+	const destExactPaths = destOpPaths.filter(isExactFileOperationPath);
+	const srcDatedPaths = srcOpPaths.filter(isDatedFileOperationPath);
+	const destDatedPaths = destOpPaths.filter(isDatedFileOperationPath);
+
+	const srcExactOps = srcExactPaths.flatMap<FileOperation>((srcOpPath) => {
+		const existsAtDest = destExactPaths.some((destOpPath) => {
+			return srcOpPath.relPath === destOpPath.relPath;
+		});
+
+		if (existsAtDest) {
+			return [];
+		} else {
+			if (!srcOpPath.db_id) {
+				throw new Error(
+					`srcOpPath missing db_id: ${JSON.stringify(srcOpPath)}`
+				);
+			}
+
+			return [
+				{
+					action: 'copy',
+					srcPath: path.join(srcOpPath.db_id, srcOpPath.relPath),
+					destPath: srcOpPath.relPath,
+				},
+			];
+		}
+	});
+
+	const srcDatedOps = srcDatedPaths.flatMap<FileOperation>((srcOpPath) => {
+		const existsOrNewerAtDest = destDatedPaths.some((destOpPath) => {
+			return (
+				srcOpPath.relDirPath === destOpPath.relDirPath &&
+				srcOpPath.fileNameBase === destOpPath.fileNameBase &&
+				srcOpPath.extension === destOpPath.extension &&
+				destOpPath.date.getTime() - srcOpPath.date.getTime() >= 0
+			);
+		});
+
+		if (existsOrNewerAtDest) {
+			return [];
+		} else {
+			if (!srcOpPath.db_id) {
+				debugger;
+				throw new Error(
+					`srcOpPath missing db_id: ${JSON.stringify(srcOpPath)}`
+				);
+			}
+
+			return [
+				{
+					action: 'copy',
+					srcPath: path.join(
+						srcOpPath.db_id,
+						srcOpPath.relDirPath,
+						srcOpPath.fileName
+					),
+					destPath: path.join(srcOpPath.relDirPath, srcOpPath.fileName),
+				},
+			];
+		}
+	});
+
+	const destExactOps = destExactPaths.flatMap<FileOperation>((destOpPath) => {
+		const existsAtSrc = srcExactPaths.some((srcOpPath) => {
+			return destOpPath.relPath === srcOpPath.relPath;
+		});
+
+		if (existsAtSrc) {
+			return [];
+		} else {
+			return [
+				{
+					action: 'delete',
+					destPath: destOpPath.relPath,
+				},
+			];
+		}
+	});
+
+	const destDatedOps = destDatedPaths.flatMap<FileOperation>((destOpPath) => {
+		const newerAtSrc = srcDatedPaths.some((srcOpPath) => {
+			return (
+				destOpPath.relDirPath === srcOpPath.relDirPath &&
+				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
+				destOpPath.extension === srcOpPath.extension &&
+				destOpPath.date.getTime() - srcOpPath.date.getTime() < 0
+			);
+		});
+
+		if (newerAtSrc) {
+			return [
+				{
+					action: 'delete',
+					destPath: path.join(destOpPath.relDirPath, destOpPath.fileName),
+				},
+			];
+		} else {
+			return [];
+		}
+	});
+
+	return uniqBy(
+		[...srcExactOps, ...srcDatedOps, ...destExactOps, ...destDatedOps],
+		JSON.stringify
 	);
 }
 
-async function performFileOperations(
+async function performLocalFileSystemFileOperations(
+	srcDirRoot: string,
+	destDirRoot: string,
 	fileOps: FileOperation[],
 	cb: (fileOp: FileOperation) => void
 ) {
 	for (const fileOp of fileOps) {
 		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
 
+		const srcPath =
+			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
+		const destPath = path.resolve(destDirRoot, fileOp.destPath);
+
 		switch (fileOp.action) {
 			case 'copy': {
-				await mkdirp(path.dirname(fileOp.destPath));
-				await fsp.copyFile(fileOp.srcPath, fileOp.destPath);
+				await mkdirp(path.dirname(destPath));
+				await fsp.copyFile(srcPath, destPath);
 				cb(fileOp);
 				break;
 			}
-			case 'copy-if-exists': {
-				const exists = !!fs.statSync(fileOp.srcPath, { throwIfNoEntry: false });
-				if (exists) {
-					await mkdirp(path.dirname(fileOp.destPath));
-					await fsp.copyFile(fileOp.srcPath, fileOp.destPath);
-					cb(fileOp);
-				} else {
-					debug(
-						`performFileOperations: copy-if-exists but doesnt exist: ${fileOp.srcPath}`
-					);
-				}
-				break;
-			}
 			case 'delete': {
-				await fsp.unlink(fileOp.destPath);
+				await fsp.unlink(destPath);
 				cb(fileOp);
 				break;
 			}
 			case 'move': {
-				await mkdirp(path.dirname(fileOp.destPath));
-				await fsp.rename(fileOp.srcPath, fileOp.destPath);
+				await mkdirp(path.dirname(destPath));
+				await fsp.rename(srcPath, destPath);
 				cb(fileOp);
 				break;
 			}
@@ -152,10 +229,87 @@ async function performFileOperations(
 
 const actionToVerb: Record<FileOperation['action'], string> = {
 	copy: 'Copied',
-	'copy-if-exists': 'Copied',
 	delete: 'Deleted',
 	move: 'Moved',
 };
+
+function getSrcPathsFromPlan(planDir: PlanGameDirectory): FileOperationPath[] {
+	const paths: FileOperationPath[] = [];
+	const rawPaths: Array<{ db_id: string; path: string }> = [];
+
+	for (const entry of planDir) {
+		if (isPlanGameDirectoryEntry(entry)) {
+			const subPaths = getSrcPathsFromPlan(entry.games);
+			paths.push(...subPaths);
+		} else {
+			if (entry.files.mra) {
+				rawPaths.push({
+					db_id: entry.db_id,
+					path: entry.files.mra.relFilePath,
+				});
+			}
+			if (entry.files.rbf) {
+				rawPaths.push({
+					db_id: entry.db_id,
+					path: entry.files.rbf.relFilePath,
+				});
+			}
+			const romPaths = entry.files.roms.flatMap((re) => {
+				if (!re.md5) {
+					return [];
+				} else {
+					return [
+						{
+							db_id: entry.db_id,
+							path: re.relFilePath,
+						},
+					];
+				}
+			});
+			rawPaths.push(...romPaths);
+		}
+	}
+
+	const finalImmediatePaths = rawPaths.map((rp) => {
+		const opPath = buildFileOperationPath(rp.path);
+		return {
+			...opPath,
+			db_id: rp.db_id,
+		};
+	});
+
+	return paths.concat(finalImmediatePaths);
+}
+
+async function getExistingDestPaths(
+	destDirRootPath: string,
+	curDirPath: string
+): Promise<FileOperationPath[]> {
+	const paths: FileOperationPath[] = [];
+	const rawPaths: string[] = [];
+
+	const entries = await fsp.readdir(path.resolve(destDirRootPath, curDirPath));
+
+	for (const entry of entries) {
+		if (
+			fs
+				.statSync(path.resolve(destDirRootPath, curDirPath, entry))
+				.isDirectory()
+		) {
+			const subPaths = await getExistingDestPaths(
+				destDirRootPath,
+				path.join(curDirPath, entry)
+			);
+			paths.push(...subPaths);
+		} else {
+			rawPaths.push(path.join(curDirPath, entry));
+		}
+	}
+
+	const finalImmediatePaths = rawPaths.map(buildFileOperationPath);
+
+	return paths.concat(finalImmediatePaths);
+}
 
 async function exportToDirectory(
 	plan: Plan,
@@ -163,14 +317,28 @@ async function exportToDirectory(
 	callback: UpdateCallback
 ) {
 	debug(`exportToDirectory(plan, ${destDirPath}, callback)`);
+	const gameCacheDir = await getGameCacheDir();
 
-	const fileOperations = await buildFileOperations(plan, destDirPath);
+	const srcPaths = getSrcPathsFromPlan(plan.games);
+	const destPaths = await getExistingDestPaths(destDirPath, '');
+	const fileOperations = buildFileOperations(srcPaths, destPaths);
 
-	await fsp.rm(destDirPath, { recursive: true, force: true });
+	debug(
+		`exportToDirectory: fileOperations:\n${fileOperations
+			.map((fo) => JSON.stringify(fo))
+			.join('\n')}`
+	);
 
-	await performFileOperations(fileOperations, (fileOp) => {
-		callback({ message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}` });
-	});
+	await performLocalFileSystemFileOperations(
+		gameCacheDir,
+		destDirPath,
+		fileOperations,
+		(fileOp) => {
+			callback({
+				message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
+			});
+		}
+	);
 
 	callback({
 		message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
@@ -200,4 +368,9 @@ async function exportToMister(
 	callback({ message: 'Export complete', complete: true });
 }
 
-export { exportToDirectory, exportToMister };
+export {
+	exportToDirectory,
+	exportToMister,
+	buildFileOperations,
+	buildFileOperationPath,
+};

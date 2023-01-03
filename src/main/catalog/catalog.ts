@@ -521,7 +521,12 @@ async function downloadRoms(
 ): Promise<Update[]> {
 	const allRomUpdates: Update[] = [];
 
-	for (const romEntry of romEntries) {
+	// sorting them at least a little bit helps the user to follow along
+	const sortedRomEntries = romEntries.sort((a, b) => {
+		return a.romFiles[0].localeCompare(b.romFiles[0]);
+	});
+
+	for (const romEntry of sortedRomEntries) {
 		let updates = await downloadRom(romEntry);
 
 		if (updates.length === 0) {
@@ -551,19 +556,21 @@ function addMisingRomsToCatalog(
 ): Catalog {
 	for (const romUpdate of romUpdates) {
 		const db = catalog[romUpdate.fileEntry.db_id];
-		const gameEntry = db.find((ce) => {
+
+		// games can share roms, such as qsound.zip for cps2 games
+		const gameEntries = db.filter((ce) => {
 			return ce.files.roms.some(
 				(r) => romUpdate.fileEntry.fileName === r.fileName
 			);
 		});
 
-		if (gameEntry) {
+		gameEntries.forEach((gameEntry) => {
 			gameEntry.files.roms.forEach((r) => {
 				if (r.fileName === romUpdate.fileEntry.fileName) {
 					r.md5 = romUpdate.fileEntry.md5;
 				}
 			});
-		}
+		});
 	}
 
 	return catalog;
@@ -625,7 +632,7 @@ async function updateCatalog(
 	debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
 
 	if (missingRoms.length > 0) {
-		callback({ message: 'Downloading potentially missing ROMs' });
+		callback({ message: 'Checking for missing ROMs' });
 	}
 	const romUpdates = await downloadRoms(missingRoms, (update) => {
 		callback({ message: `Downloaded ROM ${update.fileEntry.fileName}` });

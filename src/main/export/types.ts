@@ -9,12 +9,6 @@ type CopyFileOperation = {
 	destPath: string;
 };
 
-type CopyIfExistsFileOperation = {
-	action: 'copy-if-exists';
-	srcPath: string;
-	destPath: string;
-};
-
 type DeleteFileOperation = {
 	action: 'delete';
 	destPath: string;
@@ -28,7 +22,6 @@ type MoveFileOperation = {
 
 export type FileOperation =
 	| CopyFileOperation
-	| CopyIfExistsFileOperation
 	| DeleteFileOperation
 	| MoveFileOperation;
 
@@ -39,3 +32,23 @@ export type SambaConfig = {
 	username: string;
 	password: string;
 };
+
+export type ExactFileOperationPath = {
+	type: 'exact';
+	db_id?: string;
+	relPath: string;
+};
+
+export type DatedFilenameFileOperationPath = {
+	type: 'dated-filename';
+	db_id?: string;
+	relDirPath: string;
+	fileName: string;
+	fileNameBase: string;
+	extension: string;
+	date: Date;
+};
+
+export type FileOperationPath =
+	| ExactFileOperationPath
+	| DatedFilenameFileOperationPath;
