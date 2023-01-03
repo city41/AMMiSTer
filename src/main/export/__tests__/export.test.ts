@@ -1,24 +1,37 @@
 import { buildFileOperations, buildFileOperationPath } from '../export';
-import { FileOperationPath } from '../types';
+import { SrcFileOperationPath, DestFileOperationPath } from '../types';
 
 describe('export', function () {
 	describe('#buildFileOperations', function () {
 		describe('exact ops', function () {
 			it('should return zero operations if src and dest are the same', function () {
-				const srcOpPaths: FileOperationPath[] = [
+				const srcOpPaths: SrcFileOperationPath[] = [
 					{
 						type: 'exact',
 						db_id: 'mockdb',
-						relPath: '_Arcade/foo.mra',
-					},
-					{
-						type: 'exact',
-						db_id: 'mockdb',
-						relPath: 'games/mame/foo.zip',
+						cacheRelPath: '_Arcade/foo.mra',
+						destRelPath: '_Arcade/sub/dir/foo.mra',
 					},
 					{
 						type: 'dated-filename',
 						db_id: 'mockdb',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
+						fileName: 'foo_20230101',
+						fileNameBase: 'foo',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				const destOpPaths: DestFileOperationPath[] = [
+					{
+						type: 'exact',
+						db_id: 'mockdb',
+						relPath: '_Arcade/sub/dir/foo.mra',
+					},
+					{
+						type: 'dated-filename',
 						relDirPath: '_Arcade/cores',
 						fileName: 'foo_20230101',
 						fileNameBase: 'foo',
@@ -27,21 +40,20 @@ describe('export', function () {
 					},
 				];
 
-				const destOpPaths = srcOpPaths.map((s) => ({ ...s }));
-
 				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([]);
 			});
 
 			it('should return a copy if src has a file that dest does not', function () {
-				const srcOpPaths: FileOperationPath[] = [
+				const srcOpPaths: SrcFileOperationPath[] = [
 					{
 						type: 'exact',
 						db_id: 'mockdb',
-						relPath: '_Arcade/foo.mra',
+						cacheRelPath: '_Arcade/foo.mra',
+						destRelPath: '_Arcade/foo.mra',
 					},
 				];
 
-				const destOpPaths: FileOperationPath[] = [];
+				const destOpPaths: DestFileOperationPath[] = [];
 
 				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([
 					{
@@ -53,9 +65,9 @@ describe('export', function () {
 			});
 
 			it('should return a delete if dest has a file that src does not', function () {
-				const srcOpPaths: FileOperationPath[] = [];
+				const srcOpPaths: SrcFileOperationPath[] = [];
 
-				const destOpPaths: FileOperationPath[] = [
+				const destOpPaths: DestFileOperationPath[] = [
 					{
 						type: 'exact',
 						relPath: '_Arcade/foo.mra',
@@ -71,9 +83,9 @@ describe('export', function () {
 			});
 
 			it('should return unique file operations regardless of dupes in input', function () {
-				const srcOpPaths: FileOperationPath[] = [];
+				const srcOpPaths: SrcFileOperationPath[] = [];
 
-				const destOpPaths: FileOperationPath[] = [
+				const destOpPaths: DestFileOperationPath[] = [
 					{
 						type: 'exact',
 						relPath: '_Arcade/foo.mra',
@@ -95,11 +107,12 @@ describe('export', function () {
 
 		describe('dated ops', function () {
 			it('should leave dest alone if src is older', function () {
-				const srcOpPaths: FileOperationPath[] = [
+				const srcOpPaths: SrcFileOperationPath[] = [
 					{
 						type: 'dated-filename',
 						db_id: 'mockdb',
-						relDirPath: '_Arcade/cores',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
 						fileName: 'foo_20230101.rbf',
 						fileNameBase: 'foo',
 						extension: '.rbf',
@@ -107,7 +120,7 @@ describe('export', function () {
 					},
 				];
 
-				const destOpPaths: FileOperationPath[] = [
+				const destOpPaths: DestFileOperationPath[] = [
 					{
 						type: 'dated-filename',
 						relDirPath: '_Arcade/cores',
@@ -122,11 +135,12 @@ describe('export', function () {
 			});
 
 			it('should copy src and delete dest if dest is older', function () {
-				const srcOpPaths: FileOperationPath[] = [
+				const srcOpPaths: SrcFileOperationPath[] = [
 					{
 						type: 'dated-filename',
 						db_id: 'mockdb',
-						relDirPath: '_Arcade/cores',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
 						fileName: 'foo_20230102.rbf',
 						fileNameBase: 'foo',
 						extension: '.rbf',
@@ -134,7 +148,7 @@ describe('export', function () {
 					},
 				];
 
-				const destOpPaths: FileOperationPath[] = [
+				const destOpPaths: DestFileOperationPath[] = [
 					{
 						type: 'dated-filename',
 						relDirPath: '_Arcade/cores',

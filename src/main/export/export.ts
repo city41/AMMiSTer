@@ -6,12 +6,15 @@ import Debug from 'debug';
 import SMB2 from '@marsaud/smb2';
 import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import {
-	FileOperationPath,
+	SrcFileOperationPath,
+	DestFileOperationPath,
 	FileOperation,
 	SambaConfig,
 	UpdateCallback,
-	ExactFileOperationPath,
-	DatedFilenameFileOperationPath,
+	SrcExactFileOperationPath,
+	SrcDatedFilenameFileOperationPath,
+	DestExactFileOperationPath,
+	DestDatedFilenameFileOperationPath,
 } from './types';
 import uniqBy from 'lodash/uniqBy';
 import { getGameCacheDir } from '../util/fs';
@@ -46,7 +49,26 @@ function convertFileNameDate(str: string | null | undefined): Date | null {
 	return d;
 }
 
-function buildFileOperationPath(p: string): FileOperationPath {
+function getDatedFilenamePathComponents(fileName: string): {
+	fileNameBase: string;
+	extension: string;
+	date: Date;
+} {
+	const split = path.parse(fileName).name.split('_');
+	const date = convertFileNameDate(split[1]);
+
+	if (!date) {
+		throw new Error(`a dated filename formed an invalid Date: ${fileName}`);
+	}
+
+	return {
+		fileNameBase: split[0],
+		extension: path.extname(fileName),
+		date,
+	};
+}
+
+function buildDestFileOperationPath(p: string): DestFileOperationPath {
 	const fileName = path.basename(p);
 	const split = path.parse(fileName).name.split('_');
 	const fileNameDate = convertFileNameDate(split[1]);
@@ -68,30 +90,42 @@ function buildFileOperationPath(p: string): FileOperationPath {
 	}
 }
 
-function isExactFileOperationPath(
-	p: FileOperationPath
-): p is ExactFileOperationPath {
+function isSrcExactFileOperationPath(
+	p: SrcFileOperationPath
+): p is SrcExactFileOperationPath {
 	return p.type === 'exact';
 }
 
-function isDatedFileOperationPath(
-	p: FileOperationPath
-): p is DatedFilenameFileOperationPath {
+function isSrcDatedFileOperationPath(
+	p: SrcFileOperationPath
+): p is SrcDatedFilenameFileOperationPath {
+	return p.type === 'dated-filename';
+}
+
+function isDestExactFileOperationPath(
+	p: DestFileOperationPath
+): p is DestExactFileOperationPath {
+	return p.type === 'exact';
+}
+
+function isDestDatedFileOperationPath(
+	p: DestFileOperationPath
+): p is DestDatedFilenameFileOperationPath {
 	return p.type === 'dated-filename';
 }
 
 function buildFileOperations(
-	srcOpPaths: FileOperationPath[],
-	destOpPaths: FileOperationPath[]
+	srcOpPaths: SrcFileOperationPath[],
+	destOpPaths: DestFileOperationPath[]
 ): FileOperation[] {
-	const srcExactPaths = srcOpPaths.filter(isExactFileOperationPath);
-	const destExactPaths = destOpPaths.filter(isExactFileOperationPath);
-	const srcDatedPaths = srcOpPaths.filter(isDatedFileOperationPath);
-	const destDatedPaths = destOpPaths.filter(isDatedFileOperationPath);
+	const srcExactPaths = srcOpPaths.filter(isSrcExactFileOperationPath);
+	const destExactPaths = destOpPaths.filter(isDestExactFileOperationPath);
+	const srcDatedPaths = srcOpPaths.filter(isSrcDatedFileOperationPath);
+	const destDatedPaths = destOpPaths.filter(isDestDatedFileOperationPath);
 
 	const srcExactOps = srcExactPaths.flatMap<FileOperation>((srcOpPath) => {
 		const existsAtDest = destExactPaths.some((destOpPath) => {
-			return srcOpPath.relPath === destOpPath.relPath;
+			return srcOpPath.destRelPath === destOpPath.relPath;
 		});
 
 		if (existsAtDest) {
@@ -106,8 +140,8 @@ function buildFileOperations(
 			return [
 				{
 					action: 'copy',
-					srcPath: path.join(srcOpPath.db_id, srcOpPath.relPath),
-					destPath: srcOpPath.relPath,
+					srcPath: path.join(srcOpPath.db_id, srcOpPath.cacheRelPath),
+					destPath: srcOpPath.destRelPath,
 				},
 			];
 		}
@@ -116,7 +150,7 @@ function buildFileOperations(
 	const srcDatedOps = srcDatedPaths.flatMap<FileOperation>((srcOpPath) => {
 		const existsOrNewerAtDest = destDatedPaths.some((destOpPath) => {
 			return (
-				srcOpPath.relDirPath === destOpPath.relDirPath &&
+				srcOpPath.destRelDirPath === destOpPath.relDirPath &&
 				srcOpPath.fileNameBase === destOpPath.fileNameBase &&
 				srcOpPath.extension === destOpPath.extension &&
 				destOpPath.date.getTime() - srcOpPath.date.getTime() >= 0
@@ -138,10 +172,10 @@ function buildFileOperations(
 					action: 'copy',
 					srcPath: path.join(
 						srcOpPath.db_id,
-						srcOpPath.relDirPath,
+						srcOpPath.cacheRelDirPath,
 						srcOpPath.fileName
 					),
-					destPath: path.join(srcOpPath.relDirPath, srcOpPath.fileName),
+					destPath: path.join(srcOpPath.destRelDirPath, srcOpPath.fileName),
 				},
 			];
 		}
@@ -149,7 +183,7 @@ function buildFileOperations(
 
 	const destExactOps = destExactPaths.flatMap<FileOperation>((destOpPath) => {
 		const existsAtSrc = srcExactPaths.some((srcOpPath) => {
-			return destOpPath.relPath === srcOpPath.relPath;
+			return destOpPath.relPath === srcOpPath.destRelPath;
 		});
 
 		if (existsAtSrc) {
@@ -167,7 +201,7 @@ function buildFileOperations(
 	const destDatedOps = destDatedPaths.flatMap<FileOperation>((destOpPath) => {
 		const newerAtSrc = srcDatedPaths.some((srcOpPath) => {
 			return (
-				destOpPath.relDirPath === srcOpPath.relDirPath &&
+				destOpPath.relDirPath === srcOpPath.destRelDirPath &&
 				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
 				destOpPath.extension === srcOpPath.extension &&
 				destOpPath.date.getTime() - srcOpPath.date.getTime() < 0
@@ -176,7 +210,7 @@ function buildFileOperations(
 
 		const inSrc = srcDatedPaths.some((srcOpPath) => {
 			return (
-				destOpPath.relDirPath === srcOpPath.relDirPath &&
+				destOpPath.relDirPath === srcOpPath.destRelDirPath &&
 				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
 				destOpPath.extension === srcOpPath.extension
 			);
@@ -241,25 +275,38 @@ const actionToVerb: Record<FileOperation['action'], string> = {
 	move: 'Moved',
 };
 
-function getSrcPathsFromPlan(planDir: PlanGameDirectory): FileOperationPath[] {
-	const paths: FileOperationPath[] = [];
-	const rawPaths: Array<{ db_id: string; path: string }> = [];
+function getSrcPathsFromPlan(
+	planDir: PlanGameDirectory,
+	currentDirPath: string
+): SrcFileOperationPath[] {
+	const paths: SrcFileOperationPath[] = [];
 
 	for (const entry of planDir) {
 		if (isPlanGameDirectoryEntry(entry)) {
-			const subPaths = getSrcPathsFromPlan(entry.games);
+			const subPaths = getSrcPathsFromPlan(
+				entry.games,
+				// mra directories need to start with _
+				path.join(currentDirPath, `_${entry.directoryName}`)
+			);
 			paths.push(...subPaths);
 		} else {
 			if (entry.files.mra) {
-				rawPaths.push({
+				paths.push({
+					type: 'exact',
 					db_id: entry.db_id,
-					path: entry.files.mra.relFilePath,
+					cacheRelPath: entry.files.mra.relFilePath,
+					// only mras go into subdirectories
+					destRelPath: path.join(currentDirPath, entry.files.mra.fileName),
 				});
 			}
 			if (entry.files.rbf) {
-				rawPaths.push({
+				paths.push({
+					type: 'dated-filename',
 					db_id: entry.db_id,
-					path: entry.files.rbf.relFilePath,
+					cacheRelDirPath: path.dirname(entry.files.rbf.relFilePath),
+					destRelDirPath: path.dirname(entry.files.rbf.relFilePath),
+					fileName: entry.files.rbf.fileName,
+					...getDatedFilenamePathComponents(entry.files.rbf.fileName),
 				});
 			}
 			const romPaths = entry.files.roms.flatMap((re) => {
@@ -268,32 +315,26 @@ function getSrcPathsFromPlan(planDir: PlanGameDirectory): FileOperationPath[] {
 				} else {
 					return [
 						{
+							type: 'exact',
 							db_id: entry.db_id,
-							path: re.relFilePath,
-						},
+							cacheRelPath: re.relFilePath,
+							destRelPath: re.relFilePath,
+						} as const,
 					];
 				}
 			});
-			rawPaths.push(...romPaths);
+			paths.push(...romPaths);
 		}
 	}
 
-	const finalImmediatePaths = rawPaths.map((rp) => {
-		const opPath = buildFileOperationPath(rp.path);
-		return {
-			...opPath,
-			db_id: rp.db_id,
-		};
-	});
-
-	return paths.concat(finalImmediatePaths);
+	return paths;
 }
 
 async function getExistingDestPaths(
 	destDirRootPath: string,
 	curDirPath: string
-): Promise<FileOperationPath[]> {
-	const paths: FileOperationPath[] = [];
+): Promise<DestFileOperationPath[]> {
+	const paths: DestFileOperationPath[] = [];
 	const rawPaths: string[] = [];
 
 	const entries = await fsp.readdir(path.resolve(destDirRootPath, curDirPath));
@@ -314,7 +355,7 @@ async function getExistingDestPaths(
 		}
 	}
 
-	const finalImmediatePaths = rawPaths.map(buildFileOperationPath);
+	const finalImmediatePaths = rawPaths.map(buildDestFileOperationPath);
 
 	return paths.concat(finalImmediatePaths);
 }
@@ -327,7 +368,7 @@ async function exportToDirectory(
 	debug(`exportToDirectory(plan, ${destDirPath}, callback)`);
 	const gameCacheDir = await getGameCacheDir();
 
-	const srcPaths = getSrcPathsFromPlan(plan.games);
+	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
 	const destPaths = await getExistingDestPaths(destDirPath, '');
 	const fileOperations = buildFileOperations(srcPaths, destPaths);
 
@@ -380,5 +421,5 @@ export {
 	exportToDirectory,
 	exportToMister,
 	buildFileOperations,
-	buildFileOperationPath,
+	buildDestFileOperationPath as buildFileOperationPath,
 };

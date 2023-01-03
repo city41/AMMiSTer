@@ -33,13 +33,35 @@ export type SambaConfig = {
 	password: string;
 };
 
-export type ExactFileOperationPath = {
+export type SrcExactFileOperationPath = {
+	type: 'exact';
+	db_id?: string;
+	cacheRelPath: string;
+	destRelPath: string;
+};
+
+export type SrcDatedFilenameFileOperationPath = {
+	type: 'dated-filename';
+	db_id?: string;
+	cacheRelDirPath: string;
+	destRelDirPath: string;
+	fileName: string;
+	fileNameBase: string;
+	extension: string;
+	date: Date;
+};
+
+export type SrcFileOperationPath =
+	| SrcExactFileOperationPath
+	| SrcDatedFilenameFileOperationPath;
+
+export type DestExactFileOperationPath = {
 	type: 'exact';
 	db_id?: string;
 	relPath: string;
 };
 
-export type DatedFilenameFileOperationPath = {
+export type DestDatedFilenameFileOperationPath = {
 	type: 'dated-filename';
 	db_id?: string;
 	relDirPath: string;
@@ -49,6 +71,6 @@ export type DatedFilenameFileOperationPath = {
 	date: Date;
 };
 
-export type FileOperationPath =
-	| ExactFileOperationPath
-	| DatedFilenameFileOperationPath;
+export type DestFileOperationPath =
+	| DestExactFileOperationPath
+	| DestDatedFilenameFileOperationPath;
