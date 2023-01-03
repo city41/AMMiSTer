@@ -163,6 +163,28 @@ const planSlice = createSlice({
 				parent.games.splice(destIndex, 0, newDirectoryNode);
 			}
 		},
+		directoryRename(
+			state: PlanState,
+			action: PayloadAction<{
+				parentPath: string[];
+				name: string;
+				newName: string;
+			}>
+		) {
+			if (state.plan) {
+				const { parentPath, name, newName } = action.payload;
+
+				const parent = getNode(state.plan, parentPath);
+
+				const entry = parent.games.find((g) => {
+					return 'directoryName' in g && g.directoryName === name;
+				}) as PlanGameDirectoryEntry;
+
+				if (entry) {
+					entry.directoryName = newName;
+				}
+			}
+		},
 		toggleDirectoryExpansion(
 			state: PlanState,
 			action: PayloadAction<{ path: string[] }>
@@ -285,6 +307,7 @@ const {
 	moveItem,
 	deleteItem,
 	addDirectory,
+	directoryRename,
 	toggleDirectoryExpansion,
 } = planSlice.actions;
 
@@ -297,6 +320,7 @@ export {
 	deleteItem,
 	moveItem,
 	addDirectory,
+	directoryRename,
 	toggleDirectoryExpansion,
 };
 export type { PlanState };

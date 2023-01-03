@@ -181,14 +181,7 @@ function NodeContentRenderer({
 					})}
 					onClick={handleTitleClick}
 				>
-					<div
-						className={clsx({
-							'px-2 border-b-2 bg-indigo-100 border-indigo-800':
-								node.isDirectory,
-						})}
-					>
-						{titleContent}
-					</div>
+					<div>{titleContent}</div>
 					{typeof node.totalGameCount === 'number' && (
 						<div className="text-sm text-gray-500">
 							{node.totalGameCount} game{node.totalGameCount === 1 ? '' : 's'}

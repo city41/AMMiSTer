@@ -18,6 +18,11 @@ type InternalPlanProps = {
 		name: string;
 	}) => void;
 	onItemDelete: (args: { parentPath: string[]; name: string }) => void;
+	onDirectoryRename: (args: {
+		parentPath: string[];
+		name: string;
+		newName: string;
+	}) => void;
 	onItemAdd: (args: {
 		parentPath: string[];
 		db_id: string;
@@ -75,6 +80,7 @@ function Plan({
 	onItemDelete,
 	onItemMove,
 	onDirectoryAdd,
+	onDirectoryRename,
 	onToggleDirectoryExpansion,
 }: InternalPlanProps) {
 	return (
@@ -143,9 +149,28 @@ function Plan({
 							);
 						}
 
-						return {
-							buttons,
-						};
+						if (!node.isDirectory) {
+							return {
+								buttons,
+							};
+						} else {
+							return {
+								buttons,
+								title: (
+									<input
+										className="border-b-2 border-indigo-800 bg-indigo-200 px-2"
+										value={node.title as string}
+										onChange={(e) => {
+											onDirectoryRename({
+												parentPath: node.parentPath,
+												name: node.title as string,
+												newName: e.target.value,
+											});
+										}}
+									/>
+								),
+							};
+						}
 					}}
 					canNodeHaveChildren={(node) => {
 						return node.isDirectory;
