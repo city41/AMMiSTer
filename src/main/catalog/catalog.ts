@@ -470,12 +470,7 @@ async function determineMissingRoms(
 	catalog: Catalog
 ): Promise<MissingRomEntry[]> {
 	const { updatedAt, ...restofCatalog } = catalog;
-	const catalogEntries = Object.values(restofCatalog).reduce<CatalogEntry[]>(
-		(accum, entries) => {
-			return accum.concat(entries);
-		},
-		[]
-	);
+	const catalogEntries = Object.values(restofCatalog).flat(1);
 
 	const entriesMissingTheirRom = catalogEntries.filter((ce) =>
 		ce.files.roms?.some((r) => !r.md5)
@@ -484,7 +479,7 @@ async function determineMissingRoms(
 	return entriesMissingTheirRom.map<MissingRomEntry>((ce) => {
 		const mre: MissingRomEntry = {
 			db_id: ce.db_id,
-			romFiles: ce.files.roms.map((r) => r.fileName),
+			romFiles: ce.files.roms.filter((r) => !r.md5).map((r) => r.fileName),
 			mameVersion: ce.mameVersion,
 		};
 
@@ -560,7 +555,11 @@ async function downloadRoms(
 	for (const romEntry of sortedRomEntries) {
 		let updates = await downloadRom(romEntry);
 
-		if (updates.length === 0) {
+		// if we didn't actually download anything, it may be due to 404s, so try again with revival
+		if (
+			updates.length === 0 ||
+			updates.every((u) => u.updateReason === 'fulfilled')
+		) {
 			updates = await downloadRom(romEntry, DEFAULT_MAME_VERSION);
 		}
 
