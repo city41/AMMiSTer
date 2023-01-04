@@ -22,7 +22,7 @@ import {
 	UpdateCallback,
 	UpdateReason,
 } from './types';
-import { getGameCacheDir } from '../util/fs';
+import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 
 const imageSize = promisify(_imageSize);
 
@@ -245,6 +245,39 @@ async function determineOrientationAndRomSlug(
 }
 
 /**
+ * Given all of the local rbf files, finds the one that matches and is the most recent version
+ * in the case of there being multiple
+ */
+function getBestRbfPath(rbfPaths: string[], rbfName: string): string | null {
+	const matchingRbfPaths = rbfPaths.filter((f) =>
+		f.toLowerCase().includes(`cores/${rbfName.toLowerCase()}`)
+	);
+
+	if (matchingRbfPaths.length === 0) {
+		return null;
+	}
+
+	return matchingRbfPaths.reduce((champ, contender) => {
+		const champDate = convertFileNameDate(path.basename(champ));
+		const contenderDate = convertFileNameDate(path.basename(contender));
+
+		if (!champDate) {
+			return contender;
+		}
+
+		if (!contenderDate) {
+			return champ;
+		}
+
+		if (champDate.getTime() > contenderDate.getTime()) {
+			return champ;
+		} else {
+			return contender;
+		}
+	});
+}
+
+/**
  * Takes an mra file and parses it to grab its metadata and ultimately
  * form an catalog entry
  */
@@ -270,9 +303,7 @@ async function parseMraToCatalogEntry(
 			category,
 		} = parsed.misterromdescription;
 
-		const rbfFilePath = rbfFiles.find((f) => {
-			return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}_`);
-		});
+		const rbfFilePath = getBestRbfPath(rbfFiles, rbf);
 
 		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;
 

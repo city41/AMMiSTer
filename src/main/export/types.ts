@@ -19,7 +19,7 @@ export type FileOperation = CopyFileOperation | DeleteFileOperation;
 export type SSHConfig = {
 	host: string;
 	port: string;
-	mount: string;
+	mount: 'sdcard' | `usb${number}`;
 	username: string;
 	password: string;
 };

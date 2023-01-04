@@ -17,7 +17,7 @@ import {
 	DestDatedFilenameFileOperationPath,
 } from './types';
 import uniqBy from 'lodash/uniqBy';
-import { getGameCacheDir } from '../util/fs';
+import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
 
 const debug = Debug('main/export/export.ts');
@@ -26,27 +26,6 @@ function isPlanGameDirectoryEntry(
 	obj: CatalogEntry | PlanGameDirectoryEntry
 ): obj is PlanGameDirectoryEntry {
 	return 'directoryName' in obj;
-}
-
-function convertFileNameDate(str: string | null | undefined): Date | null {
-	if (!str || str.trim().length !== 8 || !str.startsWith('20')) {
-		return null;
-	}
-
-	const chars = str.split('');
-	const withDashes = [
-		...chars.slice(0, 4),
-		'-',
-		...chars.slice(4, 6),
-		'-',
-		...chars.slice(6),
-	].join('');
-
-	const d = new Date(withDashes);
-	if (d.toString().toLowerCase() === 'invalid date') {
-		debugger;
-	}
-	return d;
 }
 
 function getDatedFilenamePathComponents(fileName: string): {
@@ -482,21 +461,23 @@ async function exportToMister(
 		retry_minTimeout: 2000,
 	});
 
+	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
+	const mountPath = `/media/${mountDir}/`;
+
 	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
 
 	debug(`exportToMister: ${srcPaths.length} srcPaths`);
 
 	callback({ message: 'Determining what is currently on the MiSTer' });
-	// TODO: make this configurable, dont just assume the sd card
 	const destArcadePaths = await getExistingSshDestPaths(
 		client,
-		'/media/fat/',
-		'/media/fat/_Arcade/'
+		mountPath,
+		path.join(mountPath, '_Arcade')
 	);
 	const destRomPaths = await getExistingSshDestPaths(
 		client,
-		'/media/fat/',
-		'/media/fat/games/mame/'
+		mountPath,
+		path.join(mountPath, 'games', 'mame')
 	);
 	const destPaths = destArcadePaths.concat(destRomPaths);
 	debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
@@ -512,8 +493,7 @@ async function exportToMister(
 
 	await performSambaFileSystemFileOperations(
 		gameCacheDir,
-		// TODO: don't assume SD card
-		'/media/fat',
+		mountPath,
 		client,
 		fileOperations,
 		(fileOp) => {
