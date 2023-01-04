@@ -23,6 +23,7 @@ import {
 	UpdateReason,
 } from './types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
+import { getArrayField, validateOptions } from '@storybook/store';
 
 const imageSize = promisify(_imageSize);
 
@@ -307,10 +308,6 @@ async function parseMraToCatalogEntry(
 
 		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;
 
-		const manufacturerA = Array.isArray(manufacturer)
-			? manufacturer
-			: [manufacturer];
-
 		const romEntries = Array.isArray(rom) ? rom : [rom];
 		const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
 		const romFile = romEntryWithZip?.['@_zip'];
@@ -346,12 +343,29 @@ async function parseMraToCatalogEntry(
 			setname || parent
 		);
 
+		function xmlToArray(val: string | string[] | null | undefined): string[] {
+			if (!val) {
+				return [];
+			}
+
+			if (Array.isArray(val)) {
+				return val.filter((v) => !v);
+			}
+
+			return [val];
+		}
+
+		let yearReleased: number | null = parseInt(year, 10);
+		if (isNaN(yearReleased)) {
+			yearReleased = null;
+		}
+
 		const catalogEntry: CatalogEntry = {
 			db_id,
 			gameName: name,
-			manufacturer: manufacturerA,
-			yearReleased: Number(year),
-			category: category ?? null,
+			manufacturer: xmlToArray(manufacturer),
+			yearReleased,
+			categories: xmlToArray(category),
 			orientation,
 			mameVersion: mameversion,
 			titleScreenshotUrl: romSlug

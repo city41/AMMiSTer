@@ -12,7 +12,7 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 				node: {
 					title: props.entry.gameName,
 					db_id: props.entry.db_id,
-					mraFileName: props.entry.files.mra?.fileName,
+					mraFileName: props.entry.files.mra.fileName,
 				},
 			},
 		}),

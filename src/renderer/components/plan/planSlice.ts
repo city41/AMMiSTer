@@ -223,7 +223,7 @@ const addItem =
 			const { updatedAt, ...restOfCatalog } = catalog;
 			const db = restOfCatalog[db_id];
 			const catalogEntry = db.find((e) => {
-				return e.files.mra?.fileName === mraFileName;
+				return e.files.mra.fileName === mraFileName;
 			});
 
 			if (!catalogEntry) {
@@ -262,13 +262,13 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 		);
 
 		const capcomFighters = horizontalCapcomEntries.filter((ce) =>
-			ce.category?.includes('Fight')
+			ce.categories.some((c) => c.includes('Fight'))
 		);
 		const capcomShooters = horizontalCapcomEntries.filter((ce) =>
-			ce.category?.includes('Shoot')
+			ce.categories.some((c) => c.includes('Shoot'))
 		);
 		const segaShooters = horizontalSegaEntries.filter((ce) =>
-			ce.category?.includes('Shoot')
+			ce.categories.some((c) => c.includes('Shoot'))
 		);
 
 		plan.directoryName = 'Demo Plan';

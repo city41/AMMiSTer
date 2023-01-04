@@ -99,14 +99,14 @@ export type CatalogEntry = {
 	db_id: string;
 	gameName: string;
 	manufacturer: string[];
-	category: string | null;
-	yearReleased: number;
+	categories: string[];
+	yearReleased: number | null;
 	orientation: 'vertical' | 'horizontal' | null;
 	mameVersion: string;
 	titleScreenshotUrl: string | null;
 	gameplayScreenshotUrl: string | null;
 	files: {
-		mra?: CatalogFileEntry;
+		mra: CatalogFileEntry;
 		rbf?: CatalogFileEntry;
 		roms: CatalogFileEntry[];
 	};

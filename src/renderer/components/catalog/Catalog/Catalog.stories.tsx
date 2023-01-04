@@ -18,7 +18,7 @@ export default meta;
 const completeEntry: CatalogEntryType = {
 	db_id: 'jtcores',
 	gameName: 'Street Fighter Alpha 2 (Euro 960229)',
-	category: 'Fighting',
+	categories: ['Fighting'],
 	titleScreenshotUrl:
 		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/sfa2.png',
 	gameplayScreenshotUrl:
