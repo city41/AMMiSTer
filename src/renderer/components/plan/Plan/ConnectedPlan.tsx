@@ -10,6 +10,7 @@ import {
 	deleteItem,
 	moveItem,
 	addDirectory,
+	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
 } from '../../plan/planSlice';
@@ -75,6 +76,10 @@ function ConnectedPlan() {
 		dispatch(toggleDirectoryExpansion({ path }));
 	}
 
+	function handlePlanRename(name: string) {
+		dispatch(planRename(name));
+	}
+
 	function handleDirectoryRename(args: {
 		parentPath: string[];
 		name: string;
@@ -99,6 +104,7 @@ function ConnectedPlan() {
 				onItemDelete={handleItemDelete}
 				onItemMove={handleItemMove}
 				onDirectoryAdd={handleDirectoryAdd}
+				onPlanRename={handlePlanRename}
 				onDirectoryRename={handleDirectoryRename}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
 			/>

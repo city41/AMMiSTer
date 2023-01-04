@@ -18,6 +18,7 @@ type InternalPlanProps = {
 		name: string;
 	}) => void;
 	onItemDelete: (args: { parentPath: string[]; name: string }) => void;
+	onPlanRename: (newName: string) => void;
 	onDirectoryRename: (args: {
 		parentPath: string[];
 		name: string;
@@ -80,6 +81,7 @@ function Plan({
 	onItemDelete,
 	onItemMove,
 	onDirectoryAdd,
+	onPlanRename,
 	onDirectoryRename,
 	onToggleDirectoryExpansion,
 }: InternalPlanProps) {
@@ -161,11 +163,16 @@ function Plan({
 										className="border-b-2 border-indigo-800 bg-indigo-200 px-2"
 										value={node.title as string}
 										onChange={(e) => {
-											onDirectoryRename({
-												parentPath: node.parentPath,
-												name: node.title as string,
-												newName: e.target.value,
-											});
+											if (node.parentPath.length === 0) {
+												// TODO: can the plan itself not be handled separately?
+												onPlanRename(e.target.value);
+											} else {
+												onDirectoryRename({
+													parentPath: node.parentPath,
+													name: node.title as string,
+													newName: e.target.value,
+												});
+											}
 										}}
 									/>
 								),

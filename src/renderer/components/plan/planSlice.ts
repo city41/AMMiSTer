@@ -163,6 +163,11 @@ const planSlice = createSlice({
 				parent.games.splice(destIndex, 0, newDirectoryNode);
 			}
 		},
+		planRename(state: PlanState, action: PayloadAction<string>) {
+			if (state.plan) {
+				state.plan.directoryName = action.payload;
+			}
+		},
 		directoryRename(
 			state: PlanState,
 			action: PayloadAction<{
@@ -323,6 +328,7 @@ const {
 	moveItem,
 	deleteItem,
 	addDirectory,
+	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
 } = planSlice.actions;
@@ -338,6 +344,7 @@ export {
 	deleteItem,
 	moveItem,
 	addDirectory,
+	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
 };
