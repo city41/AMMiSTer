@@ -7,17 +7,19 @@ type PublicFooterProps = {
 
 type InternalFooterProps = {
 	updatedAt?: number;
+	appVersion: string;
 };
 
 function Footer({
 	className,
 	updatedAt,
+	appVersion,
 }: PublicFooterProps & InternalFooterProps) {
 	return (
 		<div
 			className={clsx(
 				className,
-				'h-8 bg-white border-t border-gray-200 px-4 py-1 flex flex-row items-center'
+				'h-8 bg-white border-t border-gray-200 px-4 py-1 flex flex-row items-center justify-between'
 			)}
 		>
 			{updatedAt && (
@@ -29,6 +31,17 @@ function Footer({
 						second: '2-digit',
 					})}
 				</div>
+			)}
+			<div className="flex-1" />
+			{!!appVersion && (
+				<a
+					href="https://github.com/city41/AMMiSTer/blob/main/RELEASE_NOTES.md"
+					target="_blank"
+					rel="noreferrer"
+					className="text-xs text-blue-600 underline cursor-pointer"
+				>
+					v{appVersion}
+				</a>
 			)}
 		</div>
 	);

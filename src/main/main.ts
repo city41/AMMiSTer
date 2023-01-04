@@ -183,6 +183,10 @@ app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
 
+ipcMain.handle('main:getVersion', async () => {
+	return app.getVersion();
+});
+
 ipcMain.handle('settings:getWelcomeDismissed', async () => {
 	const result = await settings.get('welcome-dismissed');
 	return result?.toString() === 'true';

@@ -4,6 +4,10 @@ import { SSHConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
+	getVersion(): Promise<string> {
+		return ipcRenderer.invoke('main:getVersion');
+	},
+
 	getWelcomeDismissed(): Promise<boolean> {
 		return ipcRenderer.invoke('settings:getWelcomeDismissed');
 	},
