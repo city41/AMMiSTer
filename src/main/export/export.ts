@@ -3,13 +3,13 @@ import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import Debug from 'debug';
-import SMB2 from '@marsaud/smb2';
+import SSH from 'ssh2-sftp-client';
 import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import {
 	SrcFileOperationPath,
 	DestFileOperationPath,
 	FileOperation,
-	SambaConfig,
+	SSHConfig,
 	UpdateCallback,
 	SrcExactFileOperationPath,
 	SrcDatedFilenameFileOperationPath,
@@ -259,9 +259,38 @@ async function performLocalFileSystemFileOperations(
 				cb(fileOp);
 				break;
 			}
-			case 'move': {
-				await mkdirp(path.dirname(destPath));
-				await fsp.rename(srcPath, destPath);
+		}
+	}
+}
+
+async function performSambaFileSystemFileOperations(
+	srcDirRoot: string,
+	destDirRoot: string,
+	ssh: SSH,
+	fileOps: FileOperation[],
+	cb: (fileOp: FileOperation) => void
+) {
+	for (const fileOp of fileOps) {
+		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
+
+		const srcPath =
+			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
+
+		const destPath = path.join(destDirRoot, fileOp.destPath);
+
+		switch (fileOp.action) {
+			case 'copy': {
+				await ssh.mkdir(path.dirname(destPath), true);
+				const data = fs.createReadStream(srcPath);
+				const result = await ssh.put(data, destPath);
+				debug(
+					`performFileOp,copy:${srcPath} to ${destPath}, result: ${result}`
+				);
+				cb(fileOp);
+				break;
+			}
+			case 'delete': {
+				await ssh.delete(destPath);
 				cb(fileOp);
 				break;
 			}
@@ -272,7 +301,6 @@ async function performLocalFileSystemFileOperations(
 const actionToVerb: Record<FileOperation['action'], string> = {
 	copy: 'Copied',
 	delete: 'Deleted',
-	move: 'Moved',
 };
 
 function getSrcPathsFromPlan(
@@ -330,7 +358,7 @@ function getSrcPathsFromPlan(
 	return paths;
 }
 
-async function getExistingDestPaths(
+async function getExistingLocalDestPaths(
 	destDirRootPath: string,
 	curDirPath: string
 ): Promise<DestFileOperationPath[]> {
@@ -345,7 +373,7 @@ async function getExistingDestPaths(
 				.statSync(path.resolve(destDirRootPath, curDirPath, entry))
 				.isDirectory()
 		) {
-			const subPaths = await getExistingDestPaths(
+			const subPaths = await getExistingLocalDestPaths(
 				destDirRootPath,
 				path.join(curDirPath, entry)
 			);
@@ -360,16 +388,48 @@ async function getExistingDestPaths(
 	return paths.concat(finalImmediatePaths);
 }
 
+async function getExistingSshDestPaths(
+	ssh: SSH,
+	rootDir: string,
+	curDirPath: string
+): Promise<DestFileOperationPath[]> {
+	const paths: DestFileOperationPath[] = [];
+	const rawPaths: string[] = [];
+
+	const entries = await ssh.list(curDirPath);
+
+	for (const entry of entries) {
+		const p = path.join(curDirPath, entry.name);
+		debug(`p: ${p}`);
+		const s = await ssh.stat(p);
+
+		if (s.isDirectory) {
+			const subPaths = await getExistingSshDestPaths(ssh, rootDir, p);
+			paths.push(...subPaths);
+		} else {
+			rawPaths.push(p.replace(rootDir, ''));
+		}
+	}
+
+	const finalImmediatePaths = rawPaths.map(buildDestFileOperationPath);
+
+	return paths.concat(finalImmediatePaths);
+}
+
 async function exportToDirectory(
 	plan: Plan,
 	destDirPath: string,
-	callback: UpdateCallback
+	providedCallback: UpdateCallback
 ) {
 	debug(`exportToDirectory(plan, ${destDirPath}, callback)`);
-	const gameCacheDir = await getGameCacheDir();
+
+	const callback: UpdateCallback = (args) => {
+		debug(args.message);
+		providedCallback(args);
+	};
 
 	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
-	const destPaths = await getExistingDestPaths(destDirPath, '');
+	const destPaths = await getExistingLocalDestPaths(destDirPath, '');
 	const fileOperations = buildFileOperations(srcPaths, destPaths);
 
 	debug(
@@ -377,6 +437,8 @@ async function exportToDirectory(
 			.map((fo) => JSON.stringify(fo))
 			.join('\n')}`
 	);
+
+	const gameCacheDir = await getGameCacheDir();
 
 	await performLocalFileSystemFileOperations(
 		gameCacheDir,
@@ -396,24 +458,72 @@ async function exportToDirectory(
 }
 
 async function exportToMister(
-	_plan: Plan,
-	config: SambaConfig,
-	callback: UpdateCallback
+	plan: Plan,
+	config: SSHConfig,
+	providedCallback: UpdateCallback
 ) {
-	const client = new SMB2({
-		share: `\\\\${config.host}\\${config.share}`,
-		domain: config.domain,
+	debug(`exportToMister(plan, ${JSON.stringify(config)}, callback)`);
+
+	const callback: UpdateCallback = (args) => {
+		debug(args.message);
+		providedCallback(args);
+	};
+
+	callback({ message: 'Beginning export to MiSTer' });
+
+	const client = new SSH();
+	await client.connect({
+		host: config.host,
+		port: parseInt(config.port, 10),
 		username: config.username,
 		password: config.password,
+		retries: 2,
+		retry_factor: 2,
+		retry_minTimeout: 2000,
 	});
 
-	callback({ message: 'smbTest...' });
-	const result = await client.readdir('_Arcade');
+	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
 
-	callback({ message: JSON.stringify(result, null, 2) });
+	debug(`exportToMister: ${srcPaths.length} srcPaths`);
 
-	await new Promise((resolve) => setTimeout(resolve, 10000));
+	callback({ message: 'Determining what is currently on the MiSTer' });
+	// TODO: make this configurable, dont just assume the sd card
+	const destArcadePaths = await getExistingSshDestPaths(
+		client,
+		'/media/fat/',
+		'/media/fat/_Arcade/'
+	);
+	const destRomPaths = await getExistingSshDestPaths(
+		client,
+		'/media/fat/',
+		'/media/fat/games/mame/'
+	);
+	const destPaths = destArcadePaths.concat(destRomPaths);
+	debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
+	const fileOperations = buildFileOperations(srcPaths, destPaths);
 
+	debug(
+		`exportToMister: fileOperations:\n${fileOperations
+			.map((fo) => JSON.stringify(fo))
+			.join('\n')}`
+	);
+
+	const gameCacheDir = await getGameCacheDir();
+
+	await performSambaFileSystemFileOperations(
+		gameCacheDir,
+		// TODO: don't assume SD card
+		'/media/fat',
+		client,
+		fileOperations,
+		(fileOp) => {
+			callback({
+				message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
+			});
+		}
+	);
+
+	await client.end();
 	callback({ message: 'Export complete', complete: true });
 }
 

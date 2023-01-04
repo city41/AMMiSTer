@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron';
 import { Catalog, UpdateCallback } from 'src/main/catalog/types';
-import { SambaConfig } from 'src/main/export/types';
+import { SSHConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
@@ -59,7 +59,7 @@ const ipcAPI = {
 
 	exportToMister(
 		plan: Plan,
-		config: SambaConfig,
+		config: SSHConfig,
 		statusCallback: UpdateCallback
 	) {
 		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {

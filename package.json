@@ -55,7 +55,6 @@
 	"license": "MIT",
 	"dependencies": {
 		"@heroicons/react": "^2.0.13",
-		"@marsaud/smb2": "^0.18.0",
 		"@types/react-dnd": "^3.0.2",
 		"axios": "^1.2.1",
 		"axios-retry": "^3.3.1",
@@ -74,7 +73,8 @@
 		"react-modal": "^3.16.1",
 		"react-redux": "^8.0.5",
 		"react-sortable-tree": "^2.8.0",
-		"redux-thunk": "^2.4.2"
+		"redux-thunk": "^2.4.2",
+		"ssh2-sftp-client": "^9.0.4"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.20.7",
@@ -99,6 +99,7 @@
 		"@types/react-dom": "^18.0.6",
 		"@types/react-modal": "^3.13.1",
 		"@types/react-sortable-tree": "^0.3.16",
+		"@types/ssh2-sftp-client": "^9.0.0",
 		"@typescript-eslint/eslint-plugin": "^5.40.0",
 		"@typescript-eslint/parser": "^5.40.0",
 		"babel-loader": "^8.3.0",

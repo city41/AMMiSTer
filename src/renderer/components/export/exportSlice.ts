@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { SambaConfig } from '../../../main/export/types';
+import { SSHConfig } from '../../../main/export/types';
 import { AppState } from '../../store';
 
 type ExportType = 'directory' | 'mister';
@@ -59,7 +59,7 @@ const exportToDirectory =
 	};
 
 const exportToMister =
-	(config: SambaConfig): ExportSliceThunk =>
+	(config: SSHConfig): ExportSliceThunk =>
 	async (dispatch, getState) => {
 		const plan = getState().plan.plan;
 

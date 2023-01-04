@@ -271,7 +271,7 @@ async function parseMraToCatalogEntry(
 		} = parsed.misterromdescription;
 
 		const rbfFilePath = rbfFiles.find((f) => {
-			return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}`);
+			return f.toLowerCase().includes(`cores/${rbf.toLowerCase()}_`);
 		});
 
 		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;

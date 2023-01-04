@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { SambaConfig } from '../../../../main/export/types';
-import { ExportSambaConfigModal } from './ExportSambaConfigModal';
+import { SSHConfig } from '../../../../main/export/types';
+import { ExportSSHConfigModal } from './ExportSSHConfigModal';
 import { exportToMister } from '../exportSlice';
 import { dispatch } from '../../../store';
 
-function ConnectedExportSambaConfigModal() {
+function ConnectedExportSSHConfigModal() {
 	const [modalOpen, setModalOpen] = useState(false);
 
 	useEffect(() => {
@@ -13,13 +13,13 @@ function ConnectedExportSambaConfigModal() {
 		});
 	}, [setModalOpen]);
 
-	function handleExport(config: SambaConfig) {
+	function handleExport(config: SSHConfig) {
 		dispatch(exportToMister(config));
 		setModalOpen(false);
 	}
 
 	return (
-		<ExportSambaConfigModal
+		<ExportSSHConfigModal
 			isOpen={modalOpen}
 			onRequestClose={() => {
 				setModalOpen(false);
@@ -29,4 +29,4 @@ function ConnectedExportSambaConfigModal() {
 	);
 }
 
-export { ConnectedExportSambaConfigModal };
+export { ConnectedExportSSHConfigModal };

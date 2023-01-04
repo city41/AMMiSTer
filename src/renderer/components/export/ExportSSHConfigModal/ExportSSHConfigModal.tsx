@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import { BaseFeedbackModal } from '../../BaseFeedbackModal';
 import { MisterKunIcon } from '../../../icons';
-import { SambaConfig } from '../../../../main/export/types';
+import { SSHConfig } from '../../../../main/export/types';
 
-type ExportSambaConfigModalProps = {
+type ExportSSHConfigModalProps = {
 	isOpen: boolean;
 	onRequestClose: () => void;
-	onExport: (config: SambaConfig) => void;
+	onExport: (config: SSHConfig) => void;
 };
 
 function HelpButton({
@@ -47,19 +47,22 @@ function HelpButton({
 	);
 }
 
-function isConfigComplete(config: Partial<SambaConfig>): config is SambaConfig {
+function isConfigComplete(config: Partial<SSHConfig>): config is SSHConfig {
 	const values = Object.values(config);
 
 	return values.length === 5 && values.every((v) => v.trim().length > 0);
 }
 
-function ExportSambaConfigModal({
+function ExportSSHConfigModal({
 	isOpen,
 	onRequestClose,
 	onExport,
-}: ExportSambaConfigModalProps) {
-	const [sambaConfig, setSambaConfig] = useState<Partial<SambaConfig>>({
-		share: 'sdcard',
+}: ExportSSHConfigModalProps) {
+	const [sshConfig, setSSHConfig] = useState<Partial<SSHConfig>>({
+		port: '22',
+		mount: 'sdcard',
+		username: 'root',
+		password: '1',
 	});
 
 	return (
@@ -67,9 +70,9 @@ function ExportSambaConfigModal({
 			isOpen={isOpen}
 			title="Export to MiSTer"
 			okButtonText="Export"
-			okButtonEnabled={isConfigComplete(sambaConfig)}
+			okButtonEnabled={isConfigComplete(sshConfig)}
 			icon={MisterKunIcon}
-			onOkClick={() => onExport(sambaConfig as SambaConfig)}
+			onOkClick={() => onExport(sshConfig as SSHConfig)}
 			closeButton
 			onRequestClose={onRequestClose}
 		>
@@ -77,19 +80,18 @@ function ExportSambaConfigModal({
 				<dl className="bg-white">
 					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">
-							IP Address (or Host Name)
+							IP Address
 							<HelpButton>
-								IP Address is best, especially if you have more than one MiSTer.
-								It is displayed in the main menu on the MiSTer
+								It is displayed on the main menu on the MiSTer
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							<input
 								type="text"
 								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
-								value={sambaConfig.host}
+								value={sshConfig.host}
 								onChange={(e) => {
-									setSambaConfig((sc) => {
+									setSSHConfig((sc) => {
 										return {
 											...sc,
 											host: e.target.value,
@@ -101,21 +103,21 @@ function ExportSambaConfigModal({
 					</div>
 					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">
-							Domain
+							Port
 							<HelpButton>
-								Unless you have changed it, this will be "MiSTer"
+								If you haven't changed this on your MiSTer, just use the default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							<input
-								type="text"
+								type="number"
 								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
-								value={sambaConfig.domain}
+								value={sshConfig.port}
 								onChange={(e) => {
-									setSambaConfig((sc) => {
+									setSSHConfig((sc) => {
 										return {
 											...sc,
-											domain: e.target.value,
+											port: e.target.value,
 										};
 									});
 								}}
@@ -123,16 +125,16 @@ function ExportSambaConfigModal({
 						</dd>
 					</div>
 					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt className="text-sm font-medium text-gray-500">Share</dt>
+						<dt className="text-sm font-medium text-gray-500">Mount</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							<select
 								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
-								value={sambaConfig.share}
+								value={sshConfig.port}
 								onChange={(e) => {
-									setSambaConfig((sc) => {
+									setSSHConfig((sc) => {
 										return {
 											...sc,
-											share: e.target.value,
+											port: e.target.value,
 										};
 									});
 								}}
@@ -154,16 +156,16 @@ function ExportSambaConfigModal({
 						<dt className="text-sm font-medium text-gray-500">
 							Username
 							<HelpButton>
-								Unless you have changed it, this will be "root"
+								If you haven't changed this on your MiSTer, just use the default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							<input
 								type="text"
 								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
-								value={sambaConfig.username}
+								value={sshConfig.username}
 								onChange={(e) => {
-									setSambaConfig((sc) => {
+									setSSHConfig((sc) => {
 										return {
 											...sc,
 											username: e.target.value,
@@ -177,16 +179,16 @@ function ExportSambaConfigModal({
 						<dt className="text-sm font-medium text-gray-500">
 							Password
 							<HelpButton>
-								Unless you have changed it, this will be "1"
+								If you haven't changed this on your MiSTer, just use the default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
 							<input
 								type="text"
 								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
-								value={sambaConfig.password}
+								value={sshConfig.password}
 								onChange={(e) => {
-									setSambaConfig((sc) => {
+									setSSHConfig((sc) => {
 										return {
 											...sc,
 											password: e.target.value,
@@ -202,4 +204,4 @@ function ExportSambaConfigModal({
 	);
 }
 
-export { ExportSambaConfigModal };
+export { ExportSSHConfigModal };

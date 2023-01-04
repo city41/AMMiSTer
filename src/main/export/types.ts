@@ -14,21 +14,12 @@ type DeleteFileOperation = {
 	destPath: string;
 };
 
-type MoveFileOperation = {
-	action: 'move';
-	srcPath: string;
-	destPath: string;
-};
+export type FileOperation = CopyFileOperation | DeleteFileOperation;
 
-export type FileOperation =
-	| CopyFileOperation
-	| DeleteFileOperation
-	| MoveFileOperation;
-
-export type SambaConfig = {
+export type SSHConfig = {
 	host: string;
-	domain: string;
-	share: string;
+	port: string;
+	mount: string;
 	username: string;
 	password: string;
 };

@@ -1,17 +1,17 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
-import { ExportSambaConfigModal } from './ExportSambaConfigModal';
+import { ExportSSHConfigModal } from './ExportSSHConfigModal';
 
 const meta: Meta = {
-	title: 'ExportSambaConfigModal',
-	component: ExportSambaConfigModal,
+	title: 'ExportSSHConfigModal',
+	component: ExportSSHConfigModal,
 };
 
 export default meta;
 
 export const Basic = () => {
 	return (
-		<ExportSambaConfigModal
+		<ExportSSHConfigModal
 			isOpen
 			onRequestClose={() => {}}
 			onExport={() => {}}
