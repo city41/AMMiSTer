@@ -48,8 +48,7 @@
 		"nsis": {
 			"oneClick": false,
 			"allowToChangeInstallationDirectory": true
-		},
-		"buildVersion": "1"
+		}
 	},
 	"author": "Matt Greer <matt.e.greer@gmail.com>",
 	"license": "MIT",
