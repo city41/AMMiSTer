@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
 import _imageSize from 'image-size';
+import { JsonCache } from '../util/JsonCache';
 import uniqBy from 'lodash/uniqBy';
 
 import { downloadFile } from '../util/network';
@@ -24,7 +25,6 @@ import {
 	UpdateReason,
 } from './types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
-import { getArrayField, validateOptions } from '@storybook/store';
 
 const imageSize = promisify(_imageSize);
 
@@ -35,6 +35,11 @@ const xmlParser = new XMLParser({
 	ignoreAttributes: false,
 	numberParseOptions: { leadingZeros: false, hex: false },
 });
+
+const orientationCache = new JsonCache<'vertical' | 'horizontal'>(
+	'orientation.json'
+);
+const archive404Cache = new JsonCache<boolean>('archive404.json');
 
 /**
  * Pulls down the db file from the given url. Most db files are zipped,
@@ -204,6 +209,20 @@ async function determineOrientationAndRomSlug(
 	debug(debugHeader);
 
 	for (const slug of slugs) {
+		const cachedOrientation = orientationCache.get(slug);
+
+		if (cachedOrientation) {
+			debug(
+				`${debugHeader}: got orientation for ${slug} from cache: ${JSON.stringify(
+					cachedOrientation
+				)}`
+			);
+			return {
+				orientation: cachedOrientation,
+				romSlug: slug,
+			};
+		}
+
 		const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${slug}.png`;
 		const tmpDir = path.resolve(os.tmpdir(), 'ammister');
 		const tmpPath = path.resolve(tmpDir, `orientation-image-${slug}.png`);
@@ -236,9 +255,12 @@ async function determineOrientationAndRomSlug(
 		debug(
 			`${debugHeader}: dimension, w: ${dimension.width} h: ${dimension.height}`
 		);
+
 		if (dimension.height > dimension.width) {
+			orientationCache.set(slug, 'vertical');
 			return { orientation: 'vertical', romSlug: slug };
 		} else {
+			orientationCache.set(slug, 'horizontal');
 			return { orientation: 'horizontal', romSlug: slug };
 		}
 	}
@@ -530,6 +552,13 @@ async function downloadRom(
 			romData = await fsp.readFile(localPath);
 			updateReason = 'fulfilled';
 		} catch (e) {
+			const cached404 = archive404Cache.get(remoteUrl);
+
+			if (cached404) {
+				debug(`downloadRom: cache has ${remoteUrl} as a 404`);
+				return null;
+			}
+
 			debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
 			await downloadFile(remoteUrl, localPath, 'application/zip');
 			romData = await fsp.readFile(localPath);
@@ -548,8 +577,15 @@ async function downloadRom(
 			updateReason,
 		};
 	} catch (e) {
-		// @ts-expect-error
-		debug(`downloadRom, error`, e.message);
+		const message = e instanceof Error ? e.message : String(e);
+
+		// TODO: stronger 404 signal
+		if (message.includes('status code 404')) {
+			debug('downloadRom, adding 404 to cache for', remoteUrl);
+			archive404Cache.set(remoteUrl, true);
+		}
+
+		debug('downloadRom, error', remoteUrl, message);
 		return null;
 	}
 }
@@ -655,6 +691,9 @@ async function updateCatalog(
 	const gameCacheDir = await getGameCacheDir();
 	await mkdirp(gameCacheDir);
 
+	await orientationCache.init();
+	await archive404Cache.init();
+
 	const updates: Update[] = [];
 
 	const callback: UpdateCallback = (args) => {
@@ -719,6 +758,9 @@ async function updateCatalog(
 
 	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+
+	await orientationCache.save();
+	await archive404Cache.save();
 
 	const message = catalogUpdated ? 'Update finished' : 'No updates available';
 
