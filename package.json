@@ -104,7 +104,7 @@
 		"babel-loader": "^8.3.0",
 		"concurrently": "^7.6.0",
 		"cross-env": "^7.0.3",
-		"electron": "^21.1.0",
+		"electron": "23.0.0-alpha.3",
 		"eslint": "^8.25.0",
 		"eslint-config-airbnb": "^19.0.4",
 		"eslint-config-airbnb-typescript": "^17.0.0",

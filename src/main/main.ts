@@ -16,6 +16,8 @@ const SETTINGS_FILE = 'ammister-settings.json';
 
 const debug = Debug('main/main.ts');
 
+debug('versions', JSON.stringify(process.versions));
+
 let mainWindow: BrowserWindow;
 
 let lastPlanSavePath: string | null = null;
