@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
 import _imageSize from 'image-size';
+import uniqBy from 'lodash/uniqBy';
 
 import { downloadFile } from '../util/network';
 import { extractZipFileToPath } from '../util/zip';
@@ -490,69 +491,85 @@ async function determineMissingRoms(
 		ce.files.roms?.some((r) => !r.md5)
 	);
 
-	return entriesMissingTheirRom.map<MissingRomEntry>((ce) => {
-		const mre: MissingRomEntry = {
-			db_id: ce.db_id,
-			romFiles: ce.files.roms.filter((r) => !r.md5).map((r) => r.fileName),
-			mameVersion: ce.mameVersion,
-		};
-
-		return mre;
+	return entriesMissingTheirRom.flatMap<MissingRomEntry>((ce) => {
+		return ce.files.roms
+			.filter((r) => !r.md5)
+			.map((r) => {
+				return {
+					db_id: ce.db_id,
+					romFile: r.fileName,
+					mameVersion: ce.mameVersion,
+				};
+			});
 	});
 }
 
 async function downloadRom(
 	romEntry: MissingRomEntry,
 	overrideMameVersion?: string
-): Promise<Update[]> {
+): Promise<Update | null> {
 	const gameCacheDir = await getGameCacheDir();
-	const updates: Update[] = [];
 
-	for (const romFile of romEntry.romFiles) {
-		const mameVersionToUse =
-			overrideMameVersion || romEntry.mameVersion || DEFAULT_MAME_VERSION;
+	const mameVersionToUse =
+		overrideMameVersion || romEntry.mameVersion || DEFAULT_MAME_VERSION;
 
-		debug(
-			`downloadRom, getting ${romFile} with mameVersion ${mameVersionToUse}`
-		);
-		const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romFile}`;
+	debug(
+		`downloadRom, getting ${romEntry.romFile} with mameVersion ${mameVersionToUse}`
+	);
+	const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romEntry.romFile}`;
+
+	try {
+		const fileName = path.basename(remoteUrl);
+		const relFilePath = `games/mame/${fileName}`;
+		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
+
+		let updateReason: UpdateReason;
+		let romData;
 
 		try {
-			const fileName = path.basename(remoteUrl);
-			const relFilePath = `games/mame/${fileName}`;
-			const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
-
-			let updateReason: UpdateReason;
-			let romData;
-
-			try {
-				romData = await fsp.readFile(localPath);
-				updateReason = 'fulfilled';
-			} catch (e) {
-				debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
-				await downloadFile(remoteUrl, localPath, 'application/zip');
-				romData = await fsp.readFile(localPath);
-				updateReason = 'missing';
-			}
-
-			updates.push({
-				fileEntry: {
-					db_id: romEntry.db_id,
-					type: 'rom',
-					relFilePath,
-					fileName,
-					remoteUrl,
-					md5: getFileMd5Hash(romData),
-				},
-				updateReason,
-			});
+			romData = await fsp.readFile(localPath);
+			updateReason = 'fulfilled';
 		} catch (e) {
-			// @ts-expect-error
-			debug(`downloadRom, error`, e.message);
+			debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
+			await downloadFile(remoteUrl, localPath, 'application/zip');
+			romData = await fsp.readFile(localPath);
+			updateReason = 'missing';
 		}
+
+		return {
+			fileEntry: {
+				db_id: romEntry.db_id,
+				type: 'rom',
+				relFilePath,
+				fileName,
+				remoteUrl,
+				md5: getFileMd5Hash(romData),
+			},
+			updateReason,
+		};
+	} catch (e) {
+		// @ts-expect-error
+		debug(`downloadRom, error`, e.message);
+		return null;
+	}
+}
+
+/**
+ * Divides the missing rom entries into batches, allowing parallel downloads.
+ * This allows faster downloads, as a lot of requests to archive.org will 404,
+ * and so downloading in serial is really slowed down by these 404s
+ */
+function batchMissingRoms(romEntries: MissingRomEntry[]): MissingRomEntry[][] {
+	const batchSize = 4;
+
+	const batches: MissingRomEntry[][] = [];
+
+	while (romEntries.length > 0) {
+		const batch = romEntries.splice(0, batchSize);
+		batches.push(batch);
 	}
 
-	return updates;
+	return batches;
 }
 
 async function downloadRoms(
@@ -561,33 +578,41 @@ async function downloadRoms(
 ): Promise<Update[]> {
 	const allRomUpdates: Update[] = [];
 
-	// sorting them at least a little bit helps the user to follow along
-	const sortedRomEntries = romEntries.sort((a, b) => {
-		return a.romFiles[0].localeCompare(b.romFiles[0]);
+	const uniqueRomEntries = uniqBy(romEntries, JSON.stringify);
+	const sortedRomEntries = uniqueRomEntries.sort((a, b) => {
+		return a.romFile.localeCompare(b.romFile);
 	});
 
-	for (const romEntry of sortedRomEntries) {
-		let updates = await downloadRom(romEntry);
+	// TODO: batching can mean downloading shared roms (ie qsound.zip) more than once
+	const batches = batchMissingRoms(sortedRomEntries);
 
-		// if we didn't actually download anything, it may be due to 404s, so try again with revival
-		if (
-			updates.length === 0 ||
-			updates.every((u) => u.updateReason === 'fulfilled')
-		) {
-			updates = await downloadRom(romEntry, DEFAULT_MAME_VERSION);
-		}
+	for (const batch of batches) {
+		const downloadPromises = batch.map((r) => {
+			return downloadRom(r)
+				.then((result) => {
+					if (result === null) {
+						return downloadRom(r, DEFAULT_MAME_VERSION);
+					} else {
+						return result;
+					}
+				})
+				.catch((e) => {
+					debug(`downloadRom promise rejected for ${r.romFile}: ${e}`);
+					return null;
+				});
+		});
+
+		const updates = (await Promise.all(downloadPromises)).filter(
+			// we will quietly ignore fulfilled updates as the user doesn't need to know.
+			// fulfilled means some other romEntry also had this rom and downloaded it earlier,
+			// such as qsound.zip for all cps2 games. This is very unlikely/impossible as
+			// the first thing we do is uniqBy the mising rom entries
+			(u) => !!u && u.updateReason !== 'fulfilled'
+		) as unknown as Update[];
 
 		for (const update of updates) {
-			// we will quietly ignore fulfilled updates as the user doesn't need to know
-			if (update.updateReason !== 'fulfilled') {
-				allRomUpdates.push(update);
-				cb(update);
-			} else {
-				debug(
-					`downloadRoms: failed to download ${romEntry.romFiles.join('|')}`
-				);
-				// TODO: updates should support errors for repoting
-			}
+			allRomUpdates.push(update);
+			cb(update);
 		}
 	}
 

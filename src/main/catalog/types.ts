@@ -56,7 +56,7 @@ export type FileEntry = {
  */
 export type MissingRomEntry = {
 	db_id: string;
-	romFiles: string[];
+	romFile: string;
 	mameVersion: string;
 };
 
