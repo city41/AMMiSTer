@@ -29,11 +29,12 @@ function BaseFeedbackModal({
 				className={clsx(className, 'rounded-lg bg-white grid')}
 				style={{
 					width: '55vw',
+					maxHeight: '80vh',
 					maxWidth: 900,
 					gridTemplateRows: '1fr max-content',
 				}}
 			>
-				<div className="bg-white p-6 pb-4 h-full overflow-auto">
+				<div className="bg-white p-6 pb-4 overflow-auto">
 					<div
 						className="grid gap-x-2"
 						style={{ gridTemplateColumns: 'max-content 1fr' }}
