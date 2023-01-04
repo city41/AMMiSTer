@@ -18,6 +18,8 @@ const debug = Debug('main/main.ts');
 
 let mainWindow: BrowserWindow;
 
+let lastPlanSavePath: string | null = null;
+
 function createWindow() {
 	// Create the browser window.
 	mainWindow = new BrowserWindow({
@@ -57,6 +59,7 @@ function createWindow() {
 							if (openedPlan) {
 								debug('Open Plan: sending opened plan to mainWindow');
 								mainWindow.webContents.send('menu:loadOpenedPlan', openedPlan);
+								lastPlanSavePath = result.filePaths[0];
 							} else {
 								debug(
 									'Open Plan: plan.openPlan returned null, nothing to send to mainWindow'
@@ -68,18 +71,15 @@ function createWindow() {
 				{
 					label: 'Save Plan',
 					accelerator: 'Ctrl+S',
+					click: async () => {
+						mainWindow.webContents.send('menu:savePlan');
+					},
 				},
 				{
 					label: 'Save Plan As...',
 					accelerator: 'Ctrl+shift+S',
 					click: async () => {
-						const result = await dialog.showSaveDialog(mainWindow, {
-							filters: [{ name: 'Plans', extensions: ['amip'] }],
-						});
-
-						if (!result.canceled && result.filePath) {
-							mainWindow.webContents.send('menu:savePlanAs', result.filePath);
-						}
+						mainWindow.webContents.send('menu:savePlanAs');
 					},
 				},
 			],
@@ -240,8 +240,31 @@ ipcMain.handle('plan:newPlan', () => {
 	return plan.newPlan();
 });
 
-ipcMain.handle('plan:savePlanAs', (_event, p: Plan, planPath: string) => {
-	return plan.savePlan(p, planPath);
+ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
+	const result = await dialog.showSaveDialog(mainWindow, {
+		filters: [{ name: 'Plans', extensions: ['amip'] }],
+	});
+
+	if (!result.canceled && result.filePath) {
+		lastPlanSavePath = result.filePath;
+		return plan.savePlan(p, result.filePath);
+	}
+});
+
+ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
+	if (!lastPlanSavePath) {
+		const result = await dialog.showSaveDialog(mainWindow, {
+			filters: [{ name: 'Plans', extensions: ['amip'] }],
+		});
+
+		if (!result.canceled && result.filePath) {
+			lastPlanSavePath = result.filePath;
+		}
+	}
+
+	if (lastPlanSavePath) {
+		return plan.savePlan(p, lastPlanSavePath);
+	}
 });
 
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {

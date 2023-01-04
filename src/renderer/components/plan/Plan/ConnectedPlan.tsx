@@ -4,6 +4,7 @@ import {
 	loadDemoPlan,
 	loadNewPlan,
 	savePlanAs,
+	savePlan,
 	setPlan,
 	addItem,
 	deleteItem,
@@ -45,8 +46,12 @@ function ConnectedPlan() {
 			dispatch(setPlan(plan));
 		});
 
-		window.ipcAPI.menu_savePlanAs(async (planPath: string) => {
-			dispatch(savePlanAs(planPath));
+		window.ipcAPI.menu_savePlanAs(async () => {
+			dispatch(savePlanAs());
+		});
+
+		window.ipcAPI.menu_savePlan(async () => {
+			dispatch(savePlan());
 		});
 	}, []);
 

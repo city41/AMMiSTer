@@ -301,15 +301,21 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	}
 };
 
-const savePlanAs =
-	(planPath: string): PlanSliceThunk =>
-	async (_dispatch, getState) => {
-		const plan = getState().plan.plan;
+const savePlanAs = (): PlanSliceThunk => async (_dispatch, getState) => {
+	const plan = getState().plan.plan;
 
-		if (plan) {
-			window.ipcAPI.savePlanAs(plan, planPath);
-		}
-	};
+	if (plan) {
+		window.ipcAPI.savePlanAs(plan);
+	}
+};
+
+const savePlan = (): PlanSliceThunk => async (_dispatch, getState) => {
+	const plan = getState().plan.plan;
+
+	if (plan) {
+		window.ipcAPI.savePlan(plan);
+	}
+};
 
 const reducer = planSlice.reducer;
 const {
@@ -326,6 +332,7 @@ export {
 	loadNewPlan,
 	loadDemoPlan,
 	setPlan,
+	savePlan,
 	savePlanAs,
 	addItem,
 	deleteItem,
