@@ -395,6 +395,30 @@ async function getExistingSshDestPaths(
 	return paths.concat(finalImmediatePaths);
 }
 
+/**
+ * recursively descends into local directories from bottom up, deleting
+ * any empty directories it finds along the way
+ */
+async function deleteEmptyLocalDirectories(curDirPath: string) {
+	const entries = await fsp.readdir(curDirPath);
+
+	for (const entry of entries) {
+		const p = path.join(curDirPath, entry);
+		const s = fs.statSync(p);
+
+		if (s.isDirectory()) {
+			await deleteEmptyLocalDirectories(p);
+			const dirEntries = await fsp.readdir(p);
+			debug('deleteEmtpyLocalDirs', p, 'has', dirEntries.length, 'files');
+
+			if (dirEntries.length === 0) {
+				await fsp.rmdir(p);
+				debug('deleteEmptyLocalDirs, deleted:', p);
+			}
+		}
+	}
+}
+
 async function exportToDirectory(
 	plan: Plan,
 	destDirPath: string,
@@ -430,10 +454,37 @@ async function exportToDirectory(
 		}
 	);
 
+	callback({ message: 'Cleaning up empty directories' });
+	await deleteEmptyLocalDirectories(path.join(destDirPath, '_Arcade'));
+
 	callback({
 		message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
 		complete: true,
 	});
+}
+
+/**
+ * recursively descends into directories from bottom up, deleting
+ * any empty directories it finds along the way
+ */
+async function deleteEmptySSHDirectories(ssh: SSH, curDirPath: string) {
+	const entries = await ssh.list(curDirPath);
+
+	for (const entry of entries) {
+		const p = path.join(curDirPath, entry.name);
+		const s = await ssh.stat(p);
+
+		if (s.isDirectory) {
+			await deleteEmptySSHDirectories(ssh, p);
+			const dirEntries = await ssh.list(p);
+			debug('deleteEmtpySSHDirs', p, 'has', dirEntries.length, 'files');
+
+			if (dirEntries.length === 0) {
+				await ssh.rmdir(p);
+				debug('deleteEmptySSHDirs, deleted:', p);
+			}
+		}
+	}
 }
 
 async function exportToMister(
@@ -448,7 +499,7 @@ async function exportToMister(
 		providedCallback(args);
 	};
 
-	callback({ message: 'Beginning export to MiSTer' });
+	callback({ message: `Connecting to MiSTer at ${config.host}` });
 
 	const client = new SSH();
 	await client.connect({
@@ -502,6 +553,9 @@ async function exportToMister(
 			});
 		}
 	);
+
+	callback({ message: 'Cleaning up empty directories' });
+	await deleteEmptySSHDirectories(client, path.join(mountPath, '_Arcade'));
 
 	await client.end();
 	callback({ message: 'Export complete', complete: true });
