@@ -1,3 +1,4 @@
+import path from 'node:path';
 import fsp from 'node:fs/promises';
 import Debug from 'debug';
 import { isCatalogEntry } from '../catalog';
@@ -78,6 +79,10 @@ function newPlan(): Plan {
 }
 
 async function savePlan(plan: Plan, filePath: string): Promise<void> {
+	if (path.extname(filePath) !== '.amip') {
+		filePath += '.amip';
+	}
+
 	plan.updatedAt = Date.now();
 	const planJson = JSON.stringify(plan, null, 2);
 	return fsp.writeFile(filePath, planJson);

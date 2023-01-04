@@ -41,12 +41,12 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'New Plan',
-					accelerator: 'Ctrl+n',
+					accelerator: 'Ctrl+N',
 					click: () => mainWindow.webContents.send('menu:loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
-					accelerator: 'Ctrl+o',
+					accelerator: 'Ctrl+O',
 					click: async () => {
 						const result = await dialog.showOpenDialog(mainWindow, {
 							filters: [{ name: 'Plans', extensions: ['amip'] }],
@@ -66,8 +66,21 @@ function createWindow() {
 					},
 				},
 				{
-					label: 'Load Demo Plan...',
-					click: () => mainWindow.webContents.send('menu:loadDemoPlan'),
+					label: 'Save Plan',
+					accelerator: 'Ctrl+S',
+				},
+				{
+					label: 'Save Plan As...',
+					accelerator: 'Ctrl+shift+S',
+					click: async () => {
+						const result = await dialog.showSaveDialog(mainWindow, {
+							filters: [{ name: 'Plans', extensions: ['amip'] }],
+						});
+
+						if (!result.canceled && result.filePath) {
+							mainWindow.webContents.send('menu:savePlanAs', result.filePath);
+						}
+					},
 				},
 			],
 		},
@@ -102,6 +115,10 @@ function createWindow() {
 		{
 			label: 'Dev',
 			submenu: [
+				{
+					label: 'Load Demo Plan...',
+					click: () => mainWindow.webContents.send('menu:loadDemoPlan'),
+				},
 				{
 					click: () => mainWindow.reload(),
 					label: 'Refresh',
@@ -221,6 +238,10 @@ ipcMain.handle('catalog:getCurrentCatalog', async () => {
 
 ipcMain.handle('plan:newPlan', () => {
 	return plan.newPlan();
+});
+
+ipcMain.handle('plan:savePlanAs', (_event, p: Plan, planPath: string) => {
+	return plan.savePlan(p, planPath);
 });
 
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {

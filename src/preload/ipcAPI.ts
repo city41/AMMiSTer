@@ -34,6 +34,10 @@ const ipcAPI = {
 		return ipcRenderer.invoke('plan:newPlan');
 	},
 
+	savePlanAs(plan: Plan, planPath: string): Promise<void> {
+		return ipcRenderer.invoke('plan:savePlanAs', plan, planPath);
+	},
+
 	exportToDirectory(plan: Plan, statusCallback: UpdateCallback) {
 		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
 			statusCallback(status);
@@ -83,6 +87,12 @@ const ipcAPI = {
 	menu_loadOpenedPlan(callback: (plan: Plan) => void) {
 		ipcRenderer.on('menu:loadOpenedPlan', (_event, plan) => {
 			callback(plan);
+		});
+	},
+
+	menu_savePlanAs(callback: (planPath: string) => void) {
+		ipcRenderer.on('menu:savePlanAs', (_event, planPath) => {
+			callback(planPath);
 		});
 	},
 

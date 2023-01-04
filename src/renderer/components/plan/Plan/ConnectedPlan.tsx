@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import {
 	loadDemoPlan,
 	loadNewPlan,
+	savePlanAs,
 	setPlan,
 	addItem,
 	deleteItem,
@@ -42,6 +43,10 @@ function ConnectedPlan() {
 
 		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
 			dispatch(setPlan(plan));
+		});
+
+		window.ipcAPI.menu_savePlanAs(async (planPath: string) => {
+			dispatch(savePlanAs(planPath));
 		});
 	}, []);
 
