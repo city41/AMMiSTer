@@ -356,7 +356,8 @@ async function parseMraToCatalogEntry(
 				romCatalogFileEntries.push({
 					db_id,
 					fileName: r,
-					relFilePath: `games/mame/${r}`,
+					// path.join is used to account for OS specific path separators
+					relFilePath: path.join('games', 'mamed', r),
 					type: 'rom',
 					md5: rData ? getFileMd5Hash(rData) : undefined,
 				});
@@ -544,7 +545,8 @@ async function downloadRom(
 
 	try {
 		const fileName = path.basename(remoteUrl);
-		const relFilePath = `games/mame/${fileName}`;
+		// path.join is used to account for OS specific path separators
+		const relFilePath = path.join('games', 'mame', fileName);
 		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 
 		let updateReason: UpdateReason;

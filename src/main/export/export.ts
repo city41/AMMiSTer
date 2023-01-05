@@ -513,6 +513,7 @@ async function exportToMister(
 	});
 
 	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
+	// this path is on the mister itself, using path.join would be wrong
 	const mountPath = `/media/${mountDir}/`;
 
 	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
