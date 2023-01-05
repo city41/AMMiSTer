@@ -38,7 +38,7 @@ function getDatedFilenamePathComponents(fileName: string): {
 	date: Date;
 } {
 	const split = path.parse(fileName).name.split('_');
-	const date = convertFileNameDate(split[1]);
+	const date = convertFileNameDate(split[split.length - 1]);
 
 	if (!date) {
 		throw new Error(`a dated filename formed an invalid Date: ${fileName}`);
@@ -145,7 +145,6 @@ function buildFileOperations(
 			return [];
 		} else {
 			if (!srcOpPath.db_id) {
-				debugger;
 				throw new Error(
 					`srcOpPath missing db_id: ${JSON.stringify(srcOpPath)}`
 				);
@@ -402,8 +401,9 @@ async function getExistingRemoteDestPaths(
 	for (const entry of entries) {
 		// since this is running on the mister, path.join is incorrect
 		const p = misterPathJoiner(curDirPath, entry);
-		debug(`p: ${p}`);
+		debug('p:', p);
 		const isDirectory = await client.isDir(p);
+		debug('isDirectory:', isDirectory);
 
 		if (isDirectory) {
 			const subPaths = await getExistingRemoteDestPaths(client, rootDir, p);
@@ -540,6 +540,7 @@ async function exportToMister(
 	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
 	// this path is on the mister itself, using path.join would be wrong
 	const mountPath = misterPathJoiner('/media/', mountDir);
+	debug('exportToMister, mountPath:', mountPath);
 
 	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', misterPathJoiner);
 
@@ -548,12 +549,12 @@ async function exportToMister(
 	callback({ message: 'Determining what is currently on the MiSTer' });
 	const destArcadePaths = await getExistingRemoteDestPaths(
 		client,
-		mountPath,
+		mountPath + '/',
 		misterPathJoiner(mountPath, '_Arcade')
 	);
 	const destRomPaths = await getExistingRemoteDestPaths(
 		client,
-		mountPath,
+		mountPath + '/',
 		misterPathJoiner(mountPath, 'games', 'mame')
 	);
 	const destPaths = destArcadePaths.concat(destRomPaths);

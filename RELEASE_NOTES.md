@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.1.1
+
+- [All] Fixed a bug where it would delete remote paths incorrectly
+
 ## Version 0.1.0
 
 - [All] Switch from SFTP to FTP, making exports more than twice as fast

@@ -34,20 +34,24 @@ export function convertFileNameDate(
 	].join('');
 
 	const d = new Date(withDashes);
-	if (d.toString().toLowerCase() === 'invalid date') {
-		debugger;
-	}
 	return d;
 }
 
 export function misterPathJoiner(...segments: string[]): string {
+	const result = path.join(...segments);
+
 	if (process.platform !== 'win32') {
-		return path.join(...segments);
+		return result;
+	} else {
+		// convert all \ to /
+		const cleanedResult = result.replace(/\\/g, '/');
+
+		// incoming path was unix absolute? make it unix absolute again,
+		// which the windows version of path.join will strip
+		if (segments[0]?.startsWith('/')) {
+			return '/' + cleanedResult;
+		} else {
+			return cleanedResult;
+		}
 	}
-
-	const cleanedSegments = segments.map((s) => {
-		return s.replace(/\\/g, '/');
-	});
-
-	return cleanedSegments.join('/');
 }
