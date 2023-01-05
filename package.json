@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.1.1",
+	"version": "0.1.3",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
