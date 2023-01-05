@@ -3,17 +3,17 @@ name: Build/release
 on: push
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    # Platforms to build on/for
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
+  release-ubuntu-windows:
+    runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
+
+      - name: Install Wine32
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update 1>&2
+          sudo apt install --install-recommends wine32 -y 1>&2
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
@@ -28,6 +28,7 @@ jobs:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
           github_token: ${{ secrets.github_token }}
+          args: --win
 
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
