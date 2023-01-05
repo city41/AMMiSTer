@@ -274,7 +274,9 @@ async function determineOrientationAndRomSlug(
  */
 function getBestRbfPath(rbfPaths: string[], rbfName: string): string | null {
 	const matchingRbfPaths = rbfPaths.filter((f) =>
-		f.toLowerCase().includes(`cores/${rbfName.toLowerCase()}`)
+		// join is important here to avoid platform specific issues, on Windows
+		// the path seperator is different
+		f.toLowerCase().includes(path.join('cores', rbfName.toLowerCase()))
 	);
 
 	if (matchingRbfPaths.length === 0) {
