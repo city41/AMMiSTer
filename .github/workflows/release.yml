@@ -19,6 +19,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 18
+      - run: yarn install
+      - run: yarn prod
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
