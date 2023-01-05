@@ -3,6 +3,13 @@ import { Welcome, PublicWelcomeProps } from './Welcome';
 
 function ConnectedWelcome(props: PublicWelcomeProps) {
 	const [showWelcome, setShowWelcome] = useState(false);
+	const [version, setVersion] = useState('');
+
+	useEffect(() => {
+		window.ipcAPI.getVersion().then((v) => {
+			setVersion(v);
+		});
+	}, []);
 
 	useEffect(() => {
 		window.ipcAPI.getWelcomeDismissed().then((welcomeDismissed) => {
@@ -16,7 +23,9 @@ function ConnectedWelcome(props: PublicWelcomeProps) {
 	}
 
 	if (showWelcome) {
-		return <Welcome {...props} onDismiss={handleDismiss} />;
+		return (
+			<Welcome {...props} appVersion={version} onDismiss={handleDismiss} />
+		);
 	} else {
 		return null;
 	}
