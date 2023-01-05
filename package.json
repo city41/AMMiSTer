@@ -8,7 +8,7 @@
 		"dev-backend": "NODE_ENV=development tsc -w",
 		"dev-frontend": "cross-env NODE_ENV=development webpack --watch --progress --color",
 		"dev": "yarn clean && concurrently --kill-others \"yarn dev-backend\" \"yarn dev-frontend\" \"yarn storybook\"",
-		"prod-backend": "NODE_ENV=production tsc && scripts/createAppPackageJson.js",
+		"prod-backend": "cross-env NODE_ENV=production tsc && scripts/createAppPackageJson.js",
 		"prod-frontend": "cross-env NODE_ENV=production webpack --progress --color",
 		"prod": "yarn clean && yarn prod-backend && yarn prod-frontend",
 		"test": "yarn jest",
