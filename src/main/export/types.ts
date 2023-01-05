@@ -1,3 +1,5 @@
+import { ReadStream } from 'original-fs';
+
 export type UpdateCallback = (args: {
 	message: string;
 	complete?: boolean;
@@ -15,14 +17,6 @@ type DeleteFileOperation = {
 };
 
 export type FileOperation = CopyFileOperation | DeleteFileOperation;
-
-export type SSHConfig = {
-	host: string;
-	port: string;
-	mount: 'sdcard' | `usb${number}`;
-	username: string;
-	password: string;
-};
 
 export type SrcExactFileOperationPath = {
 	type: 'exact';
@@ -65,3 +59,25 @@ export type DestDatedFilenameFileOperationPath = {
 export type DestFileOperationPath =
 	| DestExactFileOperationPath
 	| DestDatedFilenameFileOperationPath;
+
+export type FileClientConnectConfig = {
+	host: string;
+	port: string;
+	mount: 'sdcard' | `usb${number}`;
+	username: string;
+	password: string;
+};
+
+export interface FileClient {
+	connect: (config: FileClientConnectConfig) => Promise<void>;
+	disconnect: () => Promise<void>;
+
+	listDir: (dirPath: string) => Promise<string[]>;
+	isDir: (filePath: string) => Promise<boolean>;
+	mkDir: (dirPath: string, recursive?: boolean) => Promise<void>;
+	rmDir: (dirPath: string) => Promise<void>;
+
+	putFile: (data: ReadStream, destPath: string) => Promise<string>;
+	deleteFile: (filePath: string) => Promise<void>;
+	exists: (filePath: string) => Promise<boolean>;
+}

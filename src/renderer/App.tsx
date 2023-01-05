@@ -5,7 +5,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Catalog } from './components/catalog/Catalog';
 import { EntryDetailModal } from './components/catalog/EntryDetailModal';
 import { ExportModal } from './components/export/ExportModal';
-import { ExportSSHConfigModal } from './components/export/ExportSSHConfigModal';
+import { ExportRemoteConfigModal } from './components/export/ExportRemoteConfigModal';
 import { Footer } from './components/Footer';
 import { Plan } from './components/plan/Plan';
 import { Welcome } from './components/Welcome';
@@ -31,7 +31,7 @@ function App(): JSX.Element {
 				</div>
 				<UpdateModal />
 				<ExportModal />
-				<ExportSSHConfigModal />
+				<ExportRemoteConfigModal />
 				<EntryDetailModal />
 			</Provider>
 		</DndProvider>

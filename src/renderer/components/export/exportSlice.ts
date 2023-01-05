@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { SSHConfig } from '../../../main/export/types';
+import { FileClientConnectConfig } from '../../../main/export/types';
 import { AppState } from '../../store';
 
 type ExportType = 'directory' | 'mister';
@@ -59,7 +59,7 @@ const exportToDirectory =
 	};
 
 const exportToMister =
-	(config: SSHConfig): ExportSliceThunk =>
+	(config: FileClientConnectConfig): ExportSliceThunk =>
 	async (dispatch, getState) => {
 		const plan = getState().plan.plan;
 

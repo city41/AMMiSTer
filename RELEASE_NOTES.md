@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.1.0
+
+- [All] Switch from SFTP to FTP, making exports more than twice as fast
+
 ## Version 0.0.5
 
 - [Windows] Paths on the mister don't use backslashes :)

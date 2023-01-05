@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import { BaseFeedbackModal } from '../../BaseFeedbackModal';
 import { MisterKunIcon } from '../../../icons';
-import { SSHConfig } from '../../../../main/export/types';
+import { FileClientConnectConfig } from '../../../../main/export/types';
 
-type ExportSSHConfigModalProps = {
+type ExportRemoteConfigModalProps = {
 	isOpen: boolean;
 	onRequestClose: () => void;
-	onExport: (config: SSHConfig) => void;
+	onExport: (config: FileClientConnectConfig) => void;
 };
 
 function HelpButton({
@@ -47,18 +47,20 @@ function HelpButton({
 	);
 }
 
-function isConfigComplete(config: Partial<SSHConfig>): config is SSHConfig {
+function isConfigComplete(
+	config: Partial<FileClientConnectConfig>
+): config is FileClientConnectConfig {
 	const values = Object.values(config);
 
 	return values.length === 5 && values.every((v) => v.trim().length > 0);
 }
 
-function ExportSSHConfigModal({
+function ExportRemoteConfigModal({
 	isOpen,
 	onRequestClose,
 	onExport,
-}: ExportSSHConfigModalProps) {
-	const [sshConfig, setSSHConfig] = useState<Partial<SSHConfig>>({
+}: ExportRemoteConfigModalProps) {
+	const [sshConfig, setSSHConfig] = useState<Partial<FileClientConnectConfig>>({
 		port: '22',
 		mount: 'sdcard',
 		username: 'root',
@@ -72,7 +74,7 @@ function ExportSSHConfigModal({
 			okButtonText="Export"
 			okButtonEnabled={isConfigComplete(sshConfig)}
 			icon={MisterKunIcon}
-			onOkClick={() => onExport(sshConfig as SSHConfig)}
+			onOkClick={() => onExport(sshConfig as FileClientConnectConfig)}
 			closeButton
 			onRequestClose={onRequestClose}
 		>
@@ -148,7 +150,6 @@ function ExportSSHConfigModal({
 								<option value="usb5">usb5</option>
 								<option value="usb6">usb6</option>
 								<option value="usb7">usb7</option>
-								<option value="tmp">tmp</option>
 							</select>
 						</dd>
 					</div>
@@ -204,4 +205,4 @@ function ExportSSHConfigModal({
 	);
 }
 
-export { ExportSSHConfigModal };
+export { ExportRemoteConfigModal };

@@ -1,17 +1,17 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
-import { ExportSSHConfigModal } from './ExportSSHConfigModal';
+import { ExportRemoteConfigModal } from './ExportRemoteConfigModal';
 
 const meta: Meta = {
-	title: 'ExportSSHConfigModal',
-	component: ExportSSHConfigModal,
+	title: 'ExportRemoteConfigModal',
+	component: ExportRemoteConfigModal,
 };
 
 export default meta;
 
 export const Basic = () => {
 	return (
-		<ExportSSHConfigModal
+		<ExportRemoteConfigModal
 			isOpen
 			onRequestClose={() => {}}
 			onExport={() => {}}

@@ -10,7 +10,7 @@ import * as exportPlan from './export';
 
 import { DBJSON } from './catalog/types';
 import { Plan } from './plan/types';
-import { SSHConfig } from './export/types';
+import { FileClientConnectConfig } from './export/types';
 
 const SETTINGS_FILE = 'ammister-settings.json';
 
@@ -306,7 +306,7 @@ ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 
 ipcMain.on(
 	'export:exportToMister',
-	async (event, plan: Plan, config: SSHConfig) => {
+	async (event, plan: Plan, config: FileClientConnectConfig) => {
 		const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
 			'export-export-to-mister'
 		);

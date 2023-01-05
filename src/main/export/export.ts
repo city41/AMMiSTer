@@ -3,19 +3,20 @@ import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import Debug from 'debug';
-import SSH from 'ssh2-sftp-client';
 import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import {
 	SrcFileOperationPath,
 	DestFileOperationPath,
 	FileOperation,
-	SSHConfig,
+	FileClientConnectConfig,
 	UpdateCallback,
 	SrcExactFileOperationPath,
 	SrcDatedFilenameFileOperationPath,
 	DestExactFileOperationPath,
 	DestDatedFilenameFileOperationPath,
+	FileClient,
 } from './types';
+import { FTPFileClient } from './FTPFileClient';
 import uniqBy from 'lodash/uniqBy';
 import {
 	convertFileNameDate,
@@ -23,7 +24,6 @@ import {
 	misterPathJoiner,
 } from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
-
 const debug = Debug('main/export/export.ts');
 
 function isPlanGameDirectoryEntry(
@@ -215,10 +215,21 @@ function buildFileOperations(
 		}
 	});
 
-	return uniqBy(
+	const uniqued = uniqBy(
 		[...srcExactOps, ...srcDatedOps, ...destExactOps, ...destDatedOps],
 		JSON.stringify
 	);
+
+	return uniqued.sort((a, b) => {
+		// put copies before deletes
+		const actionSort = a.action.localeCompare(b.action);
+
+		if (actionSort === 0) {
+			return a.destPath.localeCompare(b.destPath);
+		} else {
+			return actionSort;
+		}
+	});
 }
 
 async function performLocalFileSystemFileOperations(
@@ -236,24 +247,24 @@ async function performLocalFileSystemFileOperations(
 
 		switch (fileOp.action) {
 			case 'copy': {
+				cb(fileOp);
 				await mkdirp(path.dirname(destPath));
 				await fsp.copyFile(srcPath, destPath);
-				cb(fileOp);
 				break;
 			}
 			case 'delete': {
-				await fsp.unlink(destPath);
 				cb(fileOp);
+				await fsp.unlink(destPath);
 				break;
 			}
 		}
 	}
 }
 
-async function performSshFileSystemFileOperations(
+async function performRemoteFileSystemFileOperations(
 	srcDirRoot: string,
 	destDirRoot: string,
-	ssh: SSH,
+	client: FileClient,
 	fileOps: FileOperation[],
 	cb: (fileOp: FileOperation) => void
 ) {
@@ -268,18 +279,18 @@ async function performSshFileSystemFileOperations(
 
 		switch (fileOp.action) {
 			case 'copy': {
-				await ssh.mkdir(path.dirname(destPath), true);
+				cb(fileOp);
+				await client.mkDir(path.dirname(destPath), true);
 				const data = fs.createReadStream(srcPath);
-				const result = await ssh.put(data, destPath);
+				const result = await client.putFile(data, destPath);
 				debug(
 					`performFileOp,copy:${srcPath} to ${destPath}, result: ${result}`
 				);
-				cb(fileOp);
 				break;
 			}
 			case 'delete': {
-				await ssh.delete(destPath);
 				cb(fileOp);
+				await client.deleteFile(destPath);
 				break;
 			}
 		}
@@ -287,8 +298,8 @@ async function performSshFileSystemFileOperations(
 }
 
 const actionToVerb: Record<FileOperation['action'], string> = {
-	copy: 'Copied',
-	delete: 'Deleted',
+	copy: 'Copying',
+	delete: 'Deleting',
 };
 
 function getSrcPathsFromPlan(
@@ -378,24 +389,24 @@ async function getExistingLocalDestPaths(
 	return paths.concat(finalImmediatePaths);
 }
 
-async function getExistingSshDestPaths(
-	ssh: SSH,
+async function getExistingRemoteDestPaths(
+	client: FileClient,
 	rootDir: string,
 	curDirPath: string
 ): Promise<DestFileOperationPath[]> {
 	const paths: DestFileOperationPath[] = [];
 	const rawPaths: string[] = [];
 
-	const entries = await ssh.list(curDirPath);
+	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
 		// since this is running on the mister, path.join is incorrect
-		const p = misterPathJoiner(curDirPath, entry.name);
+		const p = misterPathJoiner(curDirPath, entry);
 		debug(`p: ${p}`);
-		const s = await ssh.stat(p);
+		const isDirectory = await client.isDir(p);
 
-		if (s.isDirectory) {
-			const subPaths = await getExistingSshDestPaths(ssh, rootDir, p);
+		if (isDirectory) {
+			const subPaths = await getExistingRemoteDestPaths(client, rootDir, p);
 			paths.push(...subPaths);
 		} else {
 			rawPaths.push(p.replace(rootDir, ''));
@@ -479,20 +490,23 @@ async function exportToDirectory(
  * recursively descends into directories from bottom up, deleting
  * any empty directories it finds along the way
  */
-async function deleteEmptySSHDirectories(ssh: SSH, curDirPath: string) {
-	const entries = await ssh.list(curDirPath);
+async function deleteEmptyRemoteDirectories(
+	client: FileClient,
+	curDirPath: string
+) {
+	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
-		const p = misterPathJoiner(curDirPath, entry.name);
-		const s = await ssh.stat(p);
+		const p = misterPathJoiner(curDirPath, entry);
+		const isDirectory = await client.isDir(p);
 
-		if (s.isDirectory) {
-			await deleteEmptySSHDirectories(ssh, p);
-			const dirEntries = await ssh.list(p);
-			debug('deleteEmtpySSHDirs', p, 'has', dirEntries.length, 'files');
+		if (isDirectory) {
+			await deleteEmptyRemoteDirectories(client, p);
+			const dirEntries = await client.listDir(p);
+			debug('deleteEmtpyRemoteDirs', p, 'has', dirEntries.length, 'files');
 
 			if (dirEntries.length === 0) {
-				await ssh.rmdir(p);
+				await client.rmDir(p);
 				debug('deleteEmptySSHDirs, deleted:', p);
 			}
 		}
@@ -501,9 +515,10 @@ async function deleteEmptySSHDirectories(ssh: SSH, curDirPath: string) {
 
 async function exportToMister(
 	plan: Plan,
-	config: SSHConfig,
+	config: FileClientConnectConfig,
 	providedCallback: UpdateCallback
 ) {
+	const start = Date.now();
 	debug(`exportToMister(plan, ${JSON.stringify(config)}, callback)`);
 
 	const callback: UpdateCallback = (args) => {
@@ -513,15 +528,13 @@ async function exportToMister(
 
 	callback({ message: `Connecting to MiSTer at ${config.host}` });
 
-	const client = new SSH();
+	const client = new FTPFileClient();
 	await client.connect({
 		host: config.host,
-		port: parseInt(config.port, 10),
+		port: config.port,
+		mount: config.mount,
 		username: config.username,
 		password: config.password,
-		retries: 2,
-		retry_factor: 2,
-		retry_minTimeout: 2000,
 	});
 
 	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
@@ -533,12 +546,12 @@ async function exportToMister(
 	debug(`exportToMister: ${srcPaths.length} srcPaths`);
 
 	callback({ message: 'Determining what is currently on the MiSTer' });
-	const destArcadePaths = await getExistingSshDestPaths(
+	const destArcadePaths = await getExistingRemoteDestPaths(
 		client,
 		mountPath,
 		misterPathJoiner(mountPath, '_Arcade')
 	);
-	const destRomPaths = await getExistingSshDestPaths(
+	const destRomPaths = await getExistingRemoteDestPaths(
 		client,
 		mountPath,
 		misterPathJoiner(mountPath, 'games', 'mame')
@@ -559,7 +572,7 @@ async function exportToMister(
 
 	const gameCacheDir = await getGameCacheDir();
 
-	await performSshFileSystemFileOperations(
+	await performRemoteFileSystemFileOperations(
 		gameCacheDir,
 		mountPath,
 		client,
@@ -572,13 +585,25 @@ async function exportToMister(
 	);
 
 	callback({ message: 'Cleaning up empty directories' });
-	await deleteEmptySSHDirectories(
+	await deleteEmptyRemoteDirectories(
 		client,
 		misterPathJoiner(mountPath, '_Arcade')
 	);
 
-	await client.end();
-	callback({ message: 'Export complete', complete: true });
+	await client.disconnect();
+	const duration = Date.now() - start;
+	const seconds = duration / 1000;
+	const minutes = seconds / 60;
+
+	const durMsg =
+		minutes < 1
+			? `${Math.round(seconds)} seconds`
+			: `${minutes.toFixed(2)} minutes`;
+
+	callback({
+		message: `Export complete in ${durMsg}`,
+		complete: true,
+	});
 }
 
 export {

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { SSHConfig } from '../../../../main/export/types';
-import { ExportSSHConfigModal } from './ExportSSHConfigModal';
+import { FileClientConnectConfig } from '../../../../main/export/types';
+import { ExportRemoteConfigModal } from './ExportRemoteConfigModal';
 import { exportToMister } from '../exportSlice';
 import { dispatch } from '../../../store';
 
-function ConnectedExportSSHConfigModal() {
+function ConnectedExportRemoteConfigModal() {
 	const [modalOpen, setModalOpen] = useState(false);
 
 	useEffect(() => {
@@ -13,13 +13,13 @@ function ConnectedExportSSHConfigModal() {
 		});
 	}, [setModalOpen]);
 
-	function handleExport(config: SSHConfig) {
+	function handleExport(config: FileClientConnectConfig) {
 		dispatch(exportToMister(config));
 		setModalOpen(false);
 	}
 
 	return (
-		<ExportSSHConfigModal
+		<ExportRemoteConfigModal
 			isOpen={modalOpen}
 			onRequestClose={() => {
 				setModalOpen(false);
@@ -29,4 +29,4 @@ function ConnectedExportSSHConfigModal() {
 	);
 }
 
-export { ConnectedExportSSHConfigModal };
+export { ConnectedExportRemoteConfigModal };
