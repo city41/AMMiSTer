@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -15,6 +15,8 @@
 		"build:win": "electron-builder build --win",
 		"build:mac": "electron-builder build --mac",
 		"build:linux": "electron-builder build --linux",
+		"prerelease": "yarn prod",
+		"release": "electron-builder --windows --linux --publish always",
 		"clean": "rimraf dist && rimraf out",
 		"storybook": "start-storybook -p 6006",
 		"build-storybook": "build-storybook",
@@ -43,7 +45,8 @@
 			}
 		},
 		"linux": {
-			"target": "AppImage"
+			"target": "AppImage",
+			"category": "Utility"
 		},
 		"nsis": {
 			"oneClick": false,

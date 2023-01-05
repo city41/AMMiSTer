@@ -18,7 +18,7 @@ const debug = Debug('main/main.ts');
 
 debug('versions', JSON.stringify(process.versions));
 
-let mainWindow: BrowserWindow;
+let mainWindow: BrowserWindow | undefined;
 
 let lastPlanSavePath: string | null = null;
 
@@ -46,13 +46,13 @@ function createWindow() {
 				{
 					label: 'New Plan',
 					accelerator: 'Ctrl+N',
-					click: () => mainWindow.webContents.send('menu:loadNewPlan'),
+					click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
 					accelerator: 'Ctrl+O',
 					click: async () => {
-						const result = await dialog.showOpenDialog(mainWindow, {
+						const result = await dialog.showOpenDialog(mainWindow!, {
 							filters: [{ name: 'Plans', extensions: ['amip'] }],
 						});
 
@@ -60,7 +60,7 @@ function createWindow() {
 							const openedPlan = await plan.openPlan(result.filePaths[0]);
 							if (openedPlan) {
 								debug('Open Plan: sending opened plan to mainWindow');
-								mainWindow.webContents.send('menu:loadOpenedPlan', openedPlan);
+								mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
 								lastPlanSavePath = result.filePaths[0];
 							} else {
 								debug(
@@ -74,14 +74,14 @@ function createWindow() {
 					label: 'Save Plan',
 					accelerator: 'Ctrl+S',
 					click: async () => {
-						mainWindow.webContents.send('menu:savePlan');
+						mainWindow!.webContents.send('menu:savePlan');
 					},
 				},
 				{
 					label: 'Save Plan As...',
 					accelerator: 'Ctrl+shift+S',
 					click: async () => {
-						mainWindow.webContents.send('menu:savePlanAs');
+						mainWindow!.webContents.send('menu:savePlanAs');
 					},
 				},
 			],
@@ -92,7 +92,8 @@ function createWindow() {
 				{
 					label: 'Check For Updates...',
 					id: 'catalog-check-for-updates',
-					click: () => mainWindow.webContents.send('menu:kickOffCatalogUpdate'),
+					click: () =>
+						mainWindow!.webContents.send('menu:kickOffCatalogUpdate'),
 				},
 			],
 		},
@@ -102,14 +103,14 @@ function createWindow() {
 				{
 					label: 'Export to Directory...',
 					click: () => {
-						mainWindow.webContents.send('menu:exportToDirectory');
+						mainWindow!.webContents.send('menu:exportToDirectory');
 					},
 					id: 'export-export-to-directory',
 				},
 				{
 					label: 'Export to MiSTer...',
 					click: () => {
-						mainWindow.webContents.send('menu:exportToMister');
+						mainWindow!.webContents.send('menu:exportToMister');
 					},
 				},
 			],
@@ -119,15 +120,15 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'Load Demo Plan...',
-					click: () => mainWindow.webContents.send('menu:loadDemoPlan'),
+					click: () => mainWindow!.webContents.send('menu:loadDemoPlan'),
 				},
 				{
-					click: () => mainWindow.reload(),
+					click: () => mainWindow!.reload(),
 					label: 'Refresh',
 					accelerator: 'Ctrl+r',
 				},
 				{
-					click: () => mainWindow.webContents.toggleDevTools(),
+					click: () => mainWindow!.webContents.toggleDevTools(),
 					label: 'Dev Tools',
 					accelerator: 'Ctrl+Shift+i',
 				},
@@ -145,16 +146,23 @@ function createWindow() {
 
 	// Emitted when the window is closed.
 	mainWindow.on('closed', () => {
-		// Dereference the window object, usually you would store windows
-		// in an array if your app supports multi windows, this is the time
-		// when you should delete the corresponding element.
-		// mainWindow = undefined;
+		mainWindow = undefined;
 	});
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// workaround for crashing on Windows
+// https://github.com/electron/electron/issues/32074
+if (process.platform === 'win32') {
+	// TODO: likley all of these are not needed
+	app.commandLine.appendSwitch('disable-gpu');
+	app.commandLine.appendSwitch('disable-software-rasterizer');
+	app.commandLine.appendSwitch('disable-gpu-compositing');
+	app.commandLine.appendSwitch('disable-gpu-rasterization');
+	app.commandLine.appendSwitch('disable-gpu-sandbox');
+	app.commandLine.appendSwitch('--no-sandbox');
+	app.disableHardwareAcceleration();
+}
+
 app
 	.whenReady()
 	.then(async () => {
@@ -178,11 +186,8 @@ app
 		/* no action */
 	});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-	if (process.platform !== 'darwin') app.quit();
+	app.quit();
 });
 
 ipcMain.handle('main:getVersion', async () => {
@@ -247,7 +252,7 @@ ipcMain.handle('plan:newPlan', () => {
 });
 
 ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
-	const result = await dialog.showSaveDialog(mainWindow, {
+	const result = await dialog.showSaveDialog(mainWindow!, {
 		filters: [{ name: 'Plans', extensions: ['amip'] }],
 	});
 
@@ -259,7 +264,7 @@ ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
 
 ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 	if (!lastPlanSavePath) {
-		const result = await dialog.showSaveDialog(mainWindow, {
+		const result = await dialog.showSaveDialog(mainWindow!, {
 			filters: [{ name: 'Plans', extensions: ['amip'] }],
 		});
 
@@ -274,7 +279,7 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 });
 
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
-	const result = await dialog.showOpenDialog(mainWindow, {
+	const result = await dialog.showOpenDialog(mainWindow!, {
 		properties: ['openDirectory', 'createDirectory'],
 	});
 
