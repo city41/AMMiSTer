@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { buildFileOperations, buildFileOperationPath } from '../export';
 import { SrcFileOperationPath, DestFileOperationPath } from '../types';
 
@@ -40,7 +41,9 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[]
+				);
 			});
 
 			it('should return a copy if src has a file that dest does not', function () {
@@ -55,13 +58,15 @@ describe('export', function () {
 
 				const destOpPaths: DestFileOperationPath[] = [];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([
-					{
-						action: 'copy',
-						srcPath: 'mockdb/_Arcade/foo.mra',
-						destPath: '_Arcade/foo.mra',
-					},
-				]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[
+						{
+							action: 'copy',
+							srcPath: 'mockdb/_Arcade/foo.mra',
+							destPath: '_Arcade/foo.mra',
+						},
+					]
+				);
 			});
 
 			it('should return a delete if dest has a file that src does not', function () {
@@ -74,12 +79,14 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([
-					{
-						action: 'delete',
-						destPath: '_Arcade/foo.mra',
-					},
-				]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[
+						{
+							action: 'delete',
+							destPath: '_Arcade/foo.mra',
+						},
+					]
+				);
 			});
 
 			it('should return unique file operations regardless of dupes in input', function () {
@@ -96,12 +103,14 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([
-					{
-						action: 'delete',
-						destPath: '_Arcade/foo.mra',
-					},
-				]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[
+						{
+							action: 'delete',
+							destPath: '_Arcade/foo.mra',
+						},
+					]
+				);
 			});
 		});
 
@@ -131,7 +140,9 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[]
+				);
 			});
 
 			it('should copy src and delete dest if dest is older', function () {
@@ -159,17 +170,19 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([
-					{
-						action: 'copy',
-						srcPath: 'mockdb/_Arcade/cores/foo_20230102.rbf',
-						destPath: '_Arcade/cores/foo_20230102.rbf',
-					},
-					{
-						action: 'delete',
-						destPath: '_Arcade/cores/foo_20230101.rbf',
-					},
-				]);
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[
+						{
+							action: 'copy',
+							srcPath: 'mockdb/_Arcade/cores/foo_20230102.rbf',
+							destPath: '_Arcade/cores/foo_20230102.rbf',
+						},
+						{
+							action: 'delete',
+							destPath: '_Arcade/cores/foo_20230101.rbf',
+						},
+					]
+				);
 			});
 		});
 	});

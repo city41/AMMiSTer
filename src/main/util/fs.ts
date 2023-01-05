@@ -39,3 +39,15 @@ export function convertFileNameDate(
 	}
 	return d;
 }
+
+export function misterPathJoiner(...segments: string[]): string {
+	if (process.platform !== 'win32') {
+		return path.join(...segments);
+	}
+
+	const cleanedSegments = segments.map((s) => {
+		return s.replace(/\\/g, '/');
+	});
+
+	return cleanedSegments.join('/');
+}

@@ -17,7 +17,11 @@ import {
 	DestDatedFilenameFileOperationPath,
 } from './types';
 import uniqBy from 'lodash/uniqBy';
-import { convertFileNameDate, getGameCacheDir } from '../util/fs';
+import {
+	convertFileNameDate,
+	getGameCacheDir,
+	misterPathJoiner,
+} from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
 
 const debug = Debug('main/export/export.ts');
@@ -95,7 +99,8 @@ function isDestDatedFileOperationPath(
 
 function buildFileOperations(
 	srcOpPaths: SrcFileOperationPath[],
-	destOpPaths: DestFileOperationPath[]
+	destOpPaths: DestFileOperationPath[],
+	destPathJoiner: (...segments: string[]) => string
 ): FileOperation[] {
 	const srcExactPaths = srcOpPaths.filter(isSrcExactFileOperationPath);
 	const destExactPaths = destOpPaths.filter(isDestExactFileOperationPath);
@@ -154,7 +159,10 @@ function buildFileOperations(
 						srcOpPath.cacheRelDirPath,
 						srcOpPath.fileName
 					),
-					destPath: path.join(srcOpPath.destRelDirPath, srcOpPath.fileName),
+					destPath: destPathJoiner(
+						srcOpPath.destRelDirPath,
+						srcOpPath.fileName
+					),
 				},
 			];
 		}
@@ -199,7 +207,7 @@ function buildFileOperations(
 			return [
 				{
 					action: 'delete',
-					destPath: path.join(destOpPath.relDirPath, destOpPath.fileName),
+					destPath: destPathJoiner(destOpPath.relDirPath, destOpPath.fileName),
 				},
 			];
 		} else {
@@ -242,7 +250,7 @@ async function performLocalFileSystemFileOperations(
 	}
 }
 
-async function performSambaFileSystemFileOperations(
+async function performSshFileSystemFileOperations(
 	srcDirRoot: string,
 	destDirRoot: string,
 	ssh: SSH,
@@ -255,7 +263,8 @@ async function performSambaFileSystemFileOperations(
 		const srcPath =
 			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
 
-		const destPath = path.join(destDirRoot, fileOp.destPath);
+		// dest paths are for the mister, path.join is wrong
+		const destPath = misterPathJoiner(destDirRoot, fileOp.destPath);
 
 		switch (fileOp.action) {
 			case 'copy': {
@@ -284,7 +293,8 @@ const actionToVerb: Record<FileOperation['action'], string> = {
 
 function getSrcPathsFromPlan(
 	planDir: PlanGameDirectory,
-	currentDirPath: string
+	currentDirPath: string,
+	destPathJoiner: (...segments: string[]) => string
 ): SrcFileOperationPath[] {
 	const paths: SrcFileOperationPath[] = [];
 
@@ -293,7 +303,8 @@ function getSrcPathsFromPlan(
 			const subPaths = getSrcPathsFromPlan(
 				entry.games,
 				// mra directories need to start with _
-				path.join(currentDirPath, `_${entry.directoryName}`)
+				path.join(currentDirPath, `_${entry.directoryName}`),
+				destPathJoiner
 			);
 			paths.push(...subPaths);
 		} else {
@@ -303,7 +314,7 @@ function getSrcPathsFromPlan(
 					db_id: entry.db_id,
 					cacheRelPath: entry.files.mra.relFilePath,
 					// only mras go into subdirectories
-					destRelPath: path.join(currentDirPath, entry.files.mra.fileName),
+					destRelPath: destPathJoiner(currentDirPath, entry.files.mra.fileName),
 				});
 			}
 			if (entry.files.rbf) {
@@ -378,7 +389,8 @@ async function getExistingSshDestPaths(
 	const entries = await ssh.list(curDirPath);
 
 	for (const entry of entries) {
-		const p = path.join(curDirPath, entry.name);
+		// since this is running on the mister, path.join is incorrect
+		const p = misterPathJoiner(curDirPath, entry.name);
 		debug(`p: ${p}`);
 		const s = await ssh.stat(p);
 
@@ -431,9 +443,9 @@ async function exportToDirectory(
 		providedCallback(args);
 	};
 
-	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
+	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', path.join);
 	const destPaths = await getExistingLocalDestPaths(destDirPath, '');
-	const fileOperations = buildFileOperations(srcPaths, destPaths);
+	const fileOperations = buildFileOperations(srcPaths, destPaths, path.join);
 
 	debug(
 		`exportToDirectory: fileOperations:\n${fileOperations
@@ -471,7 +483,7 @@ async function deleteEmptySSHDirectories(ssh: SSH, curDirPath: string) {
 	const entries = await ssh.list(curDirPath);
 
 	for (const entry of entries) {
-		const p = path.join(curDirPath, entry.name);
+		const p = misterPathJoiner(curDirPath, entry.name);
 		const s = await ssh.stat(p);
 
 		if (s.isDirectory) {
@@ -514,9 +526,9 @@ async function exportToMister(
 
 	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
 	// this path is on the mister itself, using path.join would be wrong
-	const mountPath = `/media/${mountDir}/`;
+	const mountPath = misterPathJoiner('/media/', mountDir);
 
-	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade');
+	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', misterPathJoiner);
 
 	debug(`exportToMister: ${srcPaths.length} srcPaths`);
 
@@ -524,16 +536,20 @@ async function exportToMister(
 	const destArcadePaths = await getExistingSshDestPaths(
 		client,
 		mountPath,
-		path.join(mountPath, '_Arcade')
+		misterPathJoiner(mountPath, '_Arcade')
 	);
 	const destRomPaths = await getExistingSshDestPaths(
 		client,
 		mountPath,
-		path.join(mountPath, 'games', 'mame')
+		misterPathJoiner(mountPath, 'games', 'mame')
 	);
 	const destPaths = destArcadePaths.concat(destRomPaths);
 	debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
-	const fileOperations = buildFileOperations(srcPaths, destPaths);
+	const fileOperations = buildFileOperations(
+		srcPaths,
+		destPaths,
+		misterPathJoiner
+	);
 
 	debug(
 		`exportToMister: fileOperations:\n${fileOperations
@@ -543,7 +559,7 @@ async function exportToMister(
 
 	const gameCacheDir = await getGameCacheDir();
 
-	await performSambaFileSystemFileOperations(
+	await performSshFileSystemFileOperations(
 		gameCacheDir,
 		mountPath,
 		client,
@@ -556,7 +572,10 @@ async function exportToMister(
 	);
 
 	callback({ message: 'Cleaning up empty directories' });
-	await deleteEmptySSHDirectories(client, path.join(mountPath, '_Arcade'));
+	await deleteEmptySSHDirectories(
+		client,
+		misterPathJoiner(mountPath, '_Arcade')
+	);
 
 	await client.end();
 	callback({ message: 'Export complete', complete: true });

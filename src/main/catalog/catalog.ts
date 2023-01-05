@@ -357,7 +357,7 @@ async function parseMraToCatalogEntry(
 					db_id,
 					fileName: r,
 					// path.join is used to account for OS specific path separators
-					relFilePath: path.join('games', 'mamed', r),
+					relFilePath: path.join('games', 'mame', r),
 					type: 'rom',
 					md5: rData ? getFileMd5Hash(rData) : undefined,
 				});
