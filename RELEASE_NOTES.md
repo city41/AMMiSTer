@@ -4,6 +4,11 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.2.1
+
+- [All] Add Quit to file menu
+- [Mac] Fixed accelerators issue
+
 ## Version 0.2.0
 
 - [All] Warning first update is slow
