@@ -12,11 +12,15 @@ type PublicBulkAddModalProps = ModalProps & { className?: string };
 
 type InternalBulkAddModalProps = {
 	onApply: (args: { criteria: BulkAddCriteria[]; destination: string }) => void;
+	onDestinationChange: (newDest: string) => void;
+	destinationExists: boolean;
 };
 
 function BulkAddModal({
 	className,
 	onApply,
+	onDestinationChange,
+	destinationExists,
 	...rest
 }: PublicBulkAddModalProps & InternalBulkAddModalProps) {
 	const [criterias, setCriterias] = useState<BulkAddCriteria[]>([
@@ -109,14 +113,19 @@ function BulkAddModal({
 									value={destination}
 									onChange={(e) => {
 										setDestination(e.target.value);
+										onDestinationChange(e.target.value);
 									}}
 								/>
+								{!destinationExists && (
+									<div className="text-sm text-red-700">Not found in plan</div>
+								)}
 							</dd>
 						</div>
 					</dl>
 				</div>
 				<div className="flex flex-row justify-end p-2">
 					<Button
+						disabled={!destinationExists}
 						onClick={() => {
 							onApply({ criteria: criterias, destination });
 						}}

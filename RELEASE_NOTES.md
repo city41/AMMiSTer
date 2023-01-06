@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.3.1
+
+- [All] Simple plan path validatin in "Bulk Add"
+
 ## Version 0.3.0
 
 - [All] Initial implemenetation of "Bulk Add"

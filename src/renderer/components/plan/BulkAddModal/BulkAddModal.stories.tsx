@@ -9,6 +9,24 @@ const meta: Meta = {
 
 export default meta;
 
-export const Basic = () => {
-	return <BulkAddModal isOpen onApply={() => {}} />;
+export const DestinationExists = () => {
+	return (
+		<BulkAddModal
+			isOpen
+			onApply={() => {}}
+			onDestinationChange={() => {}}
+			destinationExists
+		/>
+	);
+};
+
+export const DestinationDoesNotExist = () => {
+	return (
+		<BulkAddModal
+			isOpen
+			onApply={() => {}}
+			onDestinationChange={() => {}}
+			destinationExists={false}
+		/>
+	);
 };

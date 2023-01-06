@@ -67,14 +67,7 @@ function BaseFeedbackModal({
 					</div>
 				</div>
 				<div className="bg-gray-50 px-6 py-3 flex flex-row-reverse">
-					<Button
-						disabled={!okButtonEnabled}
-						onClick={onOkClick}
-						className={clsx({
-							'bg-indigo-600 text-white': okButtonEnabled,
-							'bg-gray-300 text-gray-400': !okButtonEnabled,
-						})}
-					>
+					<Button disabled={!okButtonEnabled} onClick={onOkClick}>
 						{okButtonText ?? 'Okay'}
 					</Button>
 				</div>

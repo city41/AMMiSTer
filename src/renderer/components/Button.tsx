@@ -10,7 +10,11 @@ function Button({ className, ...rest }: ButtonProps) {
 		<button
 			className={clsx(
 				className,
-				'rounded-md bg-indigo-600 px-4 py-2 font-medium text-sm shadow-sm bg-indigo-600 text-white'
+				'rounded-md px-4 py-2 font-medium text-sm shadow-sm',
+				{
+					'bg-indigo-600 text-white': !rest.disabled,
+					'bg-gray-300 text-gray-400': !!rest.disabled,
+				}
 			)}
 			{...rest}
 		/>
