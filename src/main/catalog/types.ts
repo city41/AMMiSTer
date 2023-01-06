@@ -122,9 +122,19 @@ export type Catalog = {
 	updatedAt: number;
 } & Record<string, CatalogEntry[]>;
 
-export type UpdateCallback = (args: {
+export type UpdateError = {
+	type: 'connect-fail' | 'file-error' | 'unknown';
+	fileEntry?: FileEntry;
+	message?: string;
+};
+
+export type UpdateStatus = {
 	message: string;
 	complete?: boolean;
+	fresh?: boolean;
 	catalog?: Catalog;
 	updates?: Update[];
-}) => void;
+	error?: UpdateError;
+};
+
+export type UpdateCallback = (status: UpdateStatus) => void;

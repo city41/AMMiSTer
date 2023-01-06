@@ -52,12 +52,66 @@ export const Updates = () => {
 	return <UpdateModal isOpen updates={[update1, update2]} onClose={() => {}} />;
 };
 
+export const IsFreshUpdate = () => {
+	return (
+		<UpdateModal
+			isOpen
+			updates={null}
+			fresh
+			message="Downloading foo.zip"
+			onClose={() => {}}
+		/>
+	);
+};
+
 export const LotsOfUpdates = () => {
 	const updates = [];
-	for (let i = 0; i < 20; ++i) {
+	for (let i = 0; i < 200; ++i) {
 		updates.push(update1);
 		updates.push(update2);
 	}
 
 	return <UpdateModal isOpen updates={updates} onClose={() => {}} />;
+};
+
+export const UnknownError = () => {
+	return (
+		<UpdateModal
+			isOpen
+			updates={null}
+			error={{ type: 'unknown', message: `Can't call foo of undefined` }}
+			onClose={() => {}}
+		/>
+	);
+};
+
+export const ConnectError = () => {
+	return (
+		<UpdateModal
+			isOpen
+			updates={null}
+			error={{ type: 'connect-fail' }}
+			onClose={() => {}}
+		/>
+	);
+};
+
+export const FileError = () => {
+	return (
+		<UpdateModal
+			isOpen
+			updates={null}
+			error={{
+				type: 'file-error',
+				fileEntry: {
+					fileName: 'foo.rbf',
+					db_id: 'jtcores',
+					relFilePath: '_Arcade/cores/foo.rbf',
+					type: 'rbf',
+					remoteUrl: '',
+				},
+			}}
+			onClose={() => {}}
+		/>
+	);
 };

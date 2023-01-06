@@ -1,5 +1,4 @@
 import { ReadStream } from 'original-fs';
-import { FileEntry } from '../catalog/types';
 
 export type ExportType = 'directory' | 'mister';
 

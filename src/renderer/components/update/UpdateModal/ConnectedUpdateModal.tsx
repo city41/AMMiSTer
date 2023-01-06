@@ -8,8 +8,14 @@ import { UpdateModal } from './UpdateModal';
 function ConnectedUpdateModal() {
 	const [modalClosed, setModalClosed] = useState(false);
 
-	const { message, complete } = useSelector(
-		(state: AppState) => state.catalog.updateCatalogStatus ?? { message: '' }
+	const { message, fresh, complete, error } = useSelector(
+		(state: AppState) =>
+			state.catalog.updateCatalogStatus ?? {
+				message: '',
+				fresh: undefined,
+				complete: undefined,
+				error: undefined,
+			}
 	);
 
 	const updates = useSelector((state: AppState) => state.catalog.updates);
@@ -30,6 +36,7 @@ function ConnectedUpdateModal() {
 		<UpdateModal
 			isOpen={typeof complete === 'boolean' && !modalClosed}
 			message={message}
+			fresh={fresh}
 			updates={updates}
 			onClose={() => setModalClosed(true)}
 		/>

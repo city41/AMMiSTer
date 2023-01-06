@@ -50,7 +50,12 @@ function BaseFeedbackModal({
 								}
 							)}
 						>
-							<Icon className="text-indigo-300" />
+							<Icon
+								className={clsx({
+									'text-indigo-300': !errorOccured,
+									'text-red-600': errorOccured,
+								})}
+							/>
 						</div>
 						<div className="mt-0 ml-4 flex flex-col gap-y-2">
 							<h3 className="text-lg font-medium leading-6 text-gray-900">

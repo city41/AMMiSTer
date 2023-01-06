@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { Catalog, CatalogEntry, Update } from '../../../main/catalog/types';
+import {
+	Catalog,
+	CatalogEntry,
+	Update,
+	UpdateStatus,
+} from '../../../main/catalog/types';
 import { AppState } from '../../store';
-
-type UpdateStatus = {
-	message: string;
-	complete?: boolean;
-};
 
 type CatalogState = {
 	catalog: Catalog | null;
@@ -36,7 +36,7 @@ const catalogSlice = createSlice({
 			action: PayloadAction<UpdateStatus>
 		) {
 			state.updateCatalogStatus = {
-				message: action.payload.message,
+				...action.payload,
 				complete: action.payload.complete ?? false,
 			};
 		},

@@ -163,7 +163,7 @@ async function updateFile(update: Update): Promise<void> {
  */
 async function downloadUpdatesForDb(
 	db: DBJSON,
-	cb: (update: Update) => void
+	cb: (err: null | string, update: Update) => void
 ): Promise<Update[]> {
 	const fileEntries = convertDbToFileEntries(db).filter(
 		(f) =>
@@ -181,9 +181,15 @@ async function downloadUpdatesForDb(
 			debug(
 				`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
 			);
-			cb(update);
-			await updateFile(update);
-			updates.push(update);
+			cb(null, update);
+			try {
+				await updateFile(update);
+				updates.push(update);
+			} catch (e) {
+				const message = e instanceof Error ? e.message : String(e);
+				cb(message, update);
+				break;
+			}
 		}
 	}
 
@@ -692,90 +698,142 @@ function addMisingRomsToCatalog(
 async function updateCatalog(
 	providedCallback: UpdateCallback
 ): Promise<{ updates: Update[]; catalog: Catalog }> {
-	const gameCacheDir = await getGameCacheDir();
-	await mkdirp(gameCacheDir);
-
-	await orientationCache.init();
-	await archive404Cache.init();
-
-	const updates: Update[] = [];
-
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
 		providedCallback(args);
 	};
 
-	for (const [dbId, dbUrl] of Object.entries(dbs)) {
-		callback({ message: `Checking for anything new in ${dbId}` });
+	const FAIL_RETURN: { updates: Update[]; catalog: Catalog } = {
+		updates: [],
+		// @ts-expect-error
+		catalog: { updatedAt: Date.now() },
+	};
 
-		const dbResult = await getDbJson(dbUrl);
-		const dbUpdates = await downloadUpdatesForDb(dbResult, (update) => {
-			const verb: Record<UpdateReason, string> = {
-				missing: 'Dowloading',
-				updated: 'Updating',
-				corrupt: 'Fixing',
-				fulfilled: '',
-			};
+	try {
+		const gameCacheDir = await getGameCacheDir();
+		await mkdirp(gameCacheDir);
 
+		await orientationCache.init();
+		await archive404Cache.init();
+
+		const updates: Update[] = [];
+
+		const currentCatalog = await getCurrentCatalog();
+
+		let updateDbErrorOccurred = false;
+
+		for (const [dbId, dbUrl] of Object.entries(dbs)) {
 			callback({
-				message: `${verb[update.updateReason]} ${update.fileEntry.fileName}`,
+				fresh: !currentCatalog,
+				message: `Checking for anything new in ${dbId}`,
+			});
+
+			const dbResult = await getDbJson(dbUrl);
+
+			const dbUpdates = await downloadUpdatesForDb(dbResult, (err, update) => {
+				if (err) {
+					updateDbErrorOccurred = true;
+					callback({
+						message: '',
+						error: { type: 'file-error', fileEntry: update.fileEntry },
+					});
+				} else {
+					const verb: Record<UpdateReason, string> = {
+						missing: 'Dowloading',
+						updated: 'Updating',
+						corrupt: 'Fixing',
+						fulfilled: '',
+					};
+
+					callback({
+						fresh: !currentCatalog,
+						message: `${verb[update.updateReason]} ${
+							update.fileEntry.fileName
+						}`,
+					});
+				}
+			});
+
+			if (updateDbErrorOccurred) {
+				return FAIL_RETURN;
+			}
+
+			updates.push(...dbUpdates);
+		}
+
+		let catalogUpdated = false;
+		let catalog;
+
+		// nothing to update and we already have a catalog from a previous run?
+		// then just use it. If we have no catalog, we'll build a new one despite the lack of updates
+		if (updates.length === 0 && currentCatalog) {
+			catalog = currentCatalog;
+		}
+
+		if (!catalog) {
+			catalogUpdated = true;
+			callback({
+				fresh: !currentCatalog,
+				message: 'Building catalog... (this may take a bit)',
+			});
+			catalog = await buildGameCatalog();
+		}
+
+		const missingRoms = await determineMissingRoms(catalog);
+		debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
+
+		if (missingRoms.length > 0) {
+			callback({
+				fresh: !currentCatalog,
+				message: 'Checking for missing ROMs',
+			});
+		}
+		const romUpdates = await downloadRoms(missingRoms, (update) => {
+			callback({
+				fresh: !currentCatalog,
+				message: `Downloaded ROM ${update.fileEntry.fileName}`,
 			});
 		});
-		updates.push(...dbUpdates);
+
+		let finalCatalog;
+		if (romUpdates.length > 0) {
+			catalogUpdated = true;
+			callback({
+				fresh: !currentCatalog,
+				message: 'Adding new ROMs to the catalog',
+			});
+			finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
+		} else {
+			finalCatalog = catalog;
+			finalCatalog.updatedAt = Date.now();
+		}
+
+		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+
+		await orientationCache.save();
+		await archive404Cache.save();
+
+		const message = catalogUpdated ? 'Update finished' : 'No updates available';
+
+		callback({
+			message,
+			complete: true,
+			catalog: finalCatalog,
+			updates: updates.concat(romUpdates),
+		});
+
+		return { updates, catalog: finalCatalog };
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		debug('updateCatalog: unknown error', e);
+		callback({
+			message: '',
+			error: { type: 'unknown', message },
+		});
+
+		return FAIL_RETURN;
 	}
-
-	const currentCatalog = await getCurrentCatalog();
-	let catalogUpdated = false;
-	let catalog;
-
-	// nothing to update and we already have a catalog from a previous run?
-	// then just use it. If we have no catalog, we'll build a new one despite the lack of updates
-	if (updates.length === 0 && currentCatalog) {
-		catalog = currentCatalog;
-	}
-
-	if (!catalog) {
-		catalogUpdated = true;
-		callback({ message: 'Building catalog... (this may take a bit)' });
-		catalog = await buildGameCatalog();
-	}
-
-	const missingRoms = await determineMissingRoms(catalog);
-	debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
-
-	if (missingRoms.length > 0) {
-		callback({ message: 'Checking for missing ROMs' });
-	}
-	const romUpdates = await downloadRoms(missingRoms, (update) => {
-		callback({ message: `Downloaded ROM ${update.fileEntry.fileName}` });
-	});
-
-	let finalCatalog;
-	if (romUpdates.length > 0) {
-		catalogUpdated = true;
-		callback({ message: 'Adding new ROMs to the catalog' });
-		finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
-	} else {
-		finalCatalog = catalog;
-		finalCatalog.updatedAt = Date.now();
-	}
-
-	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
-	await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
-
-	await orientationCache.save();
-	await archive404Cache.save();
-
-	const message = catalogUpdated ? 'Update finished' : 'No updates available';
-
-	callback({
-		message,
-		complete: true,
-		catalog: finalCatalog,
-		updates: updates.concat(romUpdates),
-	});
-
-	return { updates, catalog: finalCatalog };
 }
 
 async function getCurrentCatalog(): Promise<Catalog | null> {
