@@ -4,6 +4,14 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.2.0
+
+- [All] Warning first update is slow
+- [All] Error if failure to connect to a mister
+- [All] Error reporting on export errors
+- [All] Error reporting on update errors
+- [Mac] Fixed accelerators to use cmnd instead of ctrl
+
 ## Version 0.1.1
 
 - [All] Fixed a bug where it would delete remote paths incorrectly

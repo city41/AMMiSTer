@@ -2,7 +2,6 @@ import path from 'node:path';
 import Debug from 'debug';
 import settings from 'electron-settings';
 import { BrowserWindow, app, dialog, ipcMain, Menu, shell } from 'electron';
-import * as nodeEnv from '../utils/node-env';
 
 import * as catalog from './catalog';
 import * as plan from './plan';
@@ -25,15 +24,16 @@ let mainWindow: BrowserWindow | undefined;
 
 let lastPlanSavePath: string | null = null;
 
+const isDev = app.getName() !== 'ammister';
+
 function createWindow() {
-	// Create the browser window.
 	mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
 		webPreferences: {
-			devTools: nodeEnv.dev,
+			devTools: isDev,
 			preload: path.join(__dirname, '../preload.bundle.js'),
-			webSecurity: nodeEnv.prod,
+			webSecurity: !isDev,
 		},
 	});
 
@@ -42,7 +42,7 @@ function createWindow() {
 		return { action: 'deny' };
 	});
 
-	const menu = Menu.buildFromTemplate([
+	const menuTemplate = [
 		{
 			label: 'File',
 			submenu: [
@@ -94,6 +94,7 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'Check For Updates...',
+					accelerator: '',
 					id: 'catalog-check-for-updates',
 					click: () =>
 						mainWindow!.webContents.send('menu:kickOffCatalogUpdate'),
@@ -112,6 +113,7 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'Export to Directory...',
+					accelerator: '',
 					click: () => {
 						mainWindow!.webContents.send('menu:exportToDirectory');
 					},
@@ -119,42 +121,46 @@ function createWindow() {
 				},
 				{
 					label: 'Export to MiSTer...',
+					accelerator: '',
 					click: () => {
 						mainWindow!.webContents.send('menu:exportToMister');
 					},
 				},
 			],
 		},
-		{
+	];
+
+	if (isDev) {
+		menuTemplate.push({
 			label: 'Dev',
 			submenu: [
 				{
 					label: 'Load Demo Plan...',
+					accelerator: '',
 					click: () => mainWindow!.webContents.send('menu:loadDemoPlan'),
 				},
 				{
-					click: () => mainWindow!.reload(),
 					label: 'Refresh',
 					accelerator: 'Ctrl+r',
+					click: () => mainWindow!.reload(),
 				},
 				{
-					click: () => mainWindow!.webContents.toggleDevTools(),
 					label: 'Dev Tools',
 					accelerator: 'Ctrl+Shift+i',
+					click: () => mainWindow!.webContents.toggleDevTools(),
 				},
 			],
-		},
-	]);
+		});
+	}
 
-	Menu.setApplicationMenu(menu);
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
 	// and load the index.html of the app.
-	const indexPath = nodeEnv.dev ? '../index.html' : './index.html';
+	const indexPath = isDev ? '../index.html' : './index.html';
 	mainWindow.loadFile(indexPath).finally(() => {
 		/* no action */
 	});
 
-	// Emitted when the window is closed.
 	mainWindow.on('closed', () => {
 		mainWindow = undefined;
 	});
@@ -163,7 +169,7 @@ function createWindow() {
 // workaround for crashing on Windows
 // https://github.com/electron/electron/issues/32074
 if (process.platform === 'win32') {
-	// TODO: likley all of these are not needed
+	// TODO: likely all of these are not needed
 	app.commandLine.appendSwitch('disable-gpu');
 	app.commandLine.appendSwitch('disable-software-rasterizer');
 	app.commandLine.appendSwitch('disable-gpu-compositing');
@@ -211,11 +217,6 @@ ipcMain.handle('settings:getWelcomeDismissed', async () => {
 
 ipcMain.handle('settings:setWelcomeDismissed', () => {
 	return settings.set('welcome-dismissed', 'true');
-});
-
-ipcMain.on('renderer-ready', () => {
-	// eslint-disable-next-line no-console
-	console.log('Renderer is ready.');
 });
 
 ipcMain.handle('catalog:getDbJson', async (_event, url: string) => {
@@ -337,8 +338,4 @@ ipcMain.on(
 	}
 );
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
-
-// eslint-disable-next-line import/prefer-default-export
-export const exportedForTests = nodeEnv.test ? { createWindow } : undefined;
+export {};
