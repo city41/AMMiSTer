@@ -19,8 +19,6 @@ function ConnectedExportModal() {
 			} as const)
 	);
 
-	console.log({ message, exportType, complete, error });
-
 	useEffect(() => {
 		window.ipcAPI.menu_exportToDirectory(() => {
 			dispatch(exportToDirectory());

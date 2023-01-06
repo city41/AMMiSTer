@@ -1,6 +1,7 @@
 import React, { Children, cloneElement } from 'react';
 import clsx from 'clsx';
 import {
+	isDescendant,
 	NodeRendererProps,
 	ThemeProps,
 	TreeRendererProps,
@@ -61,10 +62,15 @@ function TreeNodeRenderer({
 	draggedNode,
 	node,
 }: TreeRendererProps<PlanTreeItem>) {
+	if (draggedNode && draggedNode !== node && isDescendant(draggedNode, node)) {
+		return null;
+	}
+
 	return connectDropTarget(
 		<div
 			className={clsx({
 				'even:bg-gray-50': !node.isDirectory,
+				'opacity-25': !!draggedNode && !node.isDirectory,
 			})}
 		>
 			{Children.map(children, (child) => {
@@ -115,22 +121,12 @@ function TreeNodeRenderer({
 //     canDrop?: boolean | undefined;
 // }
 
-const depthToDirectoryClasses: Record<number, string> = {
-	// 1: 'bg-indigo-200 text-indigo-900',
-	1: '',
-	2: '',
-	3: '',
-	4: '',
-	// 2: 'bg-indigo-300 text-indigo-700',
-	// 3: 'bg-indigo-600 text-indigo-200',
-	// 4: 'bg-indigo-600 text-indigo-100',
-};
-
 function NodeContentRenderer({
 	connectDragPreview,
 	connectDragSource,
 	canDrag,
 	title,
+	draggedNode,
 	node,
 	path,
 	treeIndex,
@@ -161,14 +157,15 @@ function NodeContentRenderer({
 				{
 					'cursor-grab': path.length > 1,
 					'opacity-50': isDragging,
-					[depthToDirectoryClasses[path.length]]: node.isDirectory,
 				}
 			)}
 			style={{ paddingLeft: scaffoldBlockPxWidth * path.length }}
 		>
 			{node.isDirectory && (
 				<Chevron
-					className="w-5 h-5 cursor-pointer"
+					className={clsx('w-5 h-5 cursor-pointer', {
+						invisible: !!draggedNode,
+					})}
 					onClick={() => toggleChildrenVisibility?.({ node, path, treeIndex })}
 				/>
 			)}
