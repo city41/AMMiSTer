@@ -18,6 +18,8 @@ const debug = Debug('main/main.ts');
 
 debug('versions', JSON.stringify(process.versions));
 
+const acclKey = process.platform === 'darwin' ? 'cmnd ' : 'ctrl';
+
 let mainWindow: BrowserWindow | undefined;
 
 let lastPlanSavePath: string | null = null;
@@ -45,12 +47,12 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'New Plan',
-					accelerator: 'Ctrl+N',
+					accelerator: `${acclKey}+N`,
 					click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
-					accelerator: 'Ctrl+O',
+					accelerator: `${acclKey}+O`,
 					click: async () => {
 						const result = await dialog.showOpenDialog(mainWindow!, {
 							filters: [{ name: 'Plans', extensions: ['amip'] }],
@@ -72,14 +74,14 @@ function createWindow() {
 				},
 				{
 					label: 'Save Plan',
-					accelerator: 'Ctrl+S',
+					accelerator: `${acclKey}+S`,
 					click: async () => {
 						mainWindow!.webContents.send('menu:savePlan');
 					},
 				},
 				{
 					label: 'Save Plan As...',
-					accelerator: 'Ctrl+shift+S',
+					accelerator: `${acclKey}+shift+S`,
 					click: async () => {
 						mainWindow!.webContents.send('menu:savePlanAs');
 					},
