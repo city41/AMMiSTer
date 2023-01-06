@@ -30,3 +30,57 @@ export const ToMister = () => {
 		/>
 	);
 };
+
+export const ConnectFailError = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			error={{ type: 'connect-fail' }}
+			onClose={() => {}}
+		/>
+	);
+};
+
+export const UnknownError = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			error={{ type: 'unknown', message: `Can't call foo of undefined` }}
+			onClose={() => {}}
+		/>
+	);
+};
+
+export const FileCopyError = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			error={{
+				type: 'file-error',
+				fileOp: { action: 'copy', srcPath: '', destPath: 'games/mame/foo.zip' },
+			}}
+			onClose={() => {}}
+		/>
+	);
+};
+
+export const FileDeleteError = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			error={{
+				type: 'file-error',
+				fileOp: { action: 'delete', destPath: 'games/mame/foo.zip' },
+			}}
+			onClose={() => {}}
+		/>
+	);
+};

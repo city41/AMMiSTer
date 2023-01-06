@@ -2,11 +2,13 @@ import { ReadStream } from 'original-fs';
 import { Client } from 'basic-ftp';
 import { FileClient, FileClientConnectConfig } from './types';
 
+const TIMEOUT_MS = 15 * 1000;
+
 class FTPFileClient implements FileClient {
 	private ftp: Client;
 
 	constructor() {
-		this.ftp = new Client();
+		this.ftp = new Client(TIMEOUT_MS);
 	}
 
 	async connect(config: FileClientConnectConfig): Promise<void> {

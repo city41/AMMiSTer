@@ -8,15 +8,18 @@ import { ExportModal } from './ExportModal';
 function ConnectedExportModal() {
 	const [modalClosed, setModalClosed] = useState(false);
 
-	const { message, exportType, complete } = useSelector(
+	const { message, exportType, complete, error } = useSelector(
 		(state: AppState) =>
 			state.export.exportStatus ??
 			({
 				message: '',
 				exportType: 'directory',
 				complete: undefined,
+				error: undefined,
 			} as const)
 	);
+
+	console.log({ message, exportType, complete, error });
 
 	useEffect(() => {
 		window.ipcAPI.menu_exportToDirectory(() => {
@@ -35,6 +38,7 @@ function ConnectedExportModal() {
 			exportType={exportType}
 			isOpen={typeof complete === 'boolean' && !modalClosed}
 			message={message}
+			error={error}
 			complete={complete}
 			onClose={() => setModalClosed(true)}
 		/>

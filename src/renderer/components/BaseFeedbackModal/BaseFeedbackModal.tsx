@@ -6,6 +6,7 @@ import { IconType } from 'src/renderer/icons';
 type BaseFeedbackModalProps = ModalProps & {
 	icon: IconType;
 	title: string;
+	errorOccured?: boolean;
 	okButtonEnabled?: boolean;
 	okButtonText?: string;
 	onOkClick: () => void;
@@ -14,6 +15,7 @@ type BaseFeedbackModalProps = ModalProps & {
 function BaseFeedbackModal({
 	icon,
 	title,
+	errorOccured,
 	okButtonEnabled,
 	okButtonText,
 	onOkClick,
@@ -39,7 +41,15 @@ function BaseFeedbackModal({
 						className="grid gap-x-2"
 						style={{ gridTemplateColumns: 'max-content 1fr' }}
 					>
-						<div className="flex h-12 w-12 p-2 items-center justify-center rounded-full bg-indigo-50">
+						<div
+							className={clsx(
+								'flex h-12 w-12 p-2 items-center justify-center rounded-full',
+								{
+									'bg-indigo-50': !errorOccured,
+									'bg-red-300': errorOccured,
+								}
+							)}
+						>
 							<Icon className="text-indigo-300" />
 						</div>
 						<div className="mt-0 ml-4 flex flex-col gap-y-2">

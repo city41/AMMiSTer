@@ -1,9 +1,22 @@
 import { ReadStream } from 'original-fs';
+import { FileEntry } from '../catalog/types';
 
-export type UpdateCallback = (args: {
+export type ExportType = 'directory' | 'mister';
+
+export type ExportError = {
+	type: 'connect-fail' | 'file-error' | 'unknown';
+	fileOp?: FileOperation;
+	message?: string;
+};
+
+export type ExportStatus = {
+	exportType: ExportType;
 	message: string;
 	complete?: boolean;
-}) => void;
+	error?: ExportError;
+};
+
+export type UpdateCallback = (args: ExportStatus) => void;
 
 type CopyFileOperation = {
 	action: 'copy';

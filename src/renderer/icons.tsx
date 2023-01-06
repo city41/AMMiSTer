@@ -29,7 +29,7 @@ function MisterKunIcon({ className, style }: IconBaseProps) {
 			x="0px"
 			y="0px"
 			viewBox="0 0 1000 1000"
-			enable-background="new 0 0 1000 1000"
+			enableBackground="new 0 0 1000 1000"
 		>
 			<path
 				d="M695.57,43.195c-21.981,27.792-66.513,84.227-90.08,115.014H393.209c-23.568-30.787-68.098-87.222-90.08-115.014

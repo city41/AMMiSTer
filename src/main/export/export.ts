@@ -24,6 +24,7 @@ import {
 	misterPathJoiner,
 } from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
+import { useCallback } from 'react';
 const debug = Debug('main/export/export.ts');
 
 function isPlanGameDirectoryEntry(
@@ -265,7 +266,7 @@ async function performRemoteFileSystemFileOperations(
 	destDirRoot: string,
 	client: FileClient,
 	fileOps: FileOperation[],
-	cb: (fileOp: FileOperation) => void
+	cb: (error: null | Error | string, fileOp: FileOperation) => void
 ) {
 	for (const fileOp of fileOps) {
 		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
@@ -278,18 +279,28 @@ async function performRemoteFileSystemFileOperations(
 
 		switch (fileOp.action) {
 			case 'copy': {
-				cb(fileOp);
-				await client.mkDir(path.dirname(destPath), true);
-				const data = fs.createReadStream(srcPath);
-				const result = await client.putFile(data, destPath);
-				debug(
-					`performFileOp,copy:${srcPath} to ${destPath}, result: ${result}`
-				);
+				cb(null, fileOp);
+				try {
+					await client.mkDir(path.dirname(destPath), true);
+					const data = fs.createReadStream(srcPath);
+					const result = await client.putFile(data, destPath);
+					debug(
+						`performFileOp,copy:${srcPath} to ${destPath}, result: ${result}`
+					);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, fileOp);
+				}
 				break;
 			}
 			case 'delete': {
-				cb(fileOp);
-				await client.deleteFile(destPath);
+				cb(null, fileOp);
+				try {
+					await client.deleteFile(destPath);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, fileOp);
+				}
 				break;
 			}
 		}
@@ -472,15 +483,20 @@ async function exportToDirectory(
 		fileOperations,
 		(fileOp) => {
 			callback({
+				exportType: 'directory',
 				message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
 			});
 		}
 	);
 
-	callback({ message: 'Cleaning up empty directories' });
+	callback({
+		exportType: 'directory',
+		message: 'Cleaning up empty directories',
+	});
 	await deleteEmptyLocalDirectories(path.join(destDirPath, '_Arcade'));
 
 	callback({
+		exportType: 'directory',
 		message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
 		complete: true,
 	});
@@ -518,93 +534,136 @@ async function exportToMister(
 	config: FileClientConnectConfig,
 	providedCallback: UpdateCallback
 ) {
-	const start = Date.now();
-	debug(`exportToMister(plan, ${JSON.stringify(config)}, callback)`);
-
 	const callback: UpdateCallback = (args) => {
-		debug(args.message);
+		debug(args.message, args.error ?? '');
 		providedCallback(args);
 	};
 
-	callback({ message: `Connecting to MiSTer at ${config.host}` });
+	try {
+		const start = Date.now();
+		debug(`exportToMister(plan, ${JSON.stringify(config)}, callback)`);
 
-	const client = new FTPFileClient();
-	await client.connect({
-		host: config.host,
-		port: config.port,
-		mount: config.mount,
-		username: config.username,
-		password: config.password,
-	});
+		callback({
+			exportType: 'mister',
+			message: `Connecting to MiSTer at ${config.host}...`,
+		});
 
-	const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
-	// this path is on the mister itself, using path.join would be wrong
-	const mountPath = misterPathJoiner('/media/', mountDir);
-	debug('exportToMister, mountPath:', mountPath);
-
-	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', misterPathJoiner);
-
-	debug(`exportToMister: ${srcPaths.length} srcPaths`);
-
-	callback({ message: 'Determining what is currently on the MiSTer' });
-	const destArcadePaths = await getExistingRemoteDestPaths(
-		client,
-		mountPath + '/',
-		misterPathJoiner(mountPath, '_Arcade')
-	);
-	const destRomPaths = await getExistingRemoteDestPaths(
-		client,
-		mountPath + '/',
-		misterPathJoiner(mountPath, 'games', 'mame')
-	);
-	const destPaths = destArcadePaths.concat(destRomPaths);
-	debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
-	const fileOperations = buildFileOperations(
-		srcPaths,
-		destPaths,
-		misterPathJoiner
-	);
-
-	debug(
-		`exportToMister: fileOperations:\n${fileOperations
-			.map((fo) => JSON.stringify(fo))
-			.join('\n')}`
-	);
-
-	const gameCacheDir = await getGameCacheDir();
-
-	await performRemoteFileSystemFileOperations(
-		gameCacheDir,
-		mountPath,
-		client,
-		fileOperations,
-		(fileOp) => {
-			callback({
-				message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
+		const client = new FTPFileClient();
+		try {
+			await client.connect({
+				host: config.host,
+				port: config.port,
+				mount: config.mount,
+				username: config.username,
+				password: config.password,
 			});
+		} catch (e) {
+			debug('exportToMister: failed to connect', e);
+			callback({
+				exportType: 'mister',
+				message: '',
+				error: { type: 'connect-fail' },
+			});
+			return;
 		}
-	);
 
-	callback({ message: 'Cleaning up empty directories' });
-	await deleteEmptyRemoteDirectories(
-		client,
-		misterPathJoiner(mountPath, '_Arcade')
-	);
+		const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
+		// this path is on the mister itself, using path.join would be wrong
+		const mountPath = misterPathJoiner('/media/', mountDir);
+		debug('exportToMister, mountPath:', mountPath);
 
-	await client.disconnect();
-	const duration = Date.now() - start;
-	const seconds = duration / 1000;
-	const minutes = seconds / 60;
+		const srcPaths = getSrcPathsFromPlan(
+			plan.games,
+			'_Arcade',
+			misterPathJoiner
+		);
 
-	const durMsg =
-		minutes < 1
-			? `${Math.round(seconds)} seconds`
-			: `${minutes.toFixed(2)} minutes`;
+		debug(`exportToMister: ${srcPaths.length} srcPaths`);
 
-	callback({
-		message: `Export complete in ${durMsg}`,
-		complete: true,
-	});
+		callback({
+			exportType: 'mister',
+			message: 'Determining what is currently on the MiSTer',
+		});
+		const destArcadePaths = await getExistingRemoteDestPaths(
+			client,
+			mountPath + '/',
+			misterPathJoiner(mountPath, '_Arcade')
+		);
+		const destRomPaths = await getExistingRemoteDestPaths(
+			client,
+			mountPath + '/',
+			misterPathJoiner(mountPath, 'games', 'mame')
+		);
+		const destPaths = destArcadePaths.concat(destRomPaths);
+		debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
+		const fileOperations = buildFileOperations(
+			srcPaths,
+			destPaths,
+			misterPathJoiner
+		);
+
+		debug(
+			`exportToMister: fileOperations:\n${fileOperations
+				.map((fo) => JSON.stringify(fo))
+				.join('\n')}`
+		);
+
+		const gameCacheDir = await getGameCacheDir();
+
+		await performRemoteFileSystemFileOperations(
+			gameCacheDir,
+			mountPath,
+			client,
+			fileOperations,
+			(err, fileOp) => {
+				if (err) {
+					callback({
+						exportType: 'mister',
+						message: '',
+						error: { type: 'file-error', fileOp },
+					});
+				} else {
+					callback({
+						exportType: 'mister',
+						message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
+					});
+				}
+			}
+		);
+
+		callback({
+			exportType: 'mister',
+			message: 'Cleaning up empty directories',
+		});
+		await deleteEmptyRemoteDirectories(
+			client,
+			misterPathJoiner(mountPath, '_Arcade')
+		);
+
+		await client.disconnect();
+		const duration = Date.now() - start;
+		const seconds = duration / 1000;
+		const minutes = seconds / 60;
+
+		const durMsg =
+			minutes < 1
+				? `${Math.round(seconds)} seconds`
+				: `${minutes.toFixed(2)} minutes`;
+
+		callback({
+			exportType: 'mister',
+			message: `Export complete in ${durMsg}`,
+			complete: true,
+		});
+	} catch (e) {
+		const message = e instanceof Error ? e.message : String(e);
+		debug('exportToMister: unknown error occured', e);
+		callback({
+			exportType: 'mister',
+			message: '',
+			error: { type: 'unknown', message },
+		});
+	}
 }
 
 export {

@@ -127,6 +127,7 @@ function Plan({
 						if (node.isDirectory) {
 							buttons.push(
 								<DirectoryAddIcon
+									key="directory-add"
 									className="w-5 h-5"
 									onClick={() => {
 										onDirectoryAdd({
@@ -140,6 +141,7 @@ function Plan({
 						if (path.length > 1) {
 							buttons.push(
 								<TrashIcon
+									key="trash"
 									className="w-5 h-5"
 									onClick={() => {
 										onItemDelete({

@@ -60,7 +60,8 @@ function ExportRemoteConfigModal({
 	onRequestClose,
 	onExport,
 }: ExportRemoteConfigModalProps) {
-	const [sshConfig, setSSHConfig] = useState<Partial<FileClientConnectConfig>>({
+	const [sshConfig, setSSHConfig] = useState<FileClientConnectConfig>({
+		host: '',
 		port: '22',
 		mount: 'sdcard',
 		username: 'root',

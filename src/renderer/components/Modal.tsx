@@ -10,6 +10,7 @@ function Modal({ children, closeButton, ...rest }: ModalProps) {
 	return (
 		// @ts-expect-error
 		<ReactModal
+			ariaHideApp={false}
 			style={{
 				content: {
 					padding: 0,

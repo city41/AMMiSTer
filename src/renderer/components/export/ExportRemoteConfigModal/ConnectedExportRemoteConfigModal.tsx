@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { FileClientConnectConfig } from '../../../../main/export/types';
 import { ExportRemoteConfigModal } from './ExportRemoteConfigModal';
 import { exportToMister } from '../exportSlice';
-import { dispatch } from '../../../store';
+import { store, dispatch } from '../../../store';
 
 function ConnectedExportRemoteConfigModal() {
 	const [modalOpen, setModalOpen] = useState(false);
 
 	useEffect(() => {
 		window.ipcAPI.menu_exportToMister(() => {
-			setModalOpen(true);
+			const plan = store.getState().plan.plan;
+			if (plan) {
+				setModalOpen(true);
+			} else {
+				alert('Please load or create a plan first');
+			}
 		});
 	}, [setModalOpen]);
 

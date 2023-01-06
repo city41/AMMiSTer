@@ -1,15 +1,10 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { FileClientConnectConfig } from '../../../main/export/types';
+import {
+	ExportStatus,
+	FileClientConnectConfig,
+} from '../../../main/export/types';
 import { AppState } from '../../store';
-
-type ExportType = 'directory' | 'mister';
-
-type ExportStatus = {
-	exportType: ExportType;
-	message: string;
-	complete?: boolean;
-};
 
 type ExportState = {
 	exportStatus?: ExportStatus;
@@ -26,6 +21,7 @@ const exportSlice = createSlice({
 				exportType: action.payload.exportType,
 				message: action.payload.message,
 				complete: action.payload.complete ?? false,
+				error: action.payload.error,
 			};
 		},
 		resetExportStatus(state: ExportState) {
@@ -55,6 +51,8 @@ const exportToDirectory =
 					})
 				);
 			});
+		} else {
+			alert('Please load or create a plan first');
 		}
 	};
 
@@ -74,10 +72,12 @@ const exportToMister =
 					})
 				);
 			});
+		} else {
+			alert('Please load or create a plan first');
 		}
 	};
 
 const reducer = exportSlice.reducer;
 
 export { reducer, exportToDirectory, exportToMister };
-export type { ExportState, ExportType };
+export type { ExportState };
