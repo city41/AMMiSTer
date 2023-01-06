@@ -11,9 +11,8 @@ jobs:
 
       - name: Install Wine32
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt update 1>&2
-          sudo apt install --install-recommends wine32 -y 1>&2
+          sudo apt install --install-recommends wine64 -y 1>&2
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
@@ -28,7 +27,7 @@ jobs:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
           github_token: ${{ secrets.github_token }}
-          args: --win
+          args: --win --x64
 
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
