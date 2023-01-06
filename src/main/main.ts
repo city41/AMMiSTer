@@ -11,6 +11,7 @@ import * as exportPlan from './export';
 import { DBJSON } from './catalog/types';
 import { Plan } from './plan/types';
 import { FileClientConnectConfig } from './export/types';
+import { getGameCacheDir } from './util/fs';
 
 const SETTINGS_FILE = 'ammister-settings.json';
 
@@ -96,6 +97,13 @@ function createWindow() {
 					id: 'catalog-check-for-updates',
 					click: () =>
 						mainWindow!.webContents.send('menu:kickOffCatalogUpdate'),
+				},
+				{
+					label: 'Open Folder',
+					click: async () => {
+						const gameCacheDir = await getGameCacheDir();
+						shell.showItemInFolder(path.resolve(gameCacheDir, 'catalog.json'));
+					},
 				},
 			],
 		},
