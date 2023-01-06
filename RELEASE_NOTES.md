@@ -7,6 +7,7 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 ## Version 0.2.0
 
 - [All] Warning first update is slow
+- [All] Warning about alternative ROMs
 - [All] Error if failure to connect to a mister
 - [All] Error reporting on export errors
 - [All] Error reporting on update errors

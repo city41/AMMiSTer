@@ -42,7 +42,13 @@ function Welcome({
 						This is an early version of AMMiSTer. More features, improvements
 						and bug fixes are coming.
 					</p>
+					<h2 className="text-xl font-medium text-red-800">Alternative ROMs</h2>
 					<p>
+						AMMister does not support alternative ROMs. If you use those, don't
+						export to your MiSTer. You can export to a directory to play with
+						the app.
+					</p>
+					<p className="mt-8">
 						Check the{' '}
 						<a
 							href="https://github.com/city41/AMMiSTer/blob/main/RELEASE_NOTES.md"
@@ -61,7 +67,7 @@ function Welcome({
 				<p>
 					update_all and AMMiSter update your arcade games from the same
 					sources, and will conflict with each other. If you are going to use
-					AMiSTer, then you must turn off arcade core updates for update_all.
+					AMMiSTer, then you must turn off arcade core updates for update_all.
 				</p>
 				<p>
 					Keep using update_all for all other types of updates. Don't worry,
