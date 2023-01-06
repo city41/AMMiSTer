@@ -9,7 +9,7 @@ import {
 	DestFileOperationPath,
 	FileOperation,
 	FileClientConnectConfig,
-	UpdateCallback,
+	ExportCallback,
 	SrcExactFileOperationPath,
 	SrcDatedFilenameFileOperationPath,
 	DestExactFileOperationPath,
@@ -24,7 +24,7 @@ import {
 	misterPathJoiner,
 } from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
-import { useCallback } from 'react';
+
 const debug = Debug('main/export/export.ts');
 
 function isPlanGameDirectoryEntry(
@@ -236,7 +236,7 @@ async function performLocalFileSystemFileOperations(
 	srcDirRoot: string,
 	destDirRoot: string,
 	fileOps: FileOperation[],
-	cb: (fileOp: FileOperation) => void
+	cb: (err: null | string, fileOp: FileOperation) => void
 ) {
 	for (const fileOp of fileOps) {
 		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
@@ -247,14 +247,26 @@ async function performLocalFileSystemFileOperations(
 
 		switch (fileOp.action) {
 			case 'copy': {
-				cb(fileOp);
-				await mkdirp(path.dirname(destPath));
-				await fsp.copyFile(srcPath, destPath);
+				cb(null, fileOp);
+				try {
+					await mkdirp(path.dirname(destPath));
+					await fsp.copyFile(srcPath, destPath);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, fileOp);
+					return;
+				}
 				break;
 			}
 			case 'delete': {
-				cb(fileOp);
-				await fsp.unlink(destPath);
+				cb(null, fileOp);
+				try {
+					await fsp.unlink(destPath);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, fileOp);
+					return;
+				}
 				break;
 			}
 		}
@@ -290,6 +302,7 @@ async function performRemoteFileSystemFileOperations(
 				} catch (e) {
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
+					return;
 				}
 				break;
 			}
@@ -300,6 +313,7 @@ async function performRemoteFileSystemFileOperations(
 				} catch (e) {
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
+					return;
 				}
 				break;
 			}
@@ -456,50 +470,61 @@ async function deleteEmptyLocalDirectories(curDirPath: string) {
 async function exportToDirectory(
 	plan: Plan,
 	destDirPath: string,
-	providedCallback: UpdateCallback
+	providedCallback: ExportCallback
 ) {
 	debug(`exportToDirectory(plan, ${destDirPath}, callback)`);
 
-	const callback: UpdateCallback = (args) => {
+	const callback: ExportCallback = (args) => {
 		debug(args.message);
 		providedCallback(args);
 	};
+	try {
+		const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', path.join);
+		const destPaths = await getExistingLocalDestPaths(destDirPath, '');
+		const fileOperations = buildFileOperations(srcPaths, destPaths, path.join);
 
-	const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', path.join);
-	const destPaths = await getExistingLocalDestPaths(destDirPath, '');
-	const fileOperations = buildFileOperations(srcPaths, destPaths, path.join);
+		debug(
+			`exportToDirectory: fileOperations:\n${fileOperations
+				.map((fo) => JSON.stringify(fo))
+				.join('\n')}`
+		);
 
-	debug(
-		`exportToDirectory: fileOperations:\n${fileOperations
-			.map((fo) => JSON.stringify(fo))
-			.join('\n')}`
-	);
+		const gameCacheDir = await getGameCacheDir();
 
-	const gameCacheDir = await getGameCacheDir();
+		await performLocalFileSystemFileOperations(
+			gameCacheDir,
+			destDirPath,
+			fileOperations,
+			(err, fileOp) => {
+				if (err) {
+					callback({
+						exportType: 'directory',
+						message: '',
+						error: { type: 'file-error', fileOp },
+					});
+				} else {
+					callback({
+						exportType: 'directory',
+						message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
+					});
+				}
+			}
+		);
 
-	await performLocalFileSystemFileOperations(
-		gameCacheDir,
-		destDirPath,
-		fileOperations,
-		(fileOp) => {
-			callback({
-				exportType: 'directory',
-				message: `${actionToVerb[fileOp.action]}: ${fileOp.destPath}`,
-			});
-		}
-	);
+		callback({
+			exportType: 'directory',
+			message: 'Cleaning up empty directories',
+		});
+		await deleteEmptyLocalDirectories(path.join(destDirPath, '_Arcade'));
 
-	callback({
-		exportType: 'directory',
-		message: 'Cleaning up empty directories',
-	});
-	await deleteEmptyLocalDirectories(path.join(destDirPath, '_Arcade'));
-
-	callback({
-		exportType: 'directory',
-		message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
-		complete: true,
-	});
+		callback({
+			exportType: 'directory',
+			message: `Export of "${plan.directoryName}" to ${destDirPath} complete`,
+			complete: true,
+		});
+	} catch (e) {
+		debug('exportToDirectory: unknown error', e);
+	}
 }
 
 /**
@@ -532,9 +557,9 @@ async function deleteEmptyRemoteDirectories(
 async function exportToMister(
 	plan: Plan,
 	config: FileClientConnectConfig,
-	providedCallback: UpdateCallback
+	providedCallback: ExportCallback
 ) {
-	const callback: UpdateCallback = (args) => {
+	const callback: ExportCallback = (args) => {
 		debug(args.message, args.error ?? '');
 		providedCallback(args);
 	};

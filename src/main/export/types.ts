@@ -16,7 +16,7 @@ export type ExportStatus = {
 	error?: ExportError;
 };
 
-export type UpdateCallback = (args: ExportStatus) => void;
+export type ExportCallback = (args: ExportStatus) => void;
 
 type CopyFileOperation = {
 	action: 'copy';
