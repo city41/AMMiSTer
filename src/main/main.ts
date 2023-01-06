@@ -18,8 +18,6 @@ const debug = Debug('main/main.ts');
 
 debug('versions', JSON.stringify(process.versions));
 
-const acclKey = process.platform === 'darwin' ? 'cmnd ' : 'ctrl';
-
 let mainWindow: BrowserWindow | undefined;
 
 let lastPlanSavePath: string | null = null;
@@ -48,12 +46,12 @@ function createWindow() {
 			submenu: [
 				{
 					label: 'New Plan',
-					accelerator: `${acclKey}+N`,
+					accelerator: 'CommandOrControl+N',
 					click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
 				},
 				{
 					label: 'Open Plan...',
-					accelerator: `${acclKey}+O`,
+					accelerator: 'CommandOrControl+O',
 					click: async () => {
 						const result = await dialog.showOpenDialog(mainWindow!, {
 							filters: [{ name: 'Plans', extensions: ['amip'] }],
@@ -75,16 +73,23 @@ function createWindow() {
 				},
 				{
 					label: 'Save Plan',
-					accelerator: `${acclKey}+S`,
+					accelerator: 'CommandOrControl+S',
 					click: async () => {
 						mainWindow!.webContents.send('menu:savePlan');
 					},
 				},
 				{
 					label: 'Save Plan As...',
-					accelerator: `${acclKey}+shift+S`,
+					accelerator: 'CommandOrControl+shift+S',
 					click: async () => {
 						mainWindow!.webContents.send('menu:savePlanAs');
+					},
+				},
+				{
+					label: 'Quit',
+					accelerator: 'CommandOrControl+Q',
+					click: () => {
+						app.quit();
 					},
 				},
 			],
@@ -141,12 +146,12 @@ function createWindow() {
 				},
 				{
 					label: 'Refresh',
-					accelerator: 'Ctrl+r',
+					accelerator: 'CommandOrControl+R',
 					click: () => mainWindow!.reload(),
 				},
 				{
 					label: 'Dev Tools',
-					accelerator: 'Ctrl+Shift+i',
+					accelerator: 'CommandOrControl+Shift+I',
 					click: () => mainWindow!.webContents.toggleDevTools(),
 				},
 			],

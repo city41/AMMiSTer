@@ -6,6 +6,11 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 ## Version 0.2.0
 
+- [All] Add Quit to file menu
+- [Mac] Fixed accelerators for real this time
+
+## Version 0.2.0
+
 - [All] Warning first update is slow
 - [All] Warning about alternative ROMs
 - [All] Error if failure to connect to a mister
