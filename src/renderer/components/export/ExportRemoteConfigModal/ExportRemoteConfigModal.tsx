@@ -2,50 +2,15 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import { BaseFeedbackModal } from '../../BaseFeedbackModal';
 import { MisterKunIcon } from '../../../icons';
+import { Input } from '../../Input';
 import { FileClientConnectConfig } from '../../../../main/export/types';
+import { HelpButton } from '../../HelpButton';
 
 type ExportRemoteConfigModalProps = {
 	isOpen: boolean;
 	onRequestClose: () => void;
 	onExport: (config: FileClientConnectConfig) => void;
 };
-
-function HelpButton({
-	className,
-	children,
-}: {
-	className?: string;
-	children: React.ReactNode;
-}) {
-	const [showHelp, setShowHelp] = useState(false);
-
-	return (
-		<button
-			className={clsx(
-				className,
-				'relative text-blue-500 px-1 hover:bg-green-100'
-			)}
-			onClick={() => setShowHelp(true)}
-		>
-			?
-			{showHelp && (
-				<div className="absolute bg-gray-200 text-gray-800 text-left text-xs p-3 w-60 z-10">
-					{children}{' '}
-					<a
-						className="inline-block ml-2 text-blue-700 font-medium hover:underline"
-						onMouseDown={(e) => {
-							e.stopPropagation();
-							e.preventDefault();
-							setShowHelp(false);
-						}}
-					>
-						okay
-					</a>
-				</div>
-			)}
-		</button>
-	);
-}
 
 function isConfigComplete(
 	config: Partial<FileClientConnectConfig>
@@ -89,9 +54,9 @@ function ExportRemoteConfigModal({
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							<input
+							<Input
 								type="text"
-								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
+								className="w-full"
 								value={sshConfig.host}
 								onChange={(e) => {
 									setSSHConfig((sc) => {
@@ -112,9 +77,9 @@ function ExportRemoteConfigModal({
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							<input
+							<Input
 								type="number"
-								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
+								className="w-full"
 								value={sshConfig.port}
 								onChange={(e) => {
 									setSSHConfig((sc) => {
@@ -162,9 +127,9 @@ function ExportRemoteConfigModal({
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							<input
+							<Input
 								type="text"
-								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
+								className="w-full"
 								value={sshConfig.username}
 								onChange={(e) => {
 									setSSHConfig((sc) => {
@@ -185,9 +150,9 @@ function ExportRemoteConfigModal({
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							<input
+							<Input
 								type="text"
-								className="w-full py-1 border-b-2 border-gray-300 bg-transparent"
+								className="w-full"
 								value={sshConfig.password}
 								onChange={(e) => {
 									setSSHConfig((sc) => {

@@ -11,6 +11,7 @@ import { Plan } from './components/plan/Plan';
 import { Welcome } from './components/Welcome';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
+import { BulkAddModal } from './components/plan/BulkAddModal';
 
 function App(): JSX.Element {
 	return (
@@ -33,6 +34,7 @@ function App(): JSX.Element {
 				<ExportModal />
 				<ExportRemoteConfigModal />
 				<EntryDetailModal />
+				<BulkAddModal />
 			</Provider>
 		</DndProvider>
 	);

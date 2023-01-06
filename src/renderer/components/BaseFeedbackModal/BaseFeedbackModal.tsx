@@ -2,6 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { Modal, ModalProps } from '../Modal';
 import { IconType } from 'src/renderer/icons';
+import { Button } from '../Button';
 
 type BaseFeedbackModalProps = ModalProps & {
 	icon: IconType;
@@ -66,20 +67,16 @@ function BaseFeedbackModal({
 					</div>
 				</div>
 				<div className="bg-gray-50 px-6 py-3 flex flex-row-reverse">
-					<button
-						type="button"
+					<Button
 						disabled={!okButtonEnabled}
 						onClick={onOkClick}
-						className={clsx(
-							'rounded-md bg-indigo-600 px-4 py-2 font-medium text-sm shadow-sm',
-							{
-								'bg-indigo-600 text-white': okButtonEnabled,
-								'bg-gray-300 text-gray-400': !okButtonEnabled,
-							}
-						)}
+						className={clsx({
+							'bg-indigo-600 text-white': okButtonEnabled,
+							'bg-gray-300 text-gray-400': !okButtonEnabled,
+						})}
 					>
 						{okButtonText ?? 'Okay'}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</Modal>

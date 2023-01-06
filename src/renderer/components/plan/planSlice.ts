@@ -1,12 +1,18 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
-import { CatalogEntry } from 'src/main/catalog/types';
+import { Catalog, CatalogEntry } from 'src/main/catalog/types';
 import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
+
+type BulkAddCriteria = {
+	gameAspect: 'manufacturer' | 'orientation' | 'yearReleased';
+	operator: 'is' | 'is-not' | 'lte' | 'gte';
+	value: string;
+};
 
 type PlanState = {
 	plan: Plan | null;
@@ -322,6 +328,77 @@ const savePlan = (): PlanSliceThunk => async (_dispatch, getState) => {
 	}
 };
 
+function matchesCriteria(
+	entry: CatalogEntry,
+	criteria: BulkAddCriteria
+): boolean {
+	const entryValue = String(entry[criteria.gameAspect as keyof CatalogEntry]);
+
+	switch (criteria.operator) {
+		case 'is': {
+			return entryValue === criteria.value;
+		}
+		case 'is-not': {
+			return entryValue !== criteria.value;
+		}
+		case 'gte': {
+			return Number(entryValue) >= Number(criteria.value);
+		}
+		case 'lte': {
+			return Number(entryValue) <= Number(criteria.value);
+		}
+	}
+}
+
+function getEntriesBasedOnCriteria(
+	catalog: Catalog,
+	criterias: BulkAddCriteria[]
+): CatalogEntry[] {
+	debugger;
+	const { updatedAt, ...restOfCatalog } = catalog;
+
+	const allEntries = Object.values(restOfCatalog).flat(1);
+
+	let contenders = allEntries;
+
+	for (const criteria of criterias) {
+		contenders = contenders.filter((c) => matchesCriteria(c, criteria));
+	}
+
+	return contenders;
+}
+
+const bulkAdd =
+	({
+		criteria,
+		destination,
+	}: {
+		criteria: BulkAddCriteria[];
+		destination: string;
+	}): PlanSliceThunk =>
+	(dispatch, getState) => {
+		const catalog = getState().catalog.catalog;
+		const plan = getState().plan.plan;
+
+		if (catalog && plan) {
+			const entriesToAdd = getEntriesBasedOnCriteria(catalog, criteria);
+			const path = destination
+				.trim()
+				.split('/')
+				.map((seg) => seg.trim())
+				.filter((seg) => !!seg);
+
+			entriesToAdd.forEach((entry) => {
+				dispatch(
+					planSlice.actions.addCatalogEntry({
+						parentPath: [plan.directoryName].concat(path),
+						catalogEntry: entry,
+					})
+				);
+			});
+		}
+	};
+
 const reducer = planSlice.reducer;
 const {
 	setPlan,
@@ -347,5 +424,6 @@ export {
 	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
+	bulkAdd,
 };
-export type { PlanState };
+export type { PlanState, BulkAddCriteria };

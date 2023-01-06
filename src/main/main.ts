@@ -114,6 +114,16 @@ function createWindow() {
 			],
 		},
 		{
+			label: 'Plan',
+			submenu: [
+				{
+					label: 'Bulk Add...',
+					accelerator: '',
+					click: () => mainWindow!.webContents.send('menu:kickOffBulkAdd'),
+				},
+			],
+		},
+		{
 			label: 'Export',
 			submenu: [
 				{
