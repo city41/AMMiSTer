@@ -9,10 +9,12 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v2
 
-      - name: Install Wine32
+      - name: Install Wine
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt update 1>&2
           sudo apt install --install-recommends wine64 -y 1>&2
+          sudo apt install --install-recommends wine32 -y 1>&2
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
