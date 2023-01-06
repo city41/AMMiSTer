@@ -102,6 +102,22 @@ export const Favorited = () => {
 	);
 };
 
+export const NotFavorited = () => {
+	const entry = {
+		...completeEntry,
+		favorite: false,
+		orientation: 'vertical',
+	} as const;
+
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} />
+			</div>
+		</DndProvider>
+	);
+};
+
 export const Vertical = () => {
 	const entry = {
 		...completeEntry,

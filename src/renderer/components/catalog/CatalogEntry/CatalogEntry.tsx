@@ -24,9 +24,9 @@ function Monitor({
 
 	return (
 		<div
-			className={clsx('w-4 h-3 rounded-sm border border-indigo-500', {
-				'w-3 h-4': orientation === 'vertical',
-				'w-4 h-3': orientation === 'horizontal',
+			title={orientation}
+			className={clsx('rounded-sm border border-indigo-500 w-4 h-3', {
+				'transform rotate-90': orientation === 'vertical',
 			})}
 		/>
 	);
@@ -62,12 +62,14 @@ function CatalogEntry({
 					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
 						{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
 						<Monitor orientation={entry.orientation} />
-						<FavIcon
-							className={clsx('w-5 h-5', {
-								'text-gray-500': !entry.favorite,
-								'text-orange-400': entry.favorite,
-							})}
-						/>
+						{typeof entry.favorite === 'boolean' && (
+							<FavIcon
+								className={clsx('w-5 h-5', {
+									'text-gray-500': !entry.favorite,
+									'text-orange-400': entry.favorite,
+								})}
+							/>
+						)}
 					</div>
 				)}
 			</div>
