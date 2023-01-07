@@ -89,6 +89,14 @@ const ipcAPI = {
 		ipcRenderer.send('export:exportToMister', plan, config);
 	},
 
+	menu_undo(callback: () => void) {
+		ipcRenderer.on('menu:undo', callback);
+	},
+
+	menu_redo(callback: () => void) {
+		ipcRenderer.on('menu:redo', callback);
+	},
+
 	menu_kickOffCatalogUpdate(callback: () => void) {
 		ipcRenderer.on('menu:kickOffCatalogUpdate', callback);
 	},

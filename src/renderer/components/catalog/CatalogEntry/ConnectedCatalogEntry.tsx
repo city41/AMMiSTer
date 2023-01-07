@@ -38,7 +38,7 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 	);
 
 	const plan = useSelector((state: AppState) => {
-		return state.plan.plan;
+		return state.plan.present.plan;
 	});
 
 	function handleClick() {

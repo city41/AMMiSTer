@@ -1,5 +1,10 @@
 import { createSlice, PayloadAction, AnyAction } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
+import undoable, {
+	ActionCreators,
+	StateWithHistory,
+	excludeAction,
+} from 'redux-undo';
 import { Catalog, CatalogEntry } from 'src/main/catalog/types';
 import {
 	Plan,
@@ -7,6 +12,9 @@ import {
 	PlanGameDirectoryEntry,
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
+import { BatchGroupBy } from './BatchGroupBy';
+
+const batchGroupBy = new BatchGroupBy();
 
 type EnumBulkAddCriteria = {
 	gameAspect: 'orientation';
@@ -42,11 +50,13 @@ type BulkAddCriteria =
 	| StringBulkAddCriteria
 	| NumberBulkAddCriteria;
 
-type PlanState = {
+type InternalPlanState = {
 	plan: Plan | null;
 };
 
-const initialState: PlanState = {
+type PlanState = StateWithHistory<InternalPlanState>;
+
+const initialState: InternalPlanState = {
 	plan: null,
 };
 
@@ -121,11 +131,11 @@ const planSlice = createSlice({
 	name: 'plan',
 	initialState,
 	reducers: {
-		setPlan(state: PlanState, action: PayloadAction<Plan>) {
+		setPlan(state: InternalPlanState, action: PayloadAction<Plan>) {
 			state.plan = action.payload;
 		},
 		addCatalogEntry(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{
 				parentPath: string[];
 				catalogEntry: CatalogEntry;
@@ -151,7 +161,7 @@ const planSlice = createSlice({
 			}
 		},
 		moveItem(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{
 				prevParentPath: string[];
 				newParentPath: string[];
@@ -196,7 +206,7 @@ const planSlice = createSlice({
 			}
 		},
 		deleteItem(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{ parentPath: string[]; name: string }>
 		) {
 			if (state.plan) {
@@ -212,7 +222,7 @@ const planSlice = createSlice({
 			}
 		},
 		addDirectory(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{ parentPath: string[] }>
 		) {
 			if (state.plan) {
@@ -246,13 +256,13 @@ const planSlice = createSlice({
 				parent.games.splice(destIndex, 0, newDirectoryNode);
 			}
 		},
-		planRename(state: PlanState, action: PayloadAction<string>) {
+		planRename(state: InternalPlanState, action: PayloadAction<string>) {
 			if (state.plan) {
 				state.plan.directoryName = action.payload;
 			}
 		},
 		directoryRename(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{
 				parentPath: string[];
 				name: string;
@@ -274,7 +284,7 @@ const planSlice = createSlice({
 			}
 		},
 		toggleDirectoryExpansion(
-			state: PlanState,
+			state: InternalPlanState,
 			action: PayloadAction<{ path: string[] }>
 		) {
 			if (state.plan) {
@@ -299,7 +309,7 @@ const addItem =
 		mraFileName: string;
 	}): PlanSliceThunk =>
 	(dispatch, getState) => {
-		const plan = getState().plan.plan;
+		const plan = getState().plan.present.plan;
 		const catalog = getState().catalog.catalog;
 
 		if (plan && catalog) {
@@ -390,7 +400,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const savePlanAs = (): PlanSliceThunk => async (_dispatch, getState) => {
-	const plan = getState().plan.plan;
+	const plan = getState().plan.present.plan;
 
 	if (plan) {
 		window.ipcAPI.savePlanAs(plan);
@@ -398,7 +408,7 @@ const savePlanAs = (): PlanSliceThunk => async (_dispatch, getState) => {
 };
 
 const savePlan = (): PlanSliceThunk => async (_dispatch, getState) => {
-	const plan = getState().plan.plan;
+	const plan = getState().plan.present.plan;
 
 	if (plan) {
 		window.ipcAPI.savePlan(plan);
@@ -503,7 +513,7 @@ const bulkAdd =
 	}): PlanSliceThunk =>
 	(dispatch, getState) => {
 		const catalog = getState().catalog.catalog;
-		const plan = getState().plan.plan;
+		const plan = getState().plan.present.plan;
 
 		if (catalog && plan) {
 			const entriesToAdd = getEntriesBasedOnCriteria(catalog, criteria);
@@ -513,6 +523,8 @@ const bulkAdd =
 				.map((seg) => seg.trim())
 				.filter((seg) => !!seg);
 
+			batchGroupBy.start();
+
 			entriesToAdd.forEach((entry) => {
 				dispatch(
 					planSlice.actions.addCatalogEntry({
@@ -521,6 +533,8 @@ const bulkAdd =
 					})
 				);
 			});
+
+			batchGroupBy.end();
 		}
 	};
 
@@ -535,8 +549,19 @@ const {
 	toggleDirectoryExpansion,
 } = planSlice.actions;
 
+const undoableReducer = undoable(reducer, {
+	filter: excludeAction([
+		'plan/loadNewPlan',
+		'plan/loadDemoPlan',
+		'plan/savePlan',
+		'plan/savePlanAs',
+	]),
+	groupBy: batchGroupBy.init(),
+});
+const { undo, redo } = ActionCreators;
+
 export {
-	reducer,
+	undoableReducer as reducer,
 	loadNewPlan,
 	loadDemoPlan,
 	setPlan,
@@ -550,5 +575,7 @@ export {
 	directoryRename,
 	toggleDirectoryExpansion,
 	bulkAdd,
+	undo,
+	redo,
 };
 export type { PlanState, BulkAddCriteria };

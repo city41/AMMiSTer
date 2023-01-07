@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import SortableTree, { TreeItem } from 'react-sortable-tree';
 import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 import {
@@ -11,7 +12,7 @@ import { PlanTreeItem } from './types';
 import { RSTTheme } from './RSTTheme';
 
 type InternalPlanProps = {
-	plan: Plan;
+	plan: Plan | null;
 	onItemMove: (args: {
 		prevParentPath: string[];
 		newParentPath: string[];
@@ -85,17 +86,29 @@ function Plan({
 	onDirectoryRename,
 	onToggleDirectoryExpansion,
 }: InternalPlanProps) {
+	// this craziness of the planDataSeed and hidden class is due to react-sortable-tree.
+	// It renders a DragDropContext. going from plan -> no plan -> plan would create a new tree,
+	// and thus a new DragDropContext, causing react-dnd to blow up with "Cannot have two HTML5 backends at the same time"
+	// the fix was to never create a new tree. If we don't have a plan, render a tree with no nodes that is hidden.
+	//
+	// You can go from plan -> no plan using undo: Create a new plan, undo it, create a new plan
+
+	const planDataSeed = plan ? [plan] : [];
 	return (
-		<div className="w-full xh-full p-8">
+		<div
+			className={clsx('w-full xh-full p-8', {
+				hidden: !plan,
+			})}
+		>
 			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
 				<SortableTree<PlanTreeItem>
 					dndType="CatalogEntry"
-					treeData={createTreeData([plan], [])}
+					treeData={createTreeData(planDataSeed, [])}
 					onChange={() => {}}
 					onMoveNode={({ node, nextParentNode }) => {
 						const newParentPath = nextParentNode?.parentPath.concat(
 							nextParentNode.title as string
-						) ?? [plan.directoryName];
+						) ?? [plan!.directoryName];
 
 						if (node.parentPath) {
 							const name = node.title as string;

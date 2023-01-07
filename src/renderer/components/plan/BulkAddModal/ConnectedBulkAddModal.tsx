@@ -13,12 +13,12 @@ function ConnectedBulkAddModal() {
 	const [newPath, setNewPath] = useState('');
 
 	const plan = useSelector((state: AppState) => {
-		return state.plan.plan;
+		return state.plan.present.plan;
 	});
 
 	useEffect(() => {
 		window.ipcAPI.menu_kickOffBulkAdd(() => {
-			const plan = store.getState().plan.plan;
+			const plan = store.getState().plan.present.plan;
 			if (plan) {
 				setModalOpen(true);
 			} else {
