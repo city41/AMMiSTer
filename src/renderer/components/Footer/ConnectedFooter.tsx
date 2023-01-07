@@ -4,19 +4,38 @@ import { AppState } from '../../store';
 
 import { Footer, PublicFooterProps } from './Footer';
 
+const PACKAGE_JSON_URL =
+	'https://raw.githubusercontent.com/city41/AMMiSTer/main/package.json';
+
 function ConnectedFooter(props: PublicFooterProps) {
-	const [version, setVersion] = useState('');
+	const [localVersion, setLocalVersion] = useState('');
+	const [mainVersion, setMainVersion] = useState('');
 
 	useEffect(() => {
 		window.ipcAPI.getVersion().then((v) => {
-			setVersion(v);
+			setLocalVersion(v);
 		});
+
+		// get latest version from main branch
+		fetch(PACKAGE_JSON_URL)
+			.then((r) => r.json())
+			.then((packageJson) => {
+				setMainVersion(packageJson.version);
+			})
+			.catch(() => {
+				setMainVersion('');
+			});
 	}, []);
 
 	const catalog = useSelector((state: AppState) => state.catalog.catalog);
 
 	return (
-		<Footer {...props} updatedAt={catalog?.updatedAt} appVersion={version} />
+		<Footer
+			{...props}
+			updatedAt={catalog?.updatedAt}
+			localVersion={localVersion}
+			mainVersion={mainVersion}
+		/>
 	);
 }
 

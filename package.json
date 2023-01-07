@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.5.2",
+	"version": "0.6.0",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -57,6 +57,7 @@
 	"dependencies": {
 		"@heroicons/react": "^2.0.13",
 		"@types/react-dnd": "^3.0.2",
+		"@types/semver-compare": "^1.0.1",
 		"axios": "^1.2.1",
 		"axios-retry": "^3.3.1",
 		"basic-ftp": "^5.0.2",
@@ -75,7 +76,8 @@
 		"react-modal": "^3.16.1",
 		"react-redux": "^8.0.5",
 		"react-sortable-tree": "^2.8.0",
-		"redux-thunk": "^2.4.2"
+		"redux-thunk": "^2.4.2",
+		"semver-compare": "^1.0.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.20.7",
