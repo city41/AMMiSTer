@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.4.1
+
+- [All] Fix bulk adding orientation bug
+
 ## Version 0.4.0
 
 - [All] When bulk adding games, if the plan path does not exist, it gets created

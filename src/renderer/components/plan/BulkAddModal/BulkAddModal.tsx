@@ -88,7 +88,12 @@ function BulkAddModal({
 																} as BulkAddCriteria;
 
 																if (prop === 'gameAspect') {
-																	newCc.value = '';
+																	// TODO: such a nasty hack...
+																	if (value === 'orientation') {
+																		newCc.value = 'horizontal';
+																	} else {
+																		newCc.value = '';
+																	}
 																}
 																return newCc;
 															} else {
