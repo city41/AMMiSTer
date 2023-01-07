@@ -8,11 +8,28 @@ import {
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
 
-type BulkAddCriteria = {
-	gameAspect: 'manufacturer' | 'orientation' | 'yearReleased';
-	operator: 'is' | 'is-not' | 'lte' | 'gte';
-	value: string;
+type EnumBulkAddCriteria = {
+	gameAspect: 'orientation';
+	operator: 'is' | 'is-not';
+	value: any;
 };
+
+type StringArrayBulkAddCriteria = {
+	gameAspect: 'manufacturer' | 'categories';
+	operator: 'is' | 'is-not';
+	value: any;
+};
+
+type NumberBulkAddCriteria = {
+	gameAspect: 'yearReleased';
+	operator: 'is' | 'is-not' | 'gte' | 'lte';
+	value: any;
+};
+
+type BulkAddCriteria =
+	| EnumBulkAddCriteria
+	| StringArrayBulkAddCriteria
+	| NumberBulkAddCriteria;
 
 type PlanState = {
 	plan: Plan | null;
@@ -332,20 +349,49 @@ function matchesCriteria(
 	entry: CatalogEntry,
 	criteria: BulkAddCriteria
 ): boolean {
-	const entryValue = String(entry[criteria.gameAspect as keyof CatalogEntry]);
+	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
 
-	switch (criteria.operator) {
-		case 'is': {
-			return entryValue === criteria.value;
+	debugger;
+	if (entryValue === null || entryValue === undefined) {
+		return false;
+	}
+
+	switch (criteria.gameAspect) {
+		case 'manufacturer':
+		case 'categories': {
+			if (criteria.operator === 'is') {
+				return (entryValue as string[]).some((ev) =>
+					ev.toLowerCase().includes(criteria.value.toString().toLowerCase())
+				);
+			} else {
+				return !(entryValue as string[]).some((ev) =>
+					ev.toLowerCase().includes(criteria.value.toString().toLowerCase())
+				);
+			}
 		}
-		case 'is-not': {
-			return entryValue !== criteria.value;
+		case 'orientation': {
+			if (criteria.operator === 'is') {
+				return (entryValue as 'vertical' | 'horizontal') === criteria.value;
+			} else {
+				return (entryValue as 'vertical' | 'horizontal') !== criteria.value;
+			}
 		}
-		case 'gte': {
-			return Number(entryValue) >= Number(criteria.value);
-		}
-		case 'lte': {
-			return Number(entryValue) <= Number(criteria.value);
+		case 'yearReleased': {
+			const yearValue = entryValue as number;
+			switch (criteria.operator) {
+				case 'gte': {
+					return yearValue >= criteria.value;
+				}
+				case 'lte': {
+					return yearValue <= criteria.value;
+				}
+				case 'is': {
+					return yearValue === criteria.value;
+				}
+				case 'is-not': {
+					return yearValue !== criteria.value;
+				}
+			}
 		}
 	}
 }
@@ -354,7 +400,6 @@ function getEntriesBasedOnCriteria(
 	catalog: Catalog,
 	criterias: BulkAddCriteria[]
 ): CatalogEntry[] {
-	debugger;
 	const { updatedAt, ...restOfCatalog } = catalog;
 
 	const allEntries = Object.values(restOfCatalog).flat(1);

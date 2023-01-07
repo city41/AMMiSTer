@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import clsx from 'clsx';
 import { Modal, ModalProps } from '../../Modal';
 import { Criteria as CriteriaCmp } from './Criteria';
 import { Button } from '../../Button';
@@ -83,10 +82,15 @@ function BulkAddModal({
 													setCriterias((cs) => {
 														return cs.map((cc) => {
 															if (cc === c) {
-																return {
+																const newCc = {
 																	...cc,
 																	[prop]: value,
 																} as BulkAddCriteria;
+
+																if (prop === 'gameAspect') {
+																	newCc.value = '';
+																}
+																return newCc;
 															} else {
 																return cc;
 															}
