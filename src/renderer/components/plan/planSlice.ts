@@ -126,8 +126,17 @@ const planSlice = createSlice({
 				createDirectoriesIfNeeded(state.plan, parentPath.slice(1));
 
 				const parent = getNode(state.plan, parentPath);
-				parent.games.push(catalogEntry);
-				parent.games = parent.games.slice().sort();
+
+				const alreadyInParent = parent.games.some(
+					(g) =>
+						'gameName' in g &&
+						g.files.mra.fileName === catalogEntry.files.mra.fileName
+				);
+
+				if (!alreadyInParent) {
+					parent.games.push(catalogEntry);
+					parent.games = parent.games.slice().sort();
+				}
 			}
 		},
 		moveItem(
@@ -152,16 +161,27 @@ const planSlice = createSlice({
 					}
 				});
 
-				const [movingNode] = prevParent.games.splice(prevIndex, 1);
-				const movingNodeName =
-					'gameName' in movingNode
-						? movingNode.gameName
-						: movingNode.directoryName;
-				const destIndex = newParent.games.findIndex((g) => {
-					const name = 'gameName' in g ? g.gameName : g.directoryName;
-					return movingNodeName.localeCompare(name) <= 0;
-				});
-				newParent.games.splice(destIndex, 0, movingNode);
+				const entry = prevParent.games[prevIndex];
+				const alreadyInParent =
+					'gameName' in entry &&
+					newParent.games.some(
+						(g) =>
+							'gameName' in g &&
+							g.files.mra.fileName === entry.files.mra.fileName
+					);
+
+				if (!alreadyInParent) {
+					const [movingNode] = prevParent.games.splice(prevIndex, 1);
+					const movingNodeName =
+						'gameName' in movingNode
+							? movingNode.gameName
+							: movingNode.directoryName;
+					const destIndex = newParent.games.findIndex((g) => {
+						const name = 'gameName' in g ? g.gameName : g.directoryName;
+						return movingNodeName.localeCompare(name) <= 0;
+					});
+					newParent.games.splice(destIndex, 0, movingNode);
+				}
 			}
 		},
 		deleteItem(
