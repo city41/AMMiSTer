@@ -1,14 +1,17 @@
+import path from 'node:path';
 import { ReadStream } from 'original-fs';
-import { Client } from 'basic-ftp';
+import { Client, FileInfo } from 'basic-ftp';
 import { FileClient, FileClientConnectConfig } from './types';
 
 const TIMEOUT_MS = 15 * 1000;
 
 class FTPFileClient implements FileClient {
 	private ftp: Client;
+	private isDirCache: Record<string, FileInfo[]>;
 
 	constructor() {
 		this.ftp = new Client(TIMEOUT_MS);
+		this.isDirCache = {};
 	}
 
 	async connect(config: FileClientConnectConfig): Promise<void> {
@@ -21,6 +24,7 @@ class FTPFileClient implements FileClient {
 
 	async disconnect(): Promise<void> {
 		this.ftp.close();
+		this.isDirCache = {};
 	}
 
 	async listDir(dirPath: string): Promise<string[]> {
@@ -29,10 +33,14 @@ class FTPFileClient implements FileClient {
 	}
 
 	async isDir(dirPath: string): Promise<boolean> {
-		// TODO: hmmmmm
 		try {
-			await this.listDir(dirPath);
-			return true;
+			const parentDir = path.dirname(dirPath);
+			const entries =
+				this.isDirCache[parentDir] ?? (await this.ftp.list(parentDir));
+			this.isDirCache[parentDir] = entries;
+			const entry = entries.find((e) => e.name === path.basename(dirPath));
+
+			return entry?.isDirectory ?? false;
 		} catch {
 			return false;
 		}

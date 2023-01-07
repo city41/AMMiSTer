@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.5.2
+
+- [All] "Determining what is currently on the MiSTer" during an export is now much faster
+
 ## Version 0.5.1
 
 - [All] Bulk add: added core and title as options
