@@ -112,8 +112,9 @@ function BulkAddModal({
 							<dt className="text-sm font-medium text-gray-500">
 								Destination
 								<HelpButton>
-									A path within your plan such as "Capcom/Horizontal Shooters".
-									Want to add them to the top of the plan? Leave this blank.
+									A path within your plan such as &quot;Capcom/Horizontal
+									Shooters&quot;. Want to add them to the top of the plan? Leave
+									this blank.
 								</HelpButton>
 							</dt>
 							<dd className="mt-0 text-sm text-gray-900 col-span-4">

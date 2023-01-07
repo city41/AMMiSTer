@@ -65,7 +65,10 @@ function UpdateModal({
 					<div>
 						<ul>
 							{updates.map((u) => (
-								<li className="text-sm text-gray-500 flex flex-row gap-x-2">
+								<li
+									key={u.fileEntry.fileName}
+									className="text-sm text-gray-500 flex flex-row gap-x-2"
+								>
 									<div className="text-gray-800">
 										{u.fileEntry.type === 'rbf' ? 'core' : u.fileEntry.type}:
 									</div>

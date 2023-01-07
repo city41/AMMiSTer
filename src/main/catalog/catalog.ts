@@ -57,10 +57,12 @@ async function getDbJson(url: string): Promise<DBJSON> {
 	const fileExt = path.extname(url);
 
 	if (fileExt === '.json') {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		return require(filePath) as DBJSON;
 	}
 
 	const extractedJsonPaths = await extractZipFileToPath(filePath);
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	return require(extractedJsonPaths[0]) as DBJSON;
 }
 
@@ -309,6 +311,18 @@ function getBestRbfPath(rbfPaths: string[], rbfName: string): string | null {
 	});
 }
 
+function xmlToArray(val: string | string[] | null | undefined): string[] {
+	if (!val) {
+		return [];
+	}
+
+	if (Array.isArray(val)) {
+		return val.filter((v) => !v);
+	}
+
+	return [val];
+}
+
 /**
  * Takes an mra file and parses it to grab its metadata and ultimately
  * form an catalog entry
@@ -340,14 +354,16 @@ async function parseMraToCatalogEntry(
 		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;
 
 		const romEntries = Array.isArray(rom) ? rom : [rom];
-		const romEntryWithZip = romEntries.find((r: any) => !!r['@_zip']);
+		const romEntryWithZip = romEntries.find(
+			(r: { '@_zip'?: string }) => !!r['@_zip']
+		);
 		const romFile = romEntryWithZip?.['@_zip'];
 
 		if (!romFile) {
 			debug(`parseMraToCatalogEntry, ${name} has no rom zip specified`);
 		}
 
-		let romCatalogFileEntries: CatalogFileEntry[] = [];
+		const romCatalogFileEntries: CatalogFileEntry[] = [];
 		if (romFile) {
 			for (const r of romFile.split('|')) {
 				let rData;
@@ -374,18 +390,6 @@ async function parseMraToCatalogEntry(
 			romCatalogFileEntries,
 			setname || parent
 		);
-
-		function xmlToArray(val: string | string[] | null | undefined): string[] {
-			if (!val) {
-				return [];
-			}
-
-			if (Array.isArray(val)) {
-				return val.filter((v) => !v);
-			}
-
-			return [val];
-		}
 
 		let yearReleased: number | null = parseInt(year, 10);
 		if (isNaN(yearReleased)) {
@@ -842,6 +846,7 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 	debug(`getCurrentCatalog, catalogPath: ${catalogPath}`);
 
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		return require(catalogPath) as Catalog;
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);

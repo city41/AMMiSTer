@@ -30,6 +30,7 @@ class JsonCache<T extends JsonValue> {
 		const cachepath = await this._cachePath();
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			this.cache = require(cachepath) as Record<string, T>;
 		} catch {
 			this.cache = {};

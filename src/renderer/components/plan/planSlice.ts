@@ -11,24 +11,28 @@ import { AppState } from '../../store';
 type EnumBulkAddCriteria = {
 	gameAspect: 'orientation';
 	operator: 'is' | 'is-not';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
 type StringArrayBulkAddCriteria = {
 	gameAspect: 'manufacturer' | 'categories';
 	operator: 'is' | 'is-not';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
 type StringBulkAddCriteria = {
 	gameAspect: 'gameName' | 'core';
 	operator: 'is' | 'is-not';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
 type NumberBulkAddCriteria = {
 	gameAspect: 'yearReleased';
 	operator: 'is' | 'is-not' | 'gte' | 'lte';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
@@ -451,6 +455,9 @@ function matchesCriteria(
 				}
 				case 'is-not': {
 					return yearValue !== criteria.value;
+				}
+				default: {
+					return false;
 				}
 			}
 		}

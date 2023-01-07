@@ -202,10 +202,6 @@ app
 		app.on('activate', () => {
 			if (BrowserWindow.getAllWindows.length === 0) createWindow();
 		});
-		console.log(
-			'settings file',
-			path.resolve(app.getPath('userData'), SETTINGS_FILE)
-		);
 		settings.configure({
 			fileName: SETTINGS_FILE,
 			prettify: true,

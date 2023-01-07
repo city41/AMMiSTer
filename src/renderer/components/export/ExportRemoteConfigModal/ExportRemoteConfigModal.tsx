@@ -73,7 +73,8 @@ function ExportRemoteConfigModal({
 						<dt className="text-sm font-medium text-gray-500">
 							Port
 							<HelpButton>
-								If you haven't changed this on your MiSTer, just use the default
+								If you haven&apos;t changed this on your MiSTer, just use the
+								default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
@@ -123,7 +124,8 @@ function ExportRemoteConfigModal({
 						<dt className="text-sm font-medium text-gray-500">
 							Username
 							<HelpButton>
-								If you haven't changed this on your MiSTer, just use the default
+								If you haven&apos;t changed this on your MiSTer, just use the
+								default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
@@ -146,7 +148,8 @@ function ExportRemoteConfigModal({
 						<dt className="text-sm font-medium text-gray-500">
 							Password
 							<HelpButton>
-								If you haven't changed this on your MiSTer, just use the default
+								If you haven&apos;t changed this on your MiSTer, just use the
+								default
 							</HelpButton>
 						</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">

@@ -30,7 +30,7 @@ function Welcome({
 					className="text-blue-600 text-sm cursor-pointer hover:underline"
 					onClick={onDismiss}
 				>
-					Don't show this again
+					Don&apos;t show this again
 				</a>
 			</h1>
 			{isAlpha && (
@@ -44,9 +44,9 @@ function Welcome({
 					</p>
 					<h2 className="text-xl font-medium text-red-800">Alternative ROMs</h2>
 					<p>
-						AMMister does not support alternative ROMs. If you use those, don't
-						export to your MiSTer. You can export to a directory to play with
-						the app.
+						AMMister does not support alternative ROMs. If you use those,
+						don&apos;t export to your MiSTer. You can export to a directory to
+						play with the app.
 					</p>
 					<p className="mt-8">
 						Check the{' '}
@@ -70,9 +70,9 @@ function Welcome({
 					AMMiSTer, then you must turn off arcade core updates for update_all.
 				</p>
 				<p>
-					Keep using update_all for all other types of updates. Don't worry,
-					AMMiSTer will keep your arcade games updated just like update_all
-					would have.
+					Keep using update_all for all other types of updates. Don&apos;t
+					worry, AMMiSTer will keep your arcade games updated just like
+					update_all would have.
 				</p>
 			</div>
 			<div className="mt-6 rounded p-2 pb-4 -m-2 bg-white flex flex-col gap-y-2">
@@ -86,8 +86,8 @@ function Welcome({
 			</div>
 			<div className="mt-6">
 				<p>
-					Is your MiSTer not on a network? You can still use "Export to
-					Directory...", then copy that directory to a MiSTer.
+					Is your MiSTer not on a network? You can still use &quot;Export to
+					Directory...&quot;, then copy that directory to a MiSTer.
 				</p>
 			</div>
 		</div>

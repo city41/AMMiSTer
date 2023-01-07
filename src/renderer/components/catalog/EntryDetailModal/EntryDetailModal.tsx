@@ -99,7 +99,10 @@ function EntryDetailModal({
 					</div>
 					{entry.files.roms.map((r) => {
 						return (
-							<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<div
+								key={r.fileName}
+								className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+							>
 								<dt
 									className={clsx('text-sm font-medium text-gray-500', {
 										'text-red-700': !r.md5,

@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron';
-import { Catalog, UpdateCallback } from 'src/main/catalog/types';
-import { FileClientConnectConfig } from 'src/main/export/types';
+import { Catalog, UpdateCallback, UpdateStatus } from 'src/main/catalog/types';
+import { ExportStatus, FileClientConnectConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
@@ -21,7 +21,10 @@ const ipcAPI = {
 	},
 
 	updateCatalog(statusCallback: UpdateCallback) {
-		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
+		const onUpdateStatus = (
+			_event: Electron.IpcRendererEvent,
+			status: UpdateStatus
+		) => {
 			statusCallback(status);
 			if (status.complete) {
 				ipcRenderer.removeListener(
@@ -47,7 +50,10 @@ const ipcAPI = {
 	},
 
 	exportToDirectory(plan: Plan, statusCallback: UpdateCallback) {
-		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
+		const onUpdateStatus = (
+			_event: Electron.IpcRendererEvent,
+			status: ExportStatus
+		) => {
 			statusCallback(status);
 			if (status.complete) {
 				ipcRenderer.removeListener(
@@ -66,7 +72,10 @@ const ipcAPI = {
 		config: FileClientConnectConfig,
 		statusCallback: UpdateCallback
 	) {
-		const onUpdateStatus = (_event: Electron.IpcRendererEvent, status: any) => {
+		const onUpdateStatus = (
+			_event: Electron.IpcRendererEvent,
+			status: ExportStatus
+		) => {
 			statusCallback(status);
 			if (status.complete) {
 				ipcRenderer.removeListener(
