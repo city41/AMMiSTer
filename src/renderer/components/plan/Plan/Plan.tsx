@@ -92,14 +92,7 @@ function Plan({
 					dndType="CatalogEntry"
 					treeData={createTreeData([plan], [])}
 					onChange={() => {}}
-					onDragStateChanged={(args) => {
-						if (args.isDragging === false) {
-							debugger;
-						}
-					}}
 					onMoveNode={({ node, nextParentNode }) => {
-						console.log('onMoveNode');
-						console.log({ node, nextParentNode });
 						const newParentPath = nextParentNode?.parentPath.concat(
 							nextParentNode.title as string
 						) ?? [plan.directoryName];

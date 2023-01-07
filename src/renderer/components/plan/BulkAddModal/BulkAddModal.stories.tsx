@@ -9,24 +9,24 @@ const meta: Meta = {
 
 export default meta;
 
-export const DestinationExists = () => {
+export const NoNewPath = () => {
 	return (
 		<BulkAddModal
 			isOpen
 			onApply={() => {}}
 			onDestinationChange={() => {}}
-			destinationExists
+			newPath=""
 		/>
 	);
 };
 
-export const DestinationDoesNotExist = () => {
+export const NewPath = () => {
 	return (
 		<BulkAddModal
 			isOpen
 			onApply={() => {}}
 			onDestinationChange={() => {}}
-			destinationExists={false}
+			newPath="fighters/capcom"
 		/>
 	);
 };

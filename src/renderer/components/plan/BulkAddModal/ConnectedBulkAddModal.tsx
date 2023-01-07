@@ -10,7 +10,7 @@ import {
 
 function ConnectedBulkAddModal() {
 	const [modalOpen, setModalOpen] = useState(false);
-	const [destinationExists, setDestinationExists] = useState(true);
+	const [newPath, setNewPath] = useState('');
 
 	const plan = useSelector((state: AppState) => {
 		return state.plan.plan;
@@ -46,27 +46,28 @@ function ConnectedBulkAddModal() {
 
 				let planDir: PlanGameDirectory = plan.games;
 
-				for (const segment of segments) {
+				for (let i = 0; i < segments.length; ++i) {
+					const segment = segments[i];
 					const entry = planDir.find((g) => {
 						if ('directoryName' in g) {
-							return g.directoryName === segment;
+							return g.directoryName.toLowerCase() === segment.toLowerCase();
 						} else {
 							return false;
 						}
 					});
 
 					if (!entry) {
-						setDestinationExists(false);
+						setNewPath(segments.slice(i).join('/'));
 						return;
 					} else {
 						planDir = (entry as PlanGameDirectoryEntry).games;
 					}
 				}
 
-				setDestinationExists(true);
+				setNewPath('');
 			}
 		},
-		[plan, setDestinationExists]
+		[plan, setNewPath]
 	);
 
 	return (
@@ -74,7 +75,7 @@ function ConnectedBulkAddModal() {
 			isOpen={modalOpen}
 			onRequestClose={() => setModalOpen(false)}
 			onApply={handleApply}
-			destinationExists={destinationExists}
+			newPath={newPath}
 			onDestinationChange={handleDestinationChange}
 		/>
 	);

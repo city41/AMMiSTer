@@ -45,7 +45,10 @@ function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
 
 	for (const segment of path) {
 		const dirEntry = dir.find((e) => {
-			return 'directoryName' in e && e.directoryName === segment;
+			return (
+				'directoryName' in e &&
+				e.directoryName.toLowerCase() === segment.toLowerCase()
+			);
 		});
 
 		if (!dirEntry) {
@@ -79,6 +82,30 @@ function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
 	return foundDirEntry;
 }
 
+function createDirectoriesIfNeeded(plan: Plan, planPath: string[]) {
+	let dir = plan.games;
+
+	for (const segment of planPath) {
+		const subDir = dir.find((g) => {
+			return (
+				'directoryName' in g &&
+				g.directoryName.toLowerCase() === segment.toLowerCase()
+			);
+		});
+
+		if (!subDir) {
+			const l = dir.push({
+				directoryName: segment,
+				games: [],
+				isExpanded: true,
+			});
+			dir = (dir[l - 1] as PlanGameDirectoryEntry).games;
+		} else {
+			dir = (subDir as PlanGameDirectoryEntry).games;
+		}
+	}
+}
+
 const planSlice = createSlice({
 	name: 'plan',
 	initialState,
@@ -95,6 +122,8 @@ const planSlice = createSlice({
 		) {
 			if (state.plan) {
 				const { parentPath, catalogEntry } = action.payload;
+
+				createDirectoriesIfNeeded(state.plan, parentPath.slice(1));
 
 				const parent = getNode(state.plan, parentPath);
 				parent.games.push(catalogEntry);
@@ -351,7 +380,6 @@ function matchesCriteria(
 ): boolean {
 	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
 
-	debugger;
 	if (entryValue === null || entryValue === undefined) {
 		return false;
 	}
