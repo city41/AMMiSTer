@@ -20,6 +20,12 @@ type StringArrayBulkAddCriteria = {
 	value: any;
 };
 
+type StringBulkAddCriteria = {
+	gameAspect: 'gameName' | 'core';
+	operator: 'is' | 'is-not';
+	value: any;
+};
+
 type NumberBulkAddCriteria = {
 	gameAspect: 'yearReleased';
 	operator: 'is' | 'is-not' | 'gte' | 'lte';
@@ -29,6 +35,7 @@ type NumberBulkAddCriteria = {
 type BulkAddCriteria =
 	| EnumBulkAddCriteria
 	| StringArrayBulkAddCriteria
+	| StringBulkAddCriteria
 	| NumberBulkAddCriteria;
 
 type PlanState = {
@@ -398,7 +405,13 @@ function matchesCriteria(
 	entry: CatalogEntry,
 	criteria: BulkAddCriteria
 ): boolean {
-	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
+	let entryValue;
+
+	if (criteria.gameAspect === 'core') {
+		entryValue = entry.files.rbf?.fileName;
+	} else {
+		entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
+	}
 
 	if (entryValue === null || entryValue === undefined) {
 		return false;
@@ -438,6 +451,18 @@ function matchesCriteria(
 				}
 				case 'is-not': {
 					return yearValue !== criteria.value;
+				}
+			}
+		}
+		case 'core':
+		case 'gameName': {
+			const valS = entryValue as string;
+			switch (criteria.operator) {
+				case 'is': {
+					return valS.toLowerCase().includes(criteria.value.toLowerCase());
+				}
+				case 'is-not': {
+					return !valS.toLowerCase().includes(criteria.value.toLowerCase());
 				}
 			}
 		}

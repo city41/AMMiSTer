@@ -4,10 +4,12 @@ import { CloseIcon } from '../../../icons';
 import { Input } from '../../Input';
 
 type GameAspect =
+	| 'gameName'
 	| 'manufacturer'
 	| 'categories'
 	| 'orientation'
-	| 'yearReleased';
+	| 'yearReleased'
+	| 'core';
 
 type CriteriaProps = {
 	className?: string;
@@ -23,6 +25,8 @@ type CriteriaProps = {
 
 function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	switch (gameAspect) {
+		case 'core':
+		case 'gameName':
 		case 'categories':
 		case 'manufacturer': {
 			return (
@@ -63,9 +67,13 @@ function ValueInput({
 	onChange: React.ChangeEventHandler<any>;
 }) {
 	switch (gameAspect) {
+		case 'core':
+		case 'gameName':
 		case 'categories':
 		case 'manufacturer': {
-			return <Input type="text" value={value} onChange={onChange} />;
+			return (
+				<Input className="px-2" type="text" value={value} onChange={onChange} />
+			);
 		}
 		case 'yearReleased': {
 			return <Input type="number" value={value} onChange={onChange} />;
@@ -92,7 +100,7 @@ function Criteria({
 	return (
 		<div
 			className={clsx(className, 'grid gap-x-2 p-2')}
-			style={{ gridTemplateColumns: 'repeat(3, 1fr) max-content' }}
+			style={{ gridTemplateColumns: 'min-content min-content 1fr max-content' }}
 		>
 			<select
 				className="px-2 py-1"
@@ -101,10 +109,12 @@ function Criteria({
 					onChange({ prop: 'gameAspect', value: e.target.value });
 				}}
 			>
+				<option value="gameName">Title</option>
 				<option value="manufacturer">Manufacturer</option>
 				<option value="categories">Category</option>
 				<option value="yearReleased">Year</option>
 				<option value="orientation">Orientation</option>
+				<option value="core">Core</option>
 			</select>
 			<select
 				className="px-2 py-1"

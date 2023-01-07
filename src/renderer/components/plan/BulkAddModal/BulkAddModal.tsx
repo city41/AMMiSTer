@@ -24,9 +24,9 @@ function BulkAddModal({
 }: PublicBulkAddModalProps & InternalBulkAddModalProps) {
 	const [criterias, setCriterias] = useState<BulkAddCriteria[]>([
 		{
-			gameAspect: 'manufacturer',
+			gameAspect: 'gameName',
 			operator: 'is',
-			value: 'Capcom',
+			value: 'Street Fighter',
 		},
 	]);
 	const [destination, setDestination] = useState('');
@@ -51,7 +51,7 @@ function BulkAddModal({
 				</div>
 				<div className="flex flex-col items-stretch">
 					<dl className="bg-white">
-						<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<div className="even:bg-gray-50 px-6 py-5 grid grid-cols-5 gap-4">
 							<dt className="text-sm font-medium text-gray-500 flex flex-row gap-x-2">
 								<div>Criteria</div>
 								<AddIcon
@@ -67,7 +67,7 @@ function BulkAddModal({
 									}}
 								/>
 							</dt>
-							<dd className="mt-1 text-gray-900 sm:col-span-2 sm:mt-0">
+							<dd className="mt-0 text-gray-900 col-span-4">
 								<ul className="flex flex-col gap-y-2">
 									{criterias.map((c, i) => (
 										<li key={i} className="even:bg-white">
@@ -108,7 +108,7 @@ function BulkAddModal({
 								</ul>
 							</dd>
 						</div>
-						<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+						<div className="even:bg-gray-50 px-6 py-5 grid grid-cols-5 gap-4">
 							<dt className="text-sm font-medium text-gray-500">
 								Destination
 								<HelpButton>
@@ -116,7 +116,7 @@ function BulkAddModal({
 									Want to add them to the top of the plan? Leave this blank.
 								</HelpButton>
 							</dt>
-							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+							<dd className="mt-0 text-sm text-gray-900 col-span-4">
 								<Input
 									type="text"
 									value={destination}
