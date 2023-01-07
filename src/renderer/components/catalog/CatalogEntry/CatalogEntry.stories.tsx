@@ -68,6 +68,16 @@ export const CompleteEntry = () => {
 	);
 };
 
+export const IsInPlan = () => {
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={completeEntry} isInPlan />
+			</div>
+		</DndProvider>
+	);
+};
+
 export const MissingAFile = () => {
 	const entry = {
 		...completeEntry,

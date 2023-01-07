@@ -42,7 +42,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 			return (
 				<li
 					key={ge.gameName + i}
-					className="even:bg-gray-50 border border-b-gray-200"
+					className="even:bg-gray-50 border border-b-gray-200 cursor-grab"
 				>
 					<CatalogEntry entry={ge} />
 				</li>

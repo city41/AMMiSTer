@@ -11,6 +11,7 @@ type PublicCatalogEntryProps = {
 
 type InternalCatalogEntryProps = {
 	onClick?: () => void;
+	isInPlan?: boolean;
 };
 
 function Monitor({
@@ -36,6 +37,7 @@ function CatalogEntry({
 	className,
 	entry,
 	hideIcons,
+	isInPlan,
 	onClick,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
@@ -48,7 +50,9 @@ function CatalogEntry({
 		<div className={clsx(className, 'px-2 py-1')}>
 			<div className="whitespace-nowrap text-ellipsis overflow-hidden">
 				<h3
-					className="inline font-medium hover:underline cursor-pointer"
+					className={clsx('inline font-medium hover:underline cursor-pointer', {
+						'text-green-700': isInPlan,
+					})}
 					onClick={onClick}
 				>
 					{entry.gameName}
