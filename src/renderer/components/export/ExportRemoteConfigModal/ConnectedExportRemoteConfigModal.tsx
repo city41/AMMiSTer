@@ -9,7 +9,7 @@ function ConnectedExportRemoteConfigModal() {
 
 	useEffect(() => {
 		window.ipcAPI.menu_exportToMister(() => {
-			const plan = store.getState().plan.plan;
+			const plan = store.getState().plan.present.plan;
 			if (plan) {
 				setModalOpen(true);
 			} else {

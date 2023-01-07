@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.7.0
+
+- [All] Undo and Redo
+
 ## Version 0.6.0
 
 - [All] Down in the footer next to the version, it will let you know if a new version is available

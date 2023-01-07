@@ -95,6 +95,21 @@ function createWindow() {
 			],
 		},
 		{
+			label: 'Edit',
+			submenu: [
+				{
+					label: 'Undo',
+					accelerator: 'CommandOrControl+Z',
+					click: () => mainWindow!.webContents.send('menu:undo'),
+				},
+				{
+					label: 'Redo',
+					accelerator: 'CommandOrControl+Y',
+					click: () => mainWindow!.webContents.send('menu:redo'),
+				},
+			],
+		},
+		{
 			label: 'Catalog',
 			submenu: [
 				{

@@ -38,7 +38,7 @@ type ExportSliceThunk = ThunkAction<void, AppState, undefined, AnyAction>;
 
 const exportToDirectory =
 	(): ExportSliceThunk => async (dispatch, getState) => {
-		const plan = getState().plan.plan;
+		const plan = getState().plan.present.plan;
 
 		if (plan) {
 			dispatch(exportSlice.actions.resetExportStatus());
@@ -59,7 +59,7 @@ const exportToDirectory =
 const exportToMister =
 	(config: FileClientConnectConfig): ExportSliceThunk =>
 	async (dispatch, getState) => {
-		const plan = getState().plan.plan;
+		const plan = getState().plan.present.plan;
 
 		if (plan) {
 			dispatch(exportSlice.actions.resetExportStatus());

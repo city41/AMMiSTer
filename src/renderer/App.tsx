@@ -13,7 +13,7 @@ import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
 import { BulkAddModal } from './components/plan/BulkAddModal';
 
-function App(): JSX.Element {
+function App() {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<Provider store={store}>
@@ -40,4 +40,4 @@ function App(): JSX.Element {
 	);
 }
 
-export default App;
+export { App };

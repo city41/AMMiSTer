@@ -13,6 +13,8 @@ import {
 	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
+	undo,
+	redo,
 } from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
 
@@ -20,7 +22,7 @@ import { Plan } from './Plan';
 import { PlanEmptyState } from './PlanEmptyState';
 
 function ConnectedPlan() {
-	const plan = useSelector((state: AppState) => state.plan.plan);
+	const plan = useSelector((state: AppState) => state.plan.present.plan);
 
 	async function handleNewPlan() {
 		const catalog = await window.ipcAPI.getCurrentCatalog();
@@ -32,6 +34,14 @@ function ConnectedPlan() {
 	}
 
 	useEffect(() => {
+		window.ipcAPI.menu_undo(() => {
+			dispatch(undo());
+		});
+
+		window.ipcAPI.menu_redo(() => {
+			dispatch(redo());
+		});
+
 		window.ipcAPI.menu_loadDemoPlan(async () => {
 			const catalog = await window.ipcAPI.getCurrentCatalog();
 			if (!catalog) {
@@ -96,8 +106,8 @@ function ConnectedPlan() {
 		dispatch(addItem(args));
 	}
 
-	if (plan) {
-		return (
+	return (
+		<>
 			<Plan
 				plan={plan}
 				onItemAdd={handleItemAdd}
@@ -108,10 +118,9 @@ function ConnectedPlan() {
 				onDirectoryRename={handleDirectoryRename}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
 			/>
-		);
-	} else {
-		return <PlanEmptyState onClick={handleNewPlan} />;
-	}
+			{!plan && <PlanEmptyState onClick={handleNewPlan} />}
+		</>
+	);
 }
 
 export { ConnectedPlan };
