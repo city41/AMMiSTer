@@ -7,6 +7,7 @@ type PublicCatalogEntryProps = {
 	className?: string;
 	entry: CatalogEntryType;
 	hideIcons?: boolean;
+	hideInPlan?: boolean;
 };
 
 type InternalCatalogEntryProps = {
@@ -38,6 +39,7 @@ function CatalogEntry({
 	entry,
 	hideIcons,
 	isInPlan,
+	hideInPlan,
 	onClick,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
@@ -51,7 +53,7 @@ function CatalogEntry({
 			<div className="whitespace-nowrap text-ellipsis overflow-hidden">
 				<h3
 					className={clsx('inline font-medium hover:underline cursor-pointer', {
-						'text-green-700': isInPlan,
+						'text-green-700': isInPlan && !hideInPlan,
 					})}
 					onClick={onClick}
 				>
@@ -59,7 +61,7 @@ function CatalogEntry({
 				</h3>
 			</div>
 			<div className="flex flex-row justify-between">
-				<div className="flex flex-row items-center gap-x-2 text-xs text-gray-500">
+				<div className="flex flex-row font-normal items-center gap-x-2 text-xs text-gray-500">
 					{entry.manufacturer.join(',')} {entry.yearReleased}
 				</div>
 				{!hideIcons && (
