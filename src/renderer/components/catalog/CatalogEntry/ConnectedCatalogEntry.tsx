@@ -28,9 +28,10 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 			type: 'CatalogEntry',
 			item: {
 				node: {
-					title: props.entry.gameName,
-					db_id: props.entry.db_id,
-					mraFileName: props.entry.files.mra.fileName,
+					// @ts-expect-error
+					title: props.entry?.gameName ?? props.title,
+					db_id: props.entry?.db_id,
+					mraFileName: props.entry?.files.mra.fileName,
 				},
 			},
 		}),
@@ -45,8 +46,8 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 		dispatch(setDetailEntry(props.entry));
 	}
 
-	const mra = props.entry.files.mra.fileName;
-	const isInPlan = !!plan && isInPlanDir(plan.games, mra);
+	const mra = props.entry?.files.mra.fileName;
+	const isInPlan = !!mra && !!plan && isInPlanDir(plan.games, mra);
 
 	return (
 		<div ref={dragRef}>

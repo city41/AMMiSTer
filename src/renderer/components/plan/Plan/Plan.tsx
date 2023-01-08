@@ -9,7 +9,8 @@ import {
 } from '../../../../main/plan/types';
 import { DirectoryAddIcon, TrashIcon } from 'src/renderer/icons';
 import { PlanTreeItem } from './types';
-import { RSTTheme } from './RSTTheme';
+import { Input } from '../../Input';
+import { CatalogEntry } from '../../catalog/CatalogEntry';
 
 type InternalPlanProps = {
 	plan: Plan | null;
@@ -100,7 +101,7 @@ function Plan({
 				hidden: !plan,
 			})}
 		>
-			<div className="w-full xh-full rounded bg-white border border-gray-200 shadow">
+			<div className="w-full rounded bg-white border border-gray-200 shadow p-4">
 				<SortableTree<PlanTreeItem>
 					dndType="CatalogEntry"
 					treeData={createTreeData(planDataSeed, [])}
@@ -133,15 +134,19 @@ function Plan({
 						}
 					}}
 					isVirtualized={false}
-					theme={RSTTheme}
-					generateNodeProps={({ path, node }) => {
+					generateNodeProps={({ path, parentNode, node }) => {
 						const buttons = [];
+
+						const pChildren = (
+							parentNode && parentNode.isDirectory ? parentNode.children : []
+						) as any[];
+						const isEvenGame = pChildren.indexOf(node) % 2 === 0;
 
 						if (node.isDirectory) {
 							buttons.push(
 								<DirectoryAddIcon
 									key="directory-add"
-									className="w-5 h-5"
+									className="w-5 h-5 invisible group-hover:visible mr-2 cursor-pointer"
 									onClick={() => {
 										onDirectoryAdd({
 											parentPath: node.parentPath.concat(node.title as string),
@@ -155,7 +160,7 @@ function Plan({
 							buttons.push(
 								<TrashIcon
 									key="trash"
-									className="w-5 h-5"
+									className="w-5 h-5 invisible group-hover:visible cursor-pointer cursor-"
 									onClick={() => {
 										onItemDelete({
 											parentPath: node.parentPath,
@@ -166,16 +171,22 @@ function Plan({
 							);
 						}
 
-						if (!node.isDirectory) {
-							return {
-								buttons,
-							};
-						} else {
-							return {
-								buttons,
-								title: (
-									<input
-										className="border-b-2 border-indigo-800 bg-indigo-200 px-2"
+						const result: Record<string, unknown> = {
+							className: clsx('group', {
+								'cursor-default': !node.isDirectory,
+								'node-directory': node.isDirectory,
+								'bg-gray-50 is-odd-game': !isEvenGame,
+								'bg-white is-even-game': isEvenGame,
+							}),
+							buttons,
+						};
+
+						if (node.isDirectory) {
+							result.title = (
+								<div className="flex flex-row items-baseline gap-x-2">
+									<Input
+										className="border-none"
+										style={{ fontWeight: 'normal' }}
 										value={node.title as string}
 										onChange={(e) => {
 											if (node.parentPath.length === 0) {
@@ -190,9 +201,25 @@ function Plan({
 											}
 										}}
 									/>
-								),
-							};
+									<div className="text-sm font-normal text-gray-500">
+										{node.totalGameCount} game
+										{node.totalGameCount === 1 ? '' : 's'}
+									</div>
+								</div>
+							);
+						} else {
+							if (node.catalogEntry) {
+								result.title = (
+									<CatalogEntry
+										entry={node.catalogEntry}
+										hideIcons
+										hideInPlan
+									/>
+								);
+							}
 						}
+
+						return result;
 					}}
 					canNodeHaveChildren={(node) => {
 						return node.isDirectory;
