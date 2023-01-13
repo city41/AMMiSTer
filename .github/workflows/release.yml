@@ -11,11 +11,17 @@ jobs:
 
       - name: Install Wine
         run: |
-          sudo sed -i 's/azure\.//' /etc/apt/sources.list
+          # note: using 'apt-get -o Acquire::Retries=3' to dance around connectivity issues to Azure,
+          # use apt-spy2 to select closest apt mirror,
+          # which helps avoid connectivity issues in Azure;
+          # see https://github.com/actions/virtual-environments/issues/675
+          sudo gem install apt-spy2
+          sudo apt-spy2 check
+          sudo apt-spy2 fix --commit
           sudo dpkg --add-architecture i386
-          sudo apt update 1>&2
-          sudo apt install --install-recommends wine64 -y 1>&2
-          sudo apt install --install-recommends wine32 -y 1>&2
+          sudo apt-get update 1>&2
+          sudo apt-get -o Acquire::Retries=3 install --install-recommends wine64 -y 1>&2
+          sudo apt-get -o Acquire::Retries=3 install --install-recommends wine32 -y 1>&2
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
