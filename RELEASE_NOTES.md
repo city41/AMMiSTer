@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.9.0
+
+- [All] Reworked how plans work
+
 ## Version 0.7.0
 
 - [All] Undo and Redo
