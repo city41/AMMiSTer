@@ -189,8 +189,6 @@ function Plan({
 							const result: Record<string, unknown> = {
 								className: clsx('group', {
 									'focused-directory': node.id === focusedId,
-									'expanded-directory': node.expanded,
-									'closed-directory': !node.expanded,
 								}),
 								buttons,
 							};

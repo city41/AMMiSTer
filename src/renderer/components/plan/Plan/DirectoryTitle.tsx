@@ -4,6 +4,7 @@ import { useDrop } from 'react-dnd';
 import { TreeItem } from 'react-sortable-tree';
 import { Input } from '../../Input';
 import { PlanTreeItem } from './types';
+import { FolderIcon, FolderOpenIcon } from '../../../icons';
 
 type DirectoryTitleProps = {
 	node: TreeItem<PlanTreeItem>;
@@ -31,7 +32,7 @@ function DirectoryTitle({
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 
-	const [{ isDraggingOver, draggedTitle }, dropRef] = useDrop(() => {
+	const [{ isDraggingOver }, dropRef] = useDrop(() => {
 		return {
 			accept: 'CatalogEntry',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,11 +42,11 @@ function DirectoryTitle({
 					db_id: item.node.db_id,
 					mraFileName: item.node.mraFileName,
 				});
+				onSetFocusedId(node.parentPath.concat(node.title as string).join('/'));
 			},
 			collect(monitor) {
 				return {
 					isDraggingOver: !!monitor.isOver(),
-					draggedTitle: monitor.getItem()?.node.title,
 				};
 			},
 		};
@@ -96,11 +97,14 @@ function DirectoryTitle({
 		</div>
 	);
 
+	const Icon = node.expanded ? FolderOpenIcon : FolderIcon;
+
 	return (
 		<div
-			className="flex flex-row items-baseline gap-x-2"
+			className="flex flex-row items-center gap-x-2"
 			onClick={() => onSetFocusedId(node.id)}
 		>
+			<Icon className="w-6 h-6" />
 			{titleEl}
 			<div className="text-sm font-normal text-gray-500">
 				{node.immediateGameCount} / {node.totalGameCount} games
