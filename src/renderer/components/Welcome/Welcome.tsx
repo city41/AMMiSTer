@@ -36,19 +36,13 @@ function Welcome({
 			{isBeta && (
 				<div className="mt-6 rounded p-2 pb-4 -m-2 bg-red-200 flex flex-col gap-y-2">
 					<h2 className="text-xl font-medium text-red-800">
-						This is a beta version!
+						This is a beta version
 					</h2>
 					<p>
 						AMMiSTer is currently in beta. It's pretty solid, but there are
 						probably bugs yet and more features and polish to come.
 					</p>
-					<h2 className="text-xl font-medium text-red-800">Alternative ROMs</h2>
-					<p>
-						AMMister does not support alternative ROMs. If you use those,
-						don&apos;t export to your MiSTer. You can export to a directory to
-						play with the app.
-					</p>
-					<p className="mt-8">
+					<p className="mt-2 mb-6">
 						Check the{' '}
 						<a
 							href="https://github.com/city41/AMMiSTer/blob/main/RELEASE_NOTES.md"
@@ -59,6 +53,12 @@ function Welcome({
 							release notes
 						</a>{' '}
 						for more info.
+					</p>
+					<h2 className="text-xl font-medium text-red-800">Alternative ROMs</h2>
+					<p>
+						AMMister does not support alternative ROMs. If you use those,
+						don&apos;t export to your MiSTer. You can export to a directory to
+						play with the app.
 					</p>
 				</div>
 			)}
