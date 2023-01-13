@@ -1,10 +1,9 @@
-import { CatalogEntry } from '../../../../main/catalog/types';
+import { PlanGameDirectory } from 'src/main/plan/types';
 
 export type PlanTreeItem = {
-	isDirectory: boolean;
+	id: string;
 	parentPath: string[];
-	db_id?: string;
-	mraFileName?: string;
-	catalogEntry?: CatalogEntry;
-	totalGameCount?: number;
+	immediateGameCount: number;
+	totalGameCount: number;
+	entries: PlanGameDirectory;
 };

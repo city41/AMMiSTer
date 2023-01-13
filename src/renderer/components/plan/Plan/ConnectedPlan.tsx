@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
 	loadDemoPlan,
@@ -20,9 +20,14 @@ import { AppState, dispatch } from '../../../store';
 
 import { Plan } from './Plan';
 import { PlanEmptyState } from './PlanEmptyState';
+import { BulkAddModal } from '../BulkAddModal';
 
 function ConnectedPlan() {
 	const plan = useSelector((state: AppState) => state.plan.present.plan);
+	const [bulkAddDestination, setBulkAddDestination] = useState<string | null>(
+		null
+	);
+	const [bulkAddInvocationCount, setBulkAddInvocationCount] = useState(0);
 
 	async function handleNewPlan() {
 		const catalog = await window.ipcAPI.getCurrentCatalog();
@@ -106,6 +111,11 @@ function ConnectedPlan() {
 		dispatch(addItem(args));
 	}
 
+	function handleBulkAdd(planPath: string) {
+		setBulkAddDestination(planPath);
+		setBulkAddInvocationCount((c) => c + 1);
+	}
+
 	return (
 		<>
 			<Plan
@@ -117,8 +127,18 @@ function ConnectedPlan() {
 				onPlanRename={handlePlanRename}
 				onDirectoryRename={handleDirectoryRename}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
+				onBulkAdd={handleBulkAdd}
 			/>
 			{!plan && <PlanEmptyState onClick={handleNewPlan} />}
+			<BulkAddModal
+				key={String(bulkAddDestination) + bulkAddInvocationCount.toString()}
+				isOpen={bulkAddDestination !== null}
+				destination={bulkAddDestination ?? ''}
+				onClose={() => {
+					setBulkAddDestination(null);
+					setBulkAddInvocationCount((c) => c + 1);
+				}}
+			/>
 		</>
 	);
 }
