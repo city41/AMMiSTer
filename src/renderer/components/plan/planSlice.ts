@@ -183,25 +183,52 @@ const planSlice = createSlice({
 				});
 
 				const entry = prevParent.games[prevIndex];
-				const alreadyInParent =
-					'gameName' in entry &&
-					newParent.games.some(
+
+				if ('gameName' in entry) {
+					const alreadyInParent = newParent.games.some(
 						(g) =>
 							'gameName' in g &&
 							g.files.mra.fileName === entry.files.mra.fileName
 					);
 
-				if (!alreadyInParent) {
-					const [movingNode] = prevParent.games.splice(prevIndex, 1);
-					const movingNodeName =
-						'gameName' in movingNode
-							? movingNode.gameName
-							: movingNode.directoryName;
-					const destIndex = newParent.games.findIndex((g) => {
-						const name = 'gameName' in g ? g.gameName : g.directoryName;
-						return movingNodeName.localeCompare(name) <= 0;
-					});
-					newParent.games.splice(destIndex, 0, movingNode);
+					if (!alreadyInParent) {
+						const [movingNode] = prevParent.games.splice(prevIndex, 1);
+						const movingNodeName =
+							'gameName' in movingNode
+								? movingNode.gameName
+								: movingNode.directoryName;
+						const destIndex = newParent.games.findIndex((g) => {
+							const name = 'gameName' in g ? g.gameName : g.directoryName;
+							return movingNodeName.localeCompare(name) <= 0;
+						});
+						newParent.games.splice(destIndex, 0, movingNode);
+					}
+				} else {
+					const dirInNewParentWithSameName = newParent.games.find(
+						(g) =>
+							'directoryName' in g &&
+							g.directoryName.toLowerCase() ===
+								entry.directoryName.toLowerCase()
+					) as PlanGameDirectoryEntry;
+
+					if (dirInNewParentWithSameName) {
+						entry.games.forEach((movingNode) => {
+							const movingNodeName =
+								'gameName' in movingNode
+									? movingNode.gameName
+									: movingNode.directoryName;
+
+							const destIndex = dirInNewParentWithSameName.games.findIndex(
+								(g) => {
+									const name = 'gameName' in g ? g.gameName : g.directoryName;
+									return movingNodeName.localeCompare(name) <= 0;
+								}
+							);
+							dirInNewParentWithSameName.games.splice(destIndex, 0, movingNode);
+						});
+					}
+
+					prevParent.games.splice(prevIndex, 1);
 				}
 			}
 		},

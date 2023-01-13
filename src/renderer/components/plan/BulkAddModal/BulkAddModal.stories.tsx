@@ -9,24 +9,16 @@ const meta: Meta = {
 
 export default meta;
 
-export const NoNewPath = () => {
-	return (
-		<BulkAddModal
-			isOpen
-			onApply={() => {}}
-			onDestinationChange={() => {}}
-			newPath=""
-		/>
-	);
+export const Basic = () => {
+	return <BulkAddModal isOpen destination="" onApply={() => {}} />;
 };
 
-export const NewPath = () => {
+export const InSubDirectory = () => {
 	return (
 		<BulkAddModal
 			isOpen
+			destination="Capcom/games/fighters"
 			onApply={() => {}}
-			onDestinationChange={() => {}}
-			newPath="fighters/capcom"
 		/>
 	);
 };

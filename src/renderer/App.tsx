@@ -11,7 +11,6 @@ import { Plan } from './components/plan/Plan';
 import { Welcome } from './components/Welcome';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
-import { BulkAddModal } from './components/plan/BulkAddModal';
 
 function App() {
 	return (
@@ -34,7 +33,6 @@ function App() {
 				<ExportModal />
 				<ExportRemoteConfigModal />
 				<EntryDetailModal />
-				<BulkAddModal />
 			</Provider>
 		</DndProvider>
 	);

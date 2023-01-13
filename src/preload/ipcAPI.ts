@@ -101,10 +101,6 @@ const ipcAPI = {
 		ipcRenderer.on('menu:kickOffCatalogUpdate', callback);
 	},
 
-	menu_kickOffBulkAdd(callback: () => void) {
-		ipcRenderer.on('menu:kickOffBulkAdd', callback);
-	},
-
 	menu_loadDemoPlan(callback: () => void) {
 		ipcRenderer.on('menu:loadDemoPlan', callback);
 	},

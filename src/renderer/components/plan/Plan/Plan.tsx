@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
 import SortableTree, { TreeItem } from 'react-sortable-tree';
 import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
@@ -7,10 +7,10 @@ import {
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
 } from '../../../../main/plan/types';
-import { DirectoryAddIcon, TrashIcon } from 'src/renderer/icons';
+import { DirectoryAddIcon, TrashIcon } from '../../../icons';
 import { PlanTreeItem } from './types';
-import { Input } from '../../Input';
-import { CatalogEntry } from '../../catalog/CatalogEntry';
+import { FocusedDirectory } from './FocusedDirectory';
+import { DirectoryTitle } from './DirectoryTitle';
 
 type InternalPlanProps = {
 	plan: Plan | null;
@@ -33,6 +33,7 @@ type InternalPlanProps = {
 	}) => void;
 	onDirectoryAdd: (args: { parentPath: string[] }) => void;
 	onToggleDirectoryExpansion: (path: string[]) => void;
+	onBulkAdd: (planPath: string) => void;
 };
 
 function isPlanGameDirectoryEntry(
@@ -41,40 +42,63 @@ function isPlanGameDirectoryEntry(
 	return 'games' in entry;
 }
 
-function countDescendantGames(dir: PlanGameDirectory): number {
-	return dir.reduce<number>((accum, e) => {
+function getDescendantGames(dir: PlanGameDirectory): CatalogEntryType[] {
+	return dir.reduce<CatalogEntryType[]>((accum, e) => {
 		if (isPlanGameDirectoryEntry(e)) {
-			return accum + countDescendantGames(e.games);
+			return accum.concat(getDescendantGames(e.games));
 		} else {
-			return accum + 1;
+			return accum.concat(e);
 		}
-	}, 0);
+	}, []);
 }
 
 function createTreeData(
 	planDir: PlanGameDirectory,
 	parentPath: string[]
 ): TreeItem<PlanTreeItem>[] {
-	return planDir.map((g) => {
+	return planDir.flatMap((g) => {
 		if (isPlanGameDirectoryEntry(g)) {
 			const subData = createTreeData(g.games, [...parentPath, g.directoryName]);
-			return {
-				title: g.directoryName,
-				expanded: typeof g.isExpanded === 'undefined' ? true : g.isExpanded,
-				children: subData,
-				isDirectory: true,
-				parentPath,
-				totalGameCount: countDescendantGames(g.games),
-			};
+			const descendantGames = getDescendantGames(g.games).sort((a, b) => {
+				return a.gameName.localeCompare(b.gameName);
+			});
+			return [
+				{
+					id: parentPath.join('/') + '/' + g.directoryName,
+					title: g.directoryName,
+					expanded: typeof g.isExpanded === 'undefined' ? true : g.isExpanded,
+					children: subData,
+					isDirectory: true,
+					parentPath,
+					immediateGameCount: g.games.filter((g) => 'gameName' in g).length,
+					totalGameCount: descendantGames.length,
+					entries: g.games,
+				},
+			];
 		} else {
-			return {
-				title: g.gameName,
-				isDirectory: false,
-				parentPath,
-				catalogEntry: g,
-			};
+			return [];
 		}
 	});
+}
+
+function findFocusedNode(
+	data: TreeItem<PlanTreeItem>[],
+	focusedId: string
+): TreeItem<PlanTreeItem> | null {
+	for (const node of data) {
+		if (Array.isArray(node.children)) {
+			const focusedNode = findFocusedNode(node.children, focusedId);
+			if (focusedNode) {
+				return focusedNode;
+			}
+		}
+
+		if (node.id === focusedId) {
+			return node;
+		}
+	}
+
+	return null;
 }
 
 function Plan({
@@ -86,63 +110,51 @@ function Plan({
 	onPlanRename,
 	onDirectoryRename,
 	onToggleDirectoryExpansion,
+	onBulkAdd,
 }: InternalPlanProps) {
+	const [focusedId, setFocusedId] = useState('');
+
 	// this craziness of the planDataSeed and hidden class is due to react-sortable-tree.
 	// It renders a DragDropContext. going from plan -> no plan -> plan would create a new tree,
 	// and thus a new DragDropContext, causing react-dnd to blow up with "Cannot have two HTML5 backends at the same time"
 	// the fix was to never create a new tree. If we don't have a plan, render a tree with no nodes that is hidden.
 	//
 	// You can go from plan -> no plan using undo: Create a new plan, undo it, create a new plan
-
 	const planDataSeed = plan ? [plan] : [];
+	const treeData = createTreeData(planDataSeed, []);
+	const focusedNode = findFocusedNode(treeData, focusedId);
+
 	return (
 		<div
-			className={clsx('w-full xh-full p-8', {
+			className={clsx('w-full h-full p-8', {
 				hidden: !plan,
 			})}
 		>
-			<div className="w-full rounded bg-white border border-gray-200 shadow p-4">
-				<SortableTree<PlanTreeItem>
-					dndType="CatalogEntry"
-					treeData={createTreeData(planDataSeed, [])}
-					onChange={() => {}}
-					onMoveNode={({ node, nextParentNode }) => {
-						const newParentPath = nextParentNode?.parentPath.concat(
-							nextParentNode.title as string
-						) ?? [plan!.directoryName];
+			<div className="w-full h-full rounded bg-white border border-gray-200 shadow p-4 pr-0 grid grid-cols-3">
+				<div className="plan-tree-container w-full overflow-x-auto overflow-y-auto col-span-2">
+					<SortableTree<PlanTreeItem>
+						treeData={treeData}
+						onChange={() => {}}
+						onMoveNode={({ node, nextParentNode }) => {
+							if (node.parentPath && nextParentNode) {
+								const newParentPath = nextParentNode.parentPath.concat(
+									nextParentNode.title as string
+								);
 
-						if (node.parentPath) {
-							const name = node.title as string;
-							const prevParentPath = node.parentPath;
+								const name = node.title as string;
+								const prevParentPath = node.parentPath;
 
-							onItemMove({ prevParentPath, newParentPath, name });
-						} else {
-							if (node.mraFileName && node.db_id) {
-								// TODO: emit an error if the entry lacks an mra
-								onItemAdd({
-									parentPath: newParentPath,
-									db_id: node.db_id,
-									mraFileName: node.mraFileName,
-								});
+								onItemMove({ prevParentPath, newParentPath, name });
 							}
-						}
-					}}
-					onVisibilityToggle={({ node }) => {
-						if (node.isDirectory) {
+						}}
+						onVisibilityToggle={({ node }) => {
 							const path = node.parentPath.concat(node.title as string);
 							onToggleDirectoryExpansion(path);
-						}
-					}}
-					isVirtualized={false}
-					generateNodeProps={({ path, parentNode, node }) => {
-						const buttons = [];
+						}}
+						isVirtualized={false}
+						generateNodeProps={({ path, parentNode, node }) => {
+							const buttons = [];
 
-						const pChildren = (
-							parentNode && parentNode.isDirectory ? parentNode.children : []
-						) as any[];
-						const isEvenGame = pChildren.indexOf(node) % 2 === 0;
-
-						if (node.isDirectory) {
 							buttons.push(
 								<DirectoryAddIcon
 									key="directory-add"
@@ -154,81 +166,65 @@ function Plan({
 									}}
 								/>
 							);
-						}
 
-						if (path.length > 1) {
-							buttons.push(
-								<TrashIcon
-									key="trash"
-									className="w-5 h-5 invisible group-hover:visible cursor-pointer cursor-"
-									onClick={() => {
-										onItemDelete({
-											parentPath: node.parentPath,
-											name: node.title as string,
-										});
-									}}
-								/>
-							);
-						}
+							if (path.length > 1) {
+								buttons.push(
+									<TrashIcon
+										key="trash"
+										className="w-5 h-5 invisible group-hover:visible cursor-pointer cursor-"
+										onClick={() => {
+											onItemDelete({
+												parentPath: node.parentPath,
+												name: node.title as string,
+											});
 
-						const result: Record<string, unknown> = {
-							className: clsx('group', {
-								'cursor-default': !node.isDirectory,
-								'node-directory': node.isDirectory,
-								'bg-gray-50 is-odd-game': !isEvenGame,
-								'bg-white is-even-game': isEvenGame,
-							}),
-							buttons,
-						};
-
-						if (node.isDirectory) {
-							result.title = (
-								<div className="flex flex-row items-baseline gap-x-2">
-									<Input
-										className="border-none"
-										style={{ fontWeight: 'normal' }}
-										value={node.title as string}
-										onChange={(e) => {
-											if (node.parentPath.length === 0) {
-												// TODO: can the plan itself not be handled separately?
-												onPlanRename(e.target.value);
-											} else {
-												onDirectoryRename({
-													parentPath: node.parentPath,
-													name: node.title as string,
-													newName: e.target.value,
-												});
+											if (node.id === focusedId) {
+												setFocusedId('');
 											}
 										}}
 									/>
-									<div className="text-sm font-normal text-gray-500">
-										{node.totalGameCount} game
-										{node.totalGameCount === 1 ? '' : 's'}
-									</div>
-								</div>
-							);
-						} else {
-							if (node.catalogEntry) {
-								result.title = (
-									<CatalogEntry
-										entry={node.catalogEntry}
-										hideIcons
-										hideInPlan
-									/>
 								);
 							}
-						}
 
-						return result;
-					}}
-					canNodeHaveChildren={(node) => {
-						return node.isDirectory;
-					}}
-					canDrag={({ path }) => {
-						// prevent the root (which is really just the plan's name) from dragging
-						return path.length > 1;
-					}}
-				/>
+							const result: Record<string, unknown> = {
+								className: clsx('group', {
+									'focused-directory': node.id === focusedId,
+									'expanded-directory': node.expanded,
+									'closed-directory': !node.expanded,
+								}),
+								buttons,
+							};
+
+							result.title = (
+								<DirectoryTitle
+									node={node}
+									onSetFocusedId={(focusedId) => setFocusedId(focusedId)}
+									onDirectoryRename={onDirectoryRename}
+									onPlanRename={onPlanRename}
+									onItemAdd={onItemAdd}
+								/>
+							);
+
+							return result;
+						}}
+						canDrag={({ path }) => {
+							// prevent the root (which is really just the plan's name) from dragging
+							return path.length > 1;
+						}}
+						canDrop={({ nextParent, prevParent }) => {
+							return nextParent?.id !== prevParent?.id;
+						}}
+					/>
+				</div>
+				{!!focusedNode && (
+					<FocusedDirectory
+						focusedNode={focusedNode}
+						onBulkAdd={onBulkAdd}
+						onItemAdd={onItemAdd}
+						onItemDelete={onItemDelete}
+						planName={plan!.directoryName}
+					/>
+				)}
 			</div>
 		</div>
 	);

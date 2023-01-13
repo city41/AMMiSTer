@@ -49,7 +49,7 @@ function CatalogEntry({
 		(entry.files.roms.length > 0 && entry.files.roms.every((r) => !r.md5));
 
 	return (
-		<div className={clsx(className, 'px-2 py-1')}>
+		<div className={className}>
 			<div className="whitespace-nowrap text-ellipsis overflow-hidden">
 				<h3
 					className={clsx('inline font-medium hover:underline cursor-pointer', {

@@ -3,23 +3,19 @@ import { Modal, ModalProps } from '../../Modal';
 import { Criteria as CriteriaCmp } from './Criteria';
 import { Button } from '../../Button';
 import { AddIcon } from '../../../icons';
-import { Input } from '../../Input';
-import { HelpButton } from '../../HelpButton';
 import { BulkAddCriteria } from '../planSlice';
 
 type PublicBulkAddModalProps = ModalProps & { className?: string };
 
 type InternalBulkAddModalProps = {
-	onApply: (args: { criteria: BulkAddCriteria[]; destination: string }) => void;
-	onDestinationChange: (newDest: string) => void;
-	newPath: string;
+	destination: string;
+	onApply: (criteria: BulkAddCriteria[]) => void;
 };
 
 function BulkAddModal({
 	className,
+	destination,
 	onApply,
-	onDestinationChange,
-	newPath,
 	...rest
 }: PublicBulkAddModalProps & InternalBulkAddModalProps) {
 	const [criterias, setCriterias] = useState<BulkAddCriteria[]>([
@@ -29,7 +25,6 @@ function BulkAddModal({
 			value: 'Street Fighter',
 		},
 	]);
-	const [destination, setDestination] = useState('');
 
 	return (
 		<Modal {...rest} closeButton>
@@ -44,9 +39,8 @@ function BulkAddModal({
 					<h1 className="text-lg font-medium leading-6 text-gray-900">
 						Bulk Add Games
 					</h1>
-					<p className="mt-2 bg-yellow-50 p-2 text-sm text-yellow-700">
-						This is a key feature of AMMiSTer and will get better. For now it is
-						pretty basic.
+					<p className="mt-2 text-sm text-gray-600">
+						Add games to {destination || 'the main arcade directory'}
 					</p>
 				</div>
 				<div className="flex flex-col items-stretch">
@@ -108,37 +102,12 @@ function BulkAddModal({
 								</ul>
 							</dd>
 						</div>
-						<div className="even:bg-gray-50 px-6 py-5 grid grid-cols-5 gap-4">
-							<dt className="text-sm font-medium text-gray-500">
-								Destination
-								<HelpButton>
-									A path within your plan such as &quot;Capcom/Horizontal
-									Shooters&quot;. Want to add them to the top of the plan? Leave
-									this blank.
-								</HelpButton>
-							</dt>
-							<dd className="mt-0 text-sm text-gray-900 col-span-4">
-								<Input
-									type="text"
-									value={destination}
-									onChange={(e) => {
-										setDestination(e.target.value);
-										onDestinationChange(e.target.value);
-									}}
-								/>
-								{!!newPath && (
-									<div className="text-sm text-yellow-700">
-										{newPath} will be created
-									</div>
-								)}
-							</dd>
-						</div>
 					</dl>
 				</div>
 				<div className="flex flex-row justify-end p-2">
 					<Button
 						onClick={() => {
-							onApply({ criteria: criterias, destination });
+							onApply(criterias);
 						}}
 					>
 						Apply

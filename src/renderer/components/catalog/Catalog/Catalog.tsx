@@ -44,7 +44,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 					key={ge.gameName + i}
 					className="even:bg-gray-50 border border-b-gray-200 cursor-grab"
 				>
-					<CatalogEntry entry={ge} />
+					<CatalogEntry className="px-2 py-1" entry={ge} />
 				</li>
 			);
 		});
