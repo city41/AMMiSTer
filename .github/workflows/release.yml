@@ -11,6 +11,7 @@ jobs:
 
       - name: Install Wine
         run: |
+          sudo sed -i 's/azure\.//' /etc/apt/sources.list
           sudo dpkg --add-architecture i386
           sudo apt update 1>&2
           sudo apt install --install-recommends wine64 -y 1>&2
