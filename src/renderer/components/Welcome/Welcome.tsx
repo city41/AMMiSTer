@@ -15,7 +15,7 @@ function Welcome({
 	appVersion,
 	onDismiss,
 }: InternalWelcomeProps & PublicWelcomeProps) {
-	const isAlpha = appVersion.startsWith('0.');
+	const isBeta = appVersion.startsWith('0.');
 
 	return (
 		<div
@@ -33,14 +33,14 @@ function Welcome({
 					Don&apos;t show this again
 				</a>
 			</h1>
-			{isAlpha && (
+			{isBeta && (
 				<div className="mt-6 rounded p-2 pb-4 -m-2 bg-red-200 flex flex-col gap-y-2">
 					<h2 className="text-xl font-medium text-red-800">
-						This is an alpha version!
+						This is a beta version!
 					</h2>
 					<p>
-						This is an early version of AMMiSTer. More features, improvements
-						and bug fixes are coming.
+						AMMiSTer is currently in beta. It's pretty solid, but there are
+						probably bugs yet and more features and polish to come.
 					</p>
 					<h2 className="text-xl font-medium text-red-800">Alternative ROMs</h2>
 					<p>
