@@ -183,6 +183,8 @@ const planSlice = createSlice({
 				});
 
 				const entry = prevParent.games[prevIndex];
+				const movingNodeName =
+					'gameName' in entry ? entry.gameName : entry.directoryName;
 
 				if ('gameName' in entry) {
 					const alreadyInParent = newParent.games.some(
@@ -193,10 +195,6 @@ const planSlice = createSlice({
 
 					if (!alreadyInParent) {
 						const [movingNode] = prevParent.games.splice(prevIndex, 1);
-						const movingNodeName =
-							'gameName' in movingNode
-								? movingNode.gameName
-								: movingNode.directoryName;
 						const destIndex = newParent.games.findIndex((g) => {
 							const name = 'gameName' in g ? g.gameName : g.directoryName;
 							return movingNodeName.localeCompare(name) <= 0;
@@ -226,6 +224,12 @@ const planSlice = createSlice({
 							);
 							dirInNewParentWithSameName.games.splice(destIndex, 0, movingNode);
 						});
+					} else {
+						const destIndex = newParent.games.findIndex((g) => {
+							const name = 'gameName' in g ? g.gameName : g.directoryName;
+							return movingNodeName.localeCompare(name) <= 0;
+						});
+						newParent.games.splice(destIndex, 0, entry);
 					}
 
 					prevParent.games.splice(prevIndex, 1);
@@ -281,6 +285,7 @@ const planSlice = createSlice({
 					return newDirectoryName.localeCompare(entryName) <= 0;
 				});
 				parent.games.splice(destIndex, 0, newDirectoryNode);
+				parent.isExpanded = true;
 			}
 		},
 		planRename(state: InternalPlanState, action: PayloadAction<string>) {
