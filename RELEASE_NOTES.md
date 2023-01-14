@@ -6,6 +6,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 ## Version 0.10.0
 
+- [All] App icon
+
+## Version 0.10.0
+
 - [All] Generate detailed log for exports
 
 ## Version 0.9.0
