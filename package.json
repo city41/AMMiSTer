@@ -79,7 +79,8 @@
 		"react-sortable-tree": "^2.8.0",
 		"redux-thunk": "^2.4.2",
 		"redux-undo": "^1.0.1",
-		"semver-compare": "^1.0.0"
+		"semver-compare": "^1.0.0",
+		"winston": "^3.8.2"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.20.7",
@@ -105,6 +106,7 @@
 		"@types/react-modal": "^3.13.1",
 		"@types/react-sortable-tree": "^0.3.16",
 		"@types/ssh2-sftp-client": "^9.0.0",
+		"@types/winston": "^2.4.4",
 		"@typescript-eslint/eslint-plugin": "^5.40.0",
 		"@typescript-eslint/parser": "^5.40.0",
 		"babel-loader": "^8.3.0",

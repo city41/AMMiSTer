@@ -2,7 +2,8 @@ import path from 'node:path';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import mkdirp from 'mkdirp';
-import Debug from 'debug';
+import settings from 'electron-settings';
+import winston from 'winston';
 import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import {
 	SrcFileOperationPath,
@@ -24,8 +25,69 @@ import {
 	misterPathJoiner,
 } from '../util/fs';
 import { CatalogEntry } from '../catalog/types';
+import _ from 'lodash';
 
-const debug = Debug('main/export/export.ts');
+let exportLogger: winston.Logger;
+
+async function createExportLogger(planName: string, initiator: string) {
+	const rootDir = await settings.get('rootDir');
+
+	return winston.createLogger({
+		level: 'info',
+		format: winston.format.combine(
+			winston.format.errors({ stack: true }),
+			winston.format.metadata(),
+			winston.format.json()
+		),
+		transports: [
+			new winston.transports.File({
+				filename: path.resolve(
+					(rootDir ?? '').toString(),
+					`export-log--${initiator}-${planName.replace(
+						/\s/g,
+						'_'
+					)}-${new Date().toISOString()}.json`
+				),
+			}),
+		],
+		defaultMeta: {
+			initiator,
+		},
+	});
+}
+
+const ONE_WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000;
+
+async function clearOldLogs(initiator: string) {
+	const rootDirSetting = await settings.get('rootDir');
+
+	if (!rootDirSetting) {
+		throw new Error('clearOldLogs: rootDir setting not found');
+	}
+	const rootDir = rootDirSetting.toString();
+
+	const files = await fsp.readdir(rootDir);
+
+	const logFiles = files.filter(
+		(f) =>
+			f.startsWith(`export-log--${initiator}`) && path.extname(f) === '.json'
+	);
+
+	for (const logFile of logFiles) {
+		const logFilePath = path.resolve(rootDir, logFile);
+		const stat = await fsp.stat(logFilePath);
+
+		if (Date.now() - stat.mtime.getTime() > ONE_WEEK_MILLIS) {
+			try {
+				await fsp.unlink(logFilePath);
+				exportLogger.info({ deletedLogOlderThanOneWeek: logFilePath });
+			} catch (e) {
+				exportLogger.error('Error trying to delete old log file');
+				exportLogger.error(e);
+			}
+		}
+	}
+}
 
 function isPlanGameDirectoryEntry(
 	obj: CatalogEntry | PlanGameDirectoryEntry
@@ -238,8 +300,12 @@ async function performLocalFileSystemFileOperations(
 	fileOps: FileOperation[],
 	cb: (err: null | string, fileOp: FileOperation) => void
 ) {
+	const logger = exportLogger.child({
+		method: performLocalFileSystemFileOperations.name,
+	});
+
 	for (const fileOp of fileOps) {
-		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
+		logger.info({ performFileOperations: fileOp });
 
 		const srcPath =
 			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
@@ -252,6 +318,7 @@ async function performLocalFileSystemFileOperations(
 					await mkdirp(path.dirname(destPath));
 					await fsp.copyFile(srcPath, destPath);
 				} catch (e) {
+					logger.error(e);
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
 					return;
@@ -263,6 +330,7 @@ async function performLocalFileSystemFileOperations(
 				try {
 					await fsp.unlink(destPath);
 				} catch (e) {
+					logger.error(e);
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
 					return;
@@ -280,14 +348,20 @@ async function performRemoteFileSystemFileOperations(
 	fileOps: FileOperation[],
 	cb: (error: null | Error | string, fileOp: FileOperation) => void
 ) {
+	const logger = exportLogger.child({
+		method: performRemoteFileSystemFileOperations.name,
+	});
+
 	for (const fileOp of fileOps) {
-		debug(`performFileOperations: ${JSON.stringify(fileOp)}`);
+		logger.info({ performFileOperations: fileOp });
 
 		const srcPath =
 			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
 
 		// dest paths are for the mister, path.join is wrong
 		const destPath = misterPathJoiner(destDirRoot, fileOp.destPath);
+
+		logger.info({ srcPath, destPath });
 
 		switch (fileOp.action) {
 			case 'copy': {
@@ -296,10 +370,9 @@ async function performRemoteFileSystemFileOperations(
 					await client.mkDir(path.dirname(destPath), true);
 					const data = fs.createReadStream(srcPath);
 					const result = await client.putFile(data, destPath);
-					debug(
-						`performFileOp,copy:${srcPath} to ${destPath}, result: ${result}`
-					);
+					logger.info({ copyResult: result, fileOp });
 				} catch (e) {
+					logger.error(e);
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
 					return;
@@ -311,6 +384,7 @@ async function performRemoteFileSystemFileOperations(
 				try {
 					await client.deleteFile(destPath);
 				} catch (e) {
+					logger.error(e);
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, fileOp);
 					return;
@@ -426,9 +500,7 @@ async function getExistingRemoteDestPaths(
 	for (const entry of entries) {
 		// since this is running on the mister, path.join is incorrect
 		const p = misterPathJoiner(curDirPath, entry);
-		debug('p:', p);
 		const isDirectory = await client.isDir(p);
-		debug('isDirectory:', isDirectory);
 
 		if (isDirectory) {
 			const subPaths = await getExistingRemoteDestPaths(client, rootDir, p);
@@ -448,6 +520,9 @@ async function getExistingRemoteDestPaths(
  * any empty directories it finds along the way
  */
 async function deleteEmptyLocalDirectories(curDirPath: string) {
+	const logger = exportLogger.child({
+		method: deleteEmptyLocalDirectories.name,
+	});
 	const entries = await fsp.readdir(curDirPath);
 
 	for (const entry of entries) {
@@ -457,11 +532,12 @@ async function deleteEmptyLocalDirectories(curDirPath: string) {
 		if (s.isDirectory()) {
 			await deleteEmptyLocalDirectories(p);
 			const dirEntries = await fsp.readdir(p);
-			debug('deleteEmtpyLocalDirs', p, 'has', dirEntries.length, 'files');
+
+			logger.info({ directoryPath: p, fileCount: dirEntries.length });
 
 			if (dirEntries.length === 0) {
 				await fsp.rmdir(p);
-				debug('deleteEmptyLocalDirs, deleted:', p);
+				logger.info({ deleted: p });
 			}
 		}
 	}
@@ -472,22 +548,28 @@ async function exportToDirectory(
 	destDirPath: string,
 	providedCallback: ExportCallback
 ) {
-	debug(`exportToDirectory(plan, ${destDirPath}, callback)`);
+	exportLogger = await createExportLogger(
+		plan.directoryName,
+		exportToDirectory.name
+	);
+
+	await clearOldLogs(exportToDirectory.name);
+
+	exportLogger.info({ destDirPath, plan });
 
 	const callback: ExportCallback = (args) => {
-		debug(args.message);
+		exportLogger.info({ callback: args });
 		providedCallback(args);
 	};
+
 	try {
 		const srcPaths = getSrcPathsFromPlan(plan.games, '_Arcade', path.join);
 		const destPaths = await getExistingLocalDestPaths(destDirPath, '');
 		const fileOperations = buildFileOperations(srcPaths, destPaths, path.join);
 
-		debug(
-			`exportToDirectory: fileOperations:\n${fileOperations
-				.map((fo) => JSON.stringify(fo))
-				.join('\n')}`
-		);
+		exportLogger.info({ [getSrcPathsFromPlan.name]: srcPaths });
+		exportLogger.info({ [getExistingLocalDestPaths.name]: destPaths });
+		exportLogger.info({ [buildFileOperations.name]: fileOperations });
 
 		const gameCacheDir = await getGameCacheDir();
 
@@ -523,7 +605,16 @@ async function exportToDirectory(
 			complete: true,
 		});
 	} catch (e) {
-		debug('exportToDirectory: unknown error', e);
+		exportLogger.error('Uncaught exception');
+		exportLogger.error(e);
+		const message = e instanceof Error ? e.message : String(e);
+		callback({
+			exportType: 'directory',
+			message,
+			error: { type: 'unknown' },
+		});
+	} finally {
+		exportLogger.close();
 	}
 }
 
@@ -535,6 +626,10 @@ async function deleteEmptyRemoteDirectories(
 	client: FileClient,
 	curDirPath: string
 ) {
+	const logger = exportLogger.child({
+		method: deleteEmptyRemoteDirectories.name,
+	});
+
 	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
@@ -544,11 +639,12 @@ async function deleteEmptyRemoteDirectories(
 		if (isDirectory) {
 			await deleteEmptyRemoteDirectories(client, p);
 			const dirEntries = await client.listDir(p);
-			debug('deleteEmtpyRemoteDirs', p, 'has', dirEntries.length, 'files');
+
+			logger.info({ directoryPath: p, fileCount: dirEntries.length });
 
 			if (dirEntries.length === 0) {
 				await client.rmDir(p);
-				debug('deleteEmptySSHDirs, deleted:', p);
+				logger.info({ deleted: p });
 			}
 		}
 	}
@@ -559,21 +655,29 @@ async function exportToMister(
 	config: FileClientConnectConfig,
 	providedCallback: ExportCallback
 ) {
+	exportLogger = await createExportLogger(
+		plan.directoryName,
+		exportToMister.name
+	);
+
+	await clearOldLogs(exportToMister.name);
+
+	exportLogger.info({ config, plan });
+
 	const callback: ExportCallback = (args) => {
-		debug(args.message, args.error ?? '');
+		exportLogger.info({ callback: args });
 		providedCallback(args);
 	};
 
 	try {
 		const start = Date.now();
-		debug(`exportToMister(plan, ${JSON.stringify(config)}, callback)`);
 
 		callback({
 			exportType: 'mister',
 			message: `Connecting to MiSTer at ${config.host}...`,
 		});
 
-		const client = new FTPFileClient();
+		const client = new FTPFileClient(exportLogger.child({ ftpClient: true }));
 		try {
 			await client.connect({
 				host: config.host,
@@ -583,7 +687,8 @@ async function exportToMister(
 				password: config.password,
 			});
 		} catch (e) {
-			debug('exportToMister: failed to connect', e);
+			exportLogger.error({ context: 'failed to connect', config });
+			exportLogger.error(e);
 			callback({
 				exportType: 'mister',
 				message: '',
@@ -595,7 +700,7 @@ async function exportToMister(
 		const mountDir = config.mount === 'sdcard' ? 'fat' : config.mount;
 		// this path is on the mister itself, using path.join would be wrong
 		const mountPath = misterPathJoiner('/media/', mountDir);
-		debug('exportToMister, mountPath:', mountPath);
+		exportLogger.info({ mountPath });
 
 		const srcPaths = getSrcPathsFromPlan(
 			plan.games,
@@ -603,7 +708,7 @@ async function exportToMister(
 			misterPathJoiner
 		);
 
-		debug(`exportToMister: ${srcPaths.length} srcPaths`);
+		exportLogger.info({ [getSrcPathsFromPlan.name]: srcPaths });
 
 		callback({
 			exportType: 'mister',
@@ -620,18 +725,21 @@ async function exportToMister(
 			misterPathJoiner(mountPath, 'games', 'mame')
 		);
 		const destPaths = destArcadePaths.concat(destRomPaths);
-		debug(`destPaths\n${destPaths.map((dp) => JSON.stringify(dp)).join('\n')}`);
+		exportLogger.info({
+			[getExistingRemoteDestPaths.name]: destArcadePaths,
+			for: '_Arcade',
+		});
+		exportLogger.info({
+			[getExistingRemoteDestPaths.name]: destRomPaths,
+			for: 'games/mame',
+		});
 		const fileOperations = buildFileOperations(
 			srcPaths,
 			destPaths,
 			misterPathJoiner
 		);
 
-		debug(
-			`exportToMister: fileOperations:\n${fileOperations
-				.map((fo) => JSON.stringify(fo))
-				.join('\n')}`
-		);
+		exportLogger.info({ [buildFileOperations.name]: fileOperations });
 
 		const gameCacheDir = await getGameCacheDir();
 
@@ -682,12 +790,15 @@ async function exportToMister(
 		});
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
-		debug('exportToMister: unknown error occured', e);
+		exportLogger.error('Uncaught exception');
+		exportLogger.error(e);
 		callback({
 			exportType: 'mister',
 			message: '',
 			error: { type: 'unknown', message },
 		});
+	} finally {
+		exportLogger.close();
 	}
 }
 
