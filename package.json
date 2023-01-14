@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.11.0",
+	"version": "0.11.1",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"dev": "yarn clean && concurrently --kill-others \"yarn dev-backend\" \"yarn dev-frontend\" \"yarn storybook\"",
 		"prod-backend": "cross-env NODE_ENV=production tsc && scripts/createAppPackageJson.js",
 		"prod-frontend": "cross-env NODE_ENV=production webpack --progress --color",
-		"prod": "yarn clean && yarn prod-backend && yarn prod-frontend && cp ./resources/icon-640x640.png ./dist/icon.png",
+		"prod": "yarn clean && yarn prod-backend && yarn prod-frontend && cp ./resources/icon-640x640.png ./dist/icon.png && cp ./resources/icon-512x512.icns ./dist/icon.icns",
 		"test:unit": "yarn jest",
 		"lint": "yarn eslint src",
 		"build:win": "electron-builder build --win",
@@ -34,7 +34,7 @@
 				"target": "dmg",
 				"arch": "universal"
 			},
-			"icon": "dist/icon.png"
+			"icon": "dist/icon.icns"
 		},
 		"win": {
 			"target": {
