@@ -31,6 +31,8 @@ const iconProps =
 		  }
 		: {};
 
+console.log('appPath', app.getAppPath());
+
 function createWindow() {
 	mainWindow = new BrowserWindow({
 		height: 600,
