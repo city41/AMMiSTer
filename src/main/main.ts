@@ -24,10 +24,18 @@ let lastPlanSavePath: string | null = null;
 
 const isDev = app.getName() !== 'ammister';
 
+const iconProps =
+	process.platform === 'darwin'
+		? {
+				icon: path.join(app.getAppPath(), 'icon.icns'),
+		  }
+		: {};
+
 function createWindow() {
 	mainWindow = new BrowserWindow({
 		height: 600,
 		width: 800,
+		...iconProps,
 		webPreferences: {
 			devTools: isDev,
 			preload: path.join(__dirname, '../preload.bundle.js'),
