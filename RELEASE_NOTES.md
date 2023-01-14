@@ -4,6 +4,14 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.12.3
+
+- [All] Bulk add fixes
+
+## Version 0.12.0
+
+- [All] File Association (but doesn't fully work yet)
+
 ## Version 0.10.0
 
 - [All] App icon

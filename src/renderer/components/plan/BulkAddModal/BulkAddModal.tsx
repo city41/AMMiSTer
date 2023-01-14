@@ -30,9 +30,9 @@ function BulkAddModal({
 		<Modal {...rest} closeButton>
 			<div
 				style={{
-					width: '55vw',
+					width: '85vw',
 					maxHeight: '80vh',
-					maxWidth: 900,
+					maxWidth: 1300,
 				}}
 			>
 				<div className="py-5 px-6">
@@ -45,7 +45,7 @@ function BulkAddModal({
 				</div>
 				<div className="flex flex-col items-stretch">
 					<dl className="bg-white">
-						<div className="even:bg-gray-50 px-6 py-5 grid grid-cols-5 gap-4">
+						<div className="even:bg-gray-50 px-6 py-5 grid grid-cols-7 gap-4">
 							<dt className="text-sm font-medium text-gray-500 flex flex-row gap-x-2">
 								<div>Criteria</div>
 								<AddIcon
@@ -61,7 +61,7 @@ function BulkAddModal({
 									}}
 								/>
 							</dt>
-							<dd className="mt-0 text-gray-900 col-span-4">
+							<dd className="mt-0 text-gray-900 col-span-6">
 								<ul className="flex flex-col gap-y-2">
 									{criterias.map((c, i) => (
 										<li key={i} className="even:bg-white">
