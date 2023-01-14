@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.11.5",
+	"version": "0.12.0",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -29,6 +29,15 @@
 			"app": "./dist/",
 			"output": "./out/"
 		},
+		"fileAssociations": [
+			{
+				"ext": [
+					"amip"
+				],
+				"name": "AMMiSTer Plan",
+				"role": "Editor"
+			}
+		],
 		"mac": {
 			"target": {
 				"target": "dmg",
@@ -44,6 +53,9 @@
 				]
 			},
 			"icon": "dist/icon.png"
+		},
+		"nsis": {
+			"perMachine": true
 		},
 		"linux": {
 			"target": "AppImage",
