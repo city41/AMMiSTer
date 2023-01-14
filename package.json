@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.12.0",
+	"version": "0.12.1",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -55,16 +55,14 @@
 			"icon": "dist/icon.png"
 		},
 		"nsis": {
+			"oneClick": false,
+			"allowToChangeInstallationDirectory": true,
 			"perMachine": true
 		},
 		"linux": {
 			"target": "AppImage",
 			"category": "Utility",
 			"icon": "dist/icon.png"
-		},
-		"nsis": {
-			"oneClick": false,
-			"allowToChangeInstallationDirectory": true
 		}
 	},
 	"author": "Matt Greer <matt.e.greer@gmail.com>",
