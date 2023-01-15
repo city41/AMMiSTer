@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.14.1
+
+- [All] Don't allow a directory to not have a name
+
 ## Version 0.14.0
 
 - [All] Favoriting

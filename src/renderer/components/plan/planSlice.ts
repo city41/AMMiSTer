@@ -344,6 +344,11 @@ const planSlice = createSlice({
 				const { parentPath, name } = action.payload;
 				let { newName } = action.payload;
 
+				// dont allow empty directory names
+				if (!newName || !newName.trim()) {
+					return;
+				}
+
 				const parent = getNode(state.plan, parentPath);
 
 				if (parent === state.plan && newName.toLowerCase() === 'favorites') {
