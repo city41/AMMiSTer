@@ -33,9 +33,10 @@ async function loadPlan(planPath: string) {
 		lastPlanSavePath = planPath;
 	} else {
 		debug(
-			'loadPlan: plan.openPlan returned null, nothing to send to mainWindow',
+			'loadPlan: plan.openPlan returned null, returning null to let the UI know there is no plan',
 			planPath
 		);
+		mainWindow!.webContents.send('menu:loadOpenedPlan', null);
 	}
 }
 
@@ -187,7 +188,8 @@ function createWindow() {
 		if (planToLoadAfterMainWindowIsReady) {
 			loadPlan(planToLoadAfterMainWindowIsReady);
 		} else {
-			loadPlan(process.argv[1]);
+			const commandLinePlan = isDev ? process.argv[2] : process.argv[1];
+			loadPlan(commandLinePlan);
 		}
 	});
 

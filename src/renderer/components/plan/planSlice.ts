@@ -51,14 +51,17 @@ type BulkAddCriteria =
 	| NumberBulkAddCriteria;
 
 type InternalPlanState = {
-	plan: Plan | null;
+	// undefined and null are crucially different
+	// undefined -> unknown if there is a plan or not, main has not told us
+	// null -> main told us there is no plan
+	plan: Plan | null | undefined;
 	isDirty: boolean;
 };
 
 type PlanState = StateWithHistory<InternalPlanState>;
 
 const initialState: InternalPlanState = {
-	plan: null,
+	plan: undefined,
 	isDirty: false,
 };
 

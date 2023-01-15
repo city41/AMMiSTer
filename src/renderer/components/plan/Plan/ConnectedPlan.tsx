@@ -117,6 +117,16 @@ function ConnectedPlan() {
 		setBulkAddInvocationCount((c) => c + 1);
 	}
 
+	// if plan is undefined, then main is still loading it,
+	// since this will only take a couple seconds at most, the
+	// "loading state" is just blank
+	if (plan === undefined) {
+		return null;
+	}
+
+	// either plan is an object or null at this point, if null,
+	// then <Plan /> will show the blank slate
+
 	return (
 		<>
 			<Plan
