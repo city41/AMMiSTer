@@ -175,7 +175,12 @@ function buildFileOperations(
 			return srcOpPath.destRelPath === destOpPath.relPath;
 		});
 
-		if (existsAtDest) {
+		if (
+			existsAtDest &&
+			// always copy mras. They are small and it is faster to just always
+			// copy them than check their hash
+			path.extname(srcOpPath.destRelPath).toLowerCase() !== '.mra'
+		) {
 			return [];
 		} else {
 			if (!srcOpPath.db_id) {
@@ -194,6 +199,8 @@ function buildFileOperations(
 		}
 	});
 
+	// dated files are always cores, and their date is a pretty good signal to see
+	// if they have been updated. So no need to "always copy" in this case
 	const srcDatedOps = srcDatedPaths.flatMap<FileOperation>((srcOpPath) => {
 		const existsOrNewerAtDest = destDatedPaths.some((destOpPath) => {
 			return (
