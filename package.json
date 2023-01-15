@@ -124,7 +124,6 @@
 		"@typescript-eslint/parser": "^5.40.0",
 		"babel-loader": "^8.3.0",
 		"concurrently": "^7.6.0",
-		"copy": "^0.3.2",
 		"cross-env": "^7.0.3",
 		"electron": "22.0.0",
 		"eslint": "^8.25.0",
