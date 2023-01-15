@@ -18,6 +18,13 @@ function ConnectedCatalog() {
 		dispatch(updateCatalog());
 	}
 
+	// main hasn't sent us the catalog yet, we dont yet know
+	// if there is one. Since this only takes a second or so,
+	// the "loading state" is just blank
+	if (catalog === undefined) {
+		return null;
+	}
+
 	if (catalog === null) {
 		return <CatalogEmptyState onClick={handleBuildCatalog} />;
 	}

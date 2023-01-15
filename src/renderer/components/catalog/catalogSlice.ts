@@ -9,14 +9,17 @@ import {
 import { AppState } from '../../store';
 
 type CatalogState = {
-	catalog: Catalog | null;
+	// undefined and null are crucially different
+	// undefined -> unknown if there is a catalog or not, main has not told us
+	// null -> main told us there is no catalog
+	catalog: Catalog | null | undefined;
 	updateCatalogStatus?: UpdateStatus;
 	updates: Update[] | null;
 	detailEntry: CatalogEntry | null;
 };
 
 const initialState: CatalogState = {
-	catalog: null,
+	catalog: undefined,
 	updates: null,
 	detailEntry: null,
 };
@@ -25,7 +28,7 @@ const catalogSlice = createSlice({
 	name: 'catalog',
 	initialState,
 	reducers: {
-		setCatalog(state: CatalogState, action: PayloadAction<Catalog>) {
+		setCatalog(state: CatalogState, action: PayloadAction<Catalog | null>) {
 			state.catalog = action.payload;
 		},
 		setUpdates(state: CatalogState, action: PayloadAction<Update[]>) {
@@ -77,9 +80,7 @@ const updateCatalog = (): CatalogSliceThunk => async (dispatch) => {
 const getCurrentCatalog = (): CatalogSliceThunk => async (dispatch) => {
 	const currentCatalog = await window.ipcAPI.getCurrentCatalog();
 
-	if (currentCatalog) {
-		dispatch(catalogSlice.actions.setCatalog(currentCatalog));
-	}
+	dispatch(catalogSlice.actions.setCatalog(currentCatalog ?? null));
 };
 
 const reducer = catalogSlice.reducer;
