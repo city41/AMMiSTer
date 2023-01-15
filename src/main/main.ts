@@ -20,6 +20,7 @@ debug('versions', JSON.stringify(process.versions));
 
 let mainWindow: BrowserWindow | undefined;
 
+let planToLoadAfterMainWindowIsReady: string | null = null;
 let lastPlanSavePath: string | null = null;
 
 const isDev = app.getName() !== 'ammister';
@@ -183,7 +184,9 @@ function createWindow() {
 	// and load the index.html of the app.
 	const indexPath = isDev ? '../index.html' : './index.html';
 	mainWindow.loadFile(indexPath).finally(() => {
-		/* no action */
+		if (planToLoadAfterMainWindowIsReady) {
+			loadPlan(planToLoadAfterMainWindowIsReady);
+		}
 	});
 
 	mainWindow.on('closed', () => {
@@ -225,7 +228,12 @@ app
 
 app.on('open-file', (event, filePath) => {
 	event.preventDefault();
-	loadPlan(filePath);
+
+	if (mainWindow?.isEnabled()) {
+		loadPlan(filePath);
+	} else {
+		planToLoadAfterMainWindowIsReady = filePath;
+	}
 });
 
 app.on('window-all-closed', () => {
