@@ -24,6 +24,20 @@ let lastPlanSavePath: string | null = null;
 
 const isDev = app.getName() !== 'ammister';
 
+async function loadPlan(planPath: string) {
+	const openedPlan = await plan.openPlan(planPath);
+	if (openedPlan) {
+		debug('loadPlan: sending opened plan to mainWindow', planPath);
+		mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
+		lastPlanSavePath = planPath;
+	} else {
+		debug(
+			'loadPlan: plan.openPlan returned null, nothing to send to mainWindow',
+			planPath
+		);
+	}
+}
+
 function createWindow() {
 	mainWindow = new BrowserWindow({
 		width: 800,
@@ -58,16 +72,7 @@ function createWindow() {
 						});
 
 						if (!result.canceled) {
-							const openedPlan = await plan.openPlan(result.filePaths[0]);
-							if (openedPlan) {
-								debug('Open Plan: sending opened plan to mainWindow');
-								mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
-								lastPlanSavePath = result.filePaths[0];
-							} else {
-								debug(
-									'Open Plan: plan.openPlan returned null, nothing to send to mainWindow'
-								);
-							}
+							loadPlan(result.filePaths[0]);
 						}
 					},
 				},
@@ -215,8 +220,13 @@ app
 		await settings.set('rootDir', app.getPath('userData'));
 	})
 	.finally(() => {
-		/* no action */
+		loadPlan(process.argv[1]);
 	});
+
+app.on('open-file', (event, filePath) => {
+	event.preventDefault();
+	loadPlan(filePath);
+});
 
 app.on('window-all-closed', () => {
 	app.quit();
