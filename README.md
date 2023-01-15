@@ -2,7 +2,7 @@
 
 An app for managing arcade games on the MiSTer. Download all of the arcade cores and their ROMs to your PC. Then decide what games will go onto your MiSTer, organized anyway you like. When new updates come out, you can grab those updates, and just update the games that are on your MiSTer.
 
-![screenshot-plan](https://github.com/city41/AMMiSTer/blob/main/screenshot-plan.png?raw=true)
+![screenshot](https://github.com/city41/AMMiSTer/blob/main/screenshot.png?raw=true)
 
 ![screenshot-detail](https://github.com/city41/AMMiSTer/blob/main/screenshot-detail.png?raw=true)
 
