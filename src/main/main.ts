@@ -303,8 +303,11 @@ ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
 
 	if (!result.canceled && result.filePath) {
 		lastPlanSavePath = result.filePath;
-		return plan.savePlan(p, result.filePath);
+		plan.savePlan(p, result.filePath);
+		return true;
 	}
+
+	return false;
 });
 
 ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
@@ -319,8 +322,11 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 	}
 
 	if (lastPlanSavePath) {
-		return plan.savePlan(p, lastPlanSavePath);
+		plan.savePlan(p, lastPlanSavePath);
+		return true;
 	}
+
+	return false;
 });
 
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {

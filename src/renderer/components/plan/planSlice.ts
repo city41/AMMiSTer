@@ -52,12 +52,14 @@ type BulkAddCriteria =
 
 type InternalPlanState = {
 	plan: Plan | null;
+	isDirty: boolean;
 };
 
 type PlanState = StateWithHistory<InternalPlanState>;
 
 const initialState: InternalPlanState = {
 	plan: null,
+	isDirty: false,
 };
 
 function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
@@ -131,8 +133,12 @@ const planSlice = createSlice({
 	name: 'plan',
 	initialState,
 	reducers: {
+		clearDirty(state: InternalPlanState) {
+			state.isDirty = false;
+		},
 		setPlan(state: InternalPlanState, action: PayloadAction<Plan>) {
 			state.plan = action.payload;
+			state.isDirty = false;
 		},
 		addCatalogEntry(
 			state: InternalPlanState,
@@ -157,6 +163,7 @@ const planSlice = createSlice({
 				if (!alreadyInParent) {
 					parent.games.push(catalogEntry);
 					parent.games = parent.games.slice().sort();
+					state.isDirty = true;
 				}
 			}
 		},
@@ -200,6 +207,7 @@ const planSlice = createSlice({
 							return movingNodeName.localeCompare(name) <= 0;
 						});
 						newParent.games.splice(destIndex, 0, movingNode);
+						state.isDirty = true;
 					}
 				} else {
 					const dirInNewParentWithSameName = newParent.games.find(
@@ -233,6 +241,7 @@ const planSlice = createSlice({
 					}
 
 					prevParent.games.splice(prevIndex, 1);
+					state.isDirty = true;
 				}
 			}
 		},
@@ -243,6 +252,9 @@ const planSlice = createSlice({
 			if (state.plan) {
 				const { parentPath, name } = action.payload;
 				const parent = getNode(state.plan, parentPath);
+
+				let initialCount = parent.games.length;
+
 				parent.games = parent.games.filter((g) => {
 					if ('directoryName' in g) {
 						return g.directoryName !== name;
@@ -250,6 +262,8 @@ const planSlice = createSlice({
 						return g.gameName !== name;
 					}
 				});
+
+				state.isDirty = initialCount > parent.games.length;
 			}
 		},
 		addDirectory(
@@ -286,11 +300,17 @@ const planSlice = createSlice({
 				});
 				parent.games.splice(destIndex, 0, newDirectoryNode);
 				parent.isExpanded = true;
+				state.isDirty = true;
 			}
 		},
 		planRename(state: InternalPlanState, action: PayloadAction<string>) {
 			if (state.plan) {
-				state.plan.directoryName = action.payload;
+				const oldName = state.plan.directoryName;
+				const newName = action.payload;
+
+				state.plan.directoryName = newName;
+
+				state.isDirty = oldName !== newName;
 			}
 		},
 		directoryRename(
@@ -311,7 +331,10 @@ const planSlice = createSlice({
 				}) as PlanGameDirectoryEntry;
 
 				if (entry) {
+					const oldName = entry.directoryName;
 					entry.directoryName = newName;
+
+					state.isDirty = oldName !== newName;
 				}
 			}
 		},
@@ -361,11 +384,43 @@ const addItem =
 		}
 	};
 
-const loadNewPlan = (): PlanSliceThunk => async (dispatch) => {
+const loadNewPlan = (): PlanSliceThunk => async (dispatch, getState) => {
+	const { plan: currentPlan, isDirty } = getState().plan.present;
+
+	if (currentPlan && isDirty) {
+		const proceed = confirm(
+			`${currentPlan.directoryName} has unsaved changes, proceed?`
+		);
+
+		if (!proceed) {
+			return;
+		}
+	}
+
 	const plan = await window.ipcAPI.newPlan();
 	plan.directoryName = 'New Plan';
 	dispatch(planSlice.actions.setPlan(plan));
+	dispatch(ActionCreators.clearHistory());
 };
+
+const loadOpenedPlan =
+	(plan: Plan): PlanSliceThunk =>
+	(dispatch, getState) => {
+		const { plan: currentPlan, isDirty } = getState().plan.present;
+
+		if (currentPlan && isDirty) {
+			const proceed = confirm(
+				`${currentPlan.directoryName} has unsaved changes, proceed?`
+			);
+
+			if (!proceed) {
+				return;
+			}
+		}
+
+		dispatch(planSlice.actions.setPlan(plan));
+		dispatch(ActionCreators.clearHistory());
+	};
 
 const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	const catalog = getState().catalog.catalog;
@@ -431,19 +486,27 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	}
 };
 
-const savePlanAs = (): PlanSliceThunk => async (_dispatch, getState) => {
+const savePlanAs = (): PlanSliceThunk => async (dispatch, getState) => {
 	const plan = getState().plan.present.plan;
 
 	if (plan) {
-		window.ipcAPI.savePlanAs(plan);
+		const wasSaved = await window.ipcAPI.savePlanAs(plan);
+
+		if (wasSaved) {
+			dispatch(planSlice.actions.clearDirty());
+		}
 	}
 };
 
-const savePlan = (): PlanSliceThunk => async (_dispatch, getState) => {
+const savePlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	const plan = getState().plan.present.plan;
 
 	if (plan) {
-		window.ipcAPI.savePlan(plan);
+		const wasSaved = await window.ipcAPI.savePlan(plan);
+
+		if (wasSaved) {
+			dispatch(planSlice.actions.clearDirty());
+		}
 	}
 };
 
@@ -587,6 +650,7 @@ const undoableReducer = undoable(reducer, {
 		'plan/loadDemoPlan',
 		'plan/savePlan',
 		'plan/savePlanAs',
+		planSlice.actions.clearDirty.toString(),
 	]),
 	groupBy: batchGroupBy.init(),
 });
@@ -594,6 +658,7 @@ const { undo, redo } = ActionCreators;
 
 export {
 	undoableReducer as reducer,
+	loadOpenedPlan,
 	loadNewPlan,
 	loadDemoPlan,
 	setPlan,

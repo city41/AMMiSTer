@@ -41,11 +41,11 @@ const ipcAPI = {
 		return ipcRenderer.invoke('plan:newPlan');
 	},
 
-	savePlanAs(plan: Plan): Promise<void> {
+	savePlanAs(plan: Plan): Promise<boolean> {
 		return ipcRenderer.invoke('plan:savePlanAs', plan);
 	},
 
-	savePlan(plan: Plan): Promise<void> {
+	savePlan(plan: Plan): Promise<boolean> {
 		return ipcRenderer.invoke('plan:savePlan', plan);
 	},
 

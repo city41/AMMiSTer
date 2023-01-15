@@ -8,6 +8,7 @@ import { FolderIcon, FolderOpenIcon } from '../../../icons';
 
 type DirectoryTitleProps = {
 	node: TreeItem<PlanTreeItem>;
+	isDirty: boolean;
 	onPlanRename: (newName: string) => void;
 	onDirectoryRename: (args: {
 		parentPath: string[];
@@ -24,6 +25,7 @@ type DirectoryTitleProps = {
 
 function DirectoryTitle({
 	node,
+	isDirty,
 	onPlanRename,
 	onDirectoryRename,
 	onSetFocusedId,
@@ -106,6 +108,7 @@ function DirectoryTitle({
 		>
 			<Icon className="w-6 h-6" />
 			{titleEl}
+			{isDirty && <div>*</div>}
 			<div className="text-sm font-normal text-gray-500">
 				{node.immediateGameCount} / {node.totalGameCount} games
 			</div>

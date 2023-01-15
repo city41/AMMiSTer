@@ -14,6 +14,7 @@ import { DirectoryTitle } from './DirectoryTitle';
 
 type InternalPlanProps = {
 	plan: Plan | null;
+	isDirty: boolean;
 	onItemMove: (args: {
 		prevParentPath: string[];
 		newParentPath: string[];
@@ -103,6 +104,7 @@ function findFocusedNode(
 
 function Plan({
 	plan,
+	isDirty,
 	onItemAdd,
 	onItemDelete,
 	onItemMove,
@@ -122,6 +124,11 @@ function Plan({
 	// You can go from plan -> no plan using undo: Create a new plan, undo it, create a new plan
 	const planDataSeed = plan ? [plan] : [];
 	const treeData = createTreeData(planDataSeed, []);
+
+	if (plan) {
+		treeData[0].isDirty = isDirty;
+	}
+
 	const focusedNode = findFocusedNode(treeData, focusedId);
 
 	return (
@@ -196,6 +203,7 @@ function Plan({
 							result.title = (
 								<DirectoryTitle
 									node={node}
+									isDirty={!!node.isDirty}
 									onSetFocusedId={(focusedId) => setFocusedId(focusedId)}
 									onDirectoryRename={onDirectoryRename}
 									onPlanRename={onPlanRename}

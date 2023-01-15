@@ -6,4 +6,5 @@ export type PlanTreeItem = {
 	immediateGameCount: number;
 	totalGameCount: number;
 	entries: PlanGameDirectory;
+	isDirty?: boolean;
 };

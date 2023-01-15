@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
+	loadOpenedPlan,
 	loadDemoPlan,
 	loadNewPlan,
 	savePlanAs,
 	savePlan,
-	setPlan,
 	addItem,
 	deleteItem,
 	moveItem,
@@ -24,6 +24,7 @@ import { BulkAddModal } from '../BulkAddModal';
 
 function ConnectedPlan() {
 	const plan = useSelector((state: AppState) => state.plan.present.plan);
+	const isDirty = useSelector((state: AppState) => state.plan.present.isDirty);
 	const [bulkAddDestination, setBulkAddDestination] = useState<string | null>(
 		null
 	);
@@ -59,7 +60,7 @@ function ConnectedPlan() {
 		window.ipcAPI.menu_loadNewPlan(handleNewPlan);
 
 		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
-			dispatch(setPlan(plan));
+			dispatch(loadOpenedPlan(plan));
 		});
 
 		window.ipcAPI.menu_savePlanAs(async () => {
@@ -120,6 +121,7 @@ function ConnectedPlan() {
 		<>
 			<Plan
 				plan={plan}
+				isDirty={isDirty}
 				onItemAdd={handleItemAdd}
 				onItemDelete={handleItemDelete}
 				onItemMove={handleItemMove}
