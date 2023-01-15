@@ -52,7 +52,7 @@ function DirectoryTitle({
 				};
 			},
 		};
-	}, []);
+	}, [node]);
 
 	useEffect(() => {
 		if (isEditing && inputRef.current) {
