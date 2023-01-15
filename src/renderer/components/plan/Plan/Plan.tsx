@@ -159,20 +159,24 @@ function Plan({
 							onToggleDirectoryExpansion(path);
 						}}
 						isVirtualized={false}
-						generateNodeProps={({ path, parentNode, node }) => {
+						generateNodeProps={({ path, node }) => {
 							const buttons = [];
 
-							buttons.push(
-								<DirectoryAddIcon
-									key="directory-add"
-									className="w-5 h-5 invisible group-hover:visible mr-2 cursor-pointer"
-									onClick={() => {
-										onDirectoryAdd({
-											parentPath: node.parentPath.concat(node.title as string),
-										});
-									}}
-								/>
-							);
+							if (node.title !== 'favorites') {
+								buttons.push(
+									<DirectoryAddIcon
+										key="directory-add"
+										className="w-5 h-5 invisible group-hover:visible mr-2 cursor-pointer"
+										onClick={() => {
+											onDirectoryAdd({
+												parentPath: node.parentPath.concat(
+													node.title as string
+												),
+											});
+										}}
+									/>
+								);
+							}
 
 							if (path.length > 1) {
 								buttons.push(
@@ -218,7 +222,10 @@ function Plan({
 							return path.length > 1;
 						}}
 						canDrop={({ nextParent, prevParent }) => {
-							return nextParent?.id !== prevParent?.id;
+							return (
+								nextParent?.id !== prevParent?.id &&
+								nextParent?.title !== 'favorites'
+							);
 						}}
 					/>
 				</div>

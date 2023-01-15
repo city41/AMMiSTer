@@ -14,6 +14,10 @@ function ConnectedCatalog() {
 		return s.catalog.catalog;
 	});
 
+	const plan = useSelector((s: AppState) => {
+		return s.plan.present.plan;
+	});
+
 	function handleBuildCatalog() {
 		dispatch(updateCatalog());
 	}

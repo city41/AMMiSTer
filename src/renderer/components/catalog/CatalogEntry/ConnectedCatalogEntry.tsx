@@ -3,10 +3,15 @@ import { useDrag } from 'react-dnd';
 import { useSelector } from 'react-redux';
 import { AppState, dispatch } from '../../../store';
 import { setDetailEntry } from '../catalogSlice';
+import { toggleFavorite } from '../../plan/planSlice';
 import { CatalogEntry, PublicCatalogEntryProps } from './CatalogEntry';
-import { PlanGameDirectory } from '../../../../main/plan/types';
+import {
+	Plan,
+	PlanGameDirectory,
+	PlanGameDirectoryEntry,
+} from '../../../../main/plan/types';
 
-function isInPlanDir(dir: PlanGameDirectory, mra: string) {
+function isInPlanDir(dir: PlanGameDirectory, mra: string): boolean {
 	for (const e of dir) {
 		if ('gameName' in e && e.files.mra.fileName === mra) {
 			return true;
@@ -20,6 +25,31 @@ function isInPlanDir(dir: PlanGameDirectory, mra: string) {
 	}
 
 	return false;
+}
+
+function isPlanFavorite(
+	plan: Plan | null | undefined,
+	mra: string
+): boolean | undefined {
+	if (!plan) {
+		return undefined;
+	}
+
+	const favoriteDir = plan.games.find((e) => {
+		return (
+			'directoryName' in e && e.directoryName.toLowerCase() === 'favorites'
+		);
+	});
+
+	if (!favoriteDir) {
+		return false;
+	}
+
+	return (favoriteDir as PlanGameDirectoryEntry).games.some((e) => {
+		if ('gameName' in e && e.files.mra.fileName === mra) {
+			return true;
+		}
+	});
 }
 
 function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
@@ -48,11 +78,22 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 
 	const mra = props.entry?.files.mra.fileName;
 	const isInPlan = !!mra && !!plan && isInPlanDir(plan.games, mra);
+	const isFavorite = !!mra && isPlanFavorite(plan, mra);
+
+	function handleToggleFavorite() {
+		dispatch(toggleFavorite(props.entry));
+	}
 
 	return (
 		<div ref={dragRef}>
 			{' '}
-			<CatalogEntry {...props} onClick={handleClick} isInPlan={isInPlan} />
+			<CatalogEntry
+				{...props}
+				onClick={handleClick}
+				isInPlan={isInPlan}
+				isFavorite={isFavorite}
+				onToggleFavorite={handleToggleFavorite}
+			/>
 		</div>
 	);
 }

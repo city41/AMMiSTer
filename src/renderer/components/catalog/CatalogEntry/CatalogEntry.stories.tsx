@@ -62,7 +62,7 @@ export const CompleteEntry = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={completeEntry} />
+				<CatalogEntry entry={completeEntry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);
@@ -72,7 +72,11 @@ export const IsInPlan = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={completeEntry} isInPlan />
+				<CatalogEntry
+					entry={completeEntry}
+					isInPlan
+					onToggleFavorite={() => {}}
+				/>
 			</div>
 		</DndProvider>
 	);
@@ -91,7 +95,7 @@ export const MissingAFile = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={entry} />
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);
@@ -106,7 +110,7 @@ export const Favorited = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={entry} />
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);
@@ -122,7 +126,7 @@ export const NotFavorited = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={entry} />
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);
@@ -137,7 +141,7 @@ export const Vertical = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={entry} />
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);
@@ -152,7 +156,7 @@ export const orientationUnknown = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
-				<CatalogEntry entry={entry} />
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);

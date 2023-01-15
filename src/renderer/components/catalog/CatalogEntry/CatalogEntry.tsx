@@ -11,8 +11,10 @@ type PublicCatalogEntryProps = {
 };
 
 type InternalCatalogEntryProps = {
-	onClick?: () => void;
 	isInPlan?: boolean;
+	isFavorite?: boolean;
+	onClick?: () => void;
+	onToggleFavorite: () => void;
 };
 
 function Monitor({
@@ -39,10 +41,12 @@ function CatalogEntry({
 	entry,
 	hideIcons,
 	isInPlan,
+	isFavorite,
 	hideInPlan,
 	onClick,
+	onToggleFavorite,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
-	const FavIcon = entry.favorite ? FavoriteIcon : NotFavoriteIcon;
+	const FavIcon = isFavorite ? FavoriteIcon : NotFavoriteIcon;
 	const missingFile =
 		!entry.files.mra ||
 		!entry.files.rbf ||
@@ -68,11 +72,12 @@ function CatalogEntry({
 					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
 						{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
 						<Monitor orientation={entry.orientation} />
-						{typeof entry.favorite === 'boolean' && (
+						{typeof isFavorite === 'boolean' && (
 							<FavIcon
-								className={clsx('w-5 h-5', {
-									'text-gray-500': !entry.favorite,
-									'text-orange-400': entry.favorite,
+								onClick={onToggleFavorite}
+								className={clsx('w-5 h-5 cursor-pointer', {
+									'text-gray-500': !isFavorite,
+									'text-orange-400': isFavorite,
 								})}
 							/>
 						)}

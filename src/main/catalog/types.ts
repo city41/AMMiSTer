@@ -95,7 +95,6 @@ export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
  * all of the metadata and info on all of its files
  */
 export type CatalogEntry = {
-	favorite?: boolean;
 	db_id: string;
 	gameName: string;
 	manufacturer: string[];

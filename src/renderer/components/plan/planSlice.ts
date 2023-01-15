@@ -108,7 +108,7 @@ function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
 	return foundDirEntry;
 }
 
-function createDirectoriesIfNeeded(plan: Plan, planPath: string[]) {
+function createDirectoriesIfNeeded(plan: Plan, planPath: string[]): void {
 	let dir = plan.games;
 
 	for (const segment of planPath) {
@@ -183,6 +183,14 @@ const planSlice = createSlice({
 
 				const prevParent = getNode(state.plan, prevParentPath);
 				const newParent = getNode(state.plan, newParentPath);
+
+				if (
+					'directoryName' in newParent &&
+					newParent.directoryName.toLowerCase() === 'favorites'
+				) {
+					// for now at least, dont allow directories in favorites
+					return;
+				}
 
 				const prevIndex = prevParent.games.findIndex((g) => {
 					if ('directoryName' in g) {
@@ -277,6 +285,14 @@ const planSlice = createSlice({
 				const { parentPath } = action.payload;
 				const parent = getNode(state.plan, parentPath);
 
+				if (
+					'directoryName' in parent &&
+					parent.directoryName.toLowerCase() === 'favorites'
+				) {
+					// for now at least, dont allow directories in favorites
+					return;
+				}
+
 				let newDirSuffix = 0;
 				let newDirectoryName = 'New Directory';
 
@@ -325,9 +341,14 @@ const planSlice = createSlice({
 			}>
 		) {
 			if (state.plan) {
-				const { parentPath, name, newName } = action.payload;
+				const { parentPath, name } = action.payload;
+				let { newName } = action.payload;
 
 				const parent = getNode(state.plan, parentPath);
+
+				if (parent === state.plan && newName.toLowerCase() === 'favorites') {
+					newName = 'favorites';
+				}
 
 				const entry = parent.games.find((g) => {
 					return 'directoryName' in g && g.directoryName === name;
@@ -349,6 +370,42 @@ const planSlice = createSlice({
 				const { path } = action.payload;
 				const node = getNode(state.plan, path);
 				node.isExpanded = !node.isExpanded;
+			}
+		},
+		toggleFavorite(
+			state: InternalPlanState,
+			action: PayloadAction<CatalogEntry>
+		) {
+			if (state.plan) {
+				const catalogEntry = action.payload;
+
+				createDirectoriesIfNeeded(state.plan, ['favorites']);
+
+				const favDir = state.plan.games.find((e) => {
+					return 'directoryName' in e && e.directoryName === 'favorites';
+				}) as PlanGameDirectoryEntry;
+
+				const currentIndex = favDir.games.findIndex((g) => {
+					return (
+						'gameName' in g &&
+						g.files.mra.fileName === catalogEntry.files.mra.fileName
+					);
+				});
+
+				if (currentIndex > -1) {
+					favDir.games.splice(currentIndex, 1);
+				} else {
+					const newGameName = catalogEntry.gameName;
+
+					const destIndex = favDir.games.findIndex((g) => {
+						const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+						return newGameName.localeCompare(entryName) <= 0;
+					});
+					favDir.games.splice(destIndex, 0, catalogEntry);
+					favDir.isExpanded = true;
+				}
+
+				state.isDirty = true;
 			}
 		},
 	},
@@ -645,6 +702,7 @@ const {
 	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
+	toggleFavorite,
 } = planSlice.actions;
 
 const undoableReducer = undoable(reducer, {
@@ -674,6 +732,7 @@ export {
 	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
+	toggleFavorite,
 	bulkAdd,
 	undo,
 	redo,

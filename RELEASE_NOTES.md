@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improv
 
 # Releases
 
+## Version 0.14.0
+
+- [All] Favoriting
+
 ## Version 0.13.0
 
 - [Mac] Double clicking a plan file loads that plan
