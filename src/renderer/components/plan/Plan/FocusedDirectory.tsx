@@ -85,7 +85,7 @@ function FocusedDirectory({
 							let entryName: string;
 							if ('directoryName' in g) {
 								entryName = g.directoryName;
-								el = <DirectoryEntry directory={g} />;
+								el = <DirectoryEntry className="py-2" directory={g} />;
 							} else {
 								entryName = g.gameName;
 								el = <CatalogEntry entry={g} hideInPlan />;
