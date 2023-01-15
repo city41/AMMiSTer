@@ -4,7 +4,7 @@ import { useDrop } from 'react-dnd';
 import { TreeItem } from 'react-sortable-tree';
 import { Input } from '../../Input';
 import { PlanTreeItem } from './types';
-import { FolderIcon, FolderOpenIcon } from '../../../icons';
+import { FolderIcon } from '../../../icons';
 
 type DirectoryTitleProps = {
 	node: TreeItem<PlanTreeItem>;
@@ -99,14 +99,12 @@ function DirectoryTitle({
 		</div>
 	);
 
-	const Icon = node.expanded ? FolderOpenIcon : FolderIcon;
-
 	return (
 		<div
 			className="flex flex-row items-center gap-x-2"
 			onClick={() => onSetFocusedId(node.id)}
 		>
-			<Icon className="w-6 h-6" />
+			<FolderIcon className="w-6 h-6" />
 			{titleEl}
 			{isDirty && <div>*</div>}
 			<div className="text-sm font-normal text-gray-500">
