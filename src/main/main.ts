@@ -186,6 +186,8 @@ function createWindow() {
 	mainWindow.loadFile(indexPath).finally(() => {
 		if (planToLoadAfterMainWindowIsReady) {
 			loadPlan(planToLoadAfterMainWindowIsReady);
+		} else {
+			loadPlan(process.argv[1]);
 		}
 	});
 
@@ -222,9 +224,7 @@ app
 		});
 		await settings.set('rootDir', app.getPath('userData'));
 	})
-	.finally(() => {
-		loadPlan(process.argv[1]);
-	});
+	.finally(() => {});
 
 app.on('open-file', (event, filePath) => {
 	event.preventDefault();
