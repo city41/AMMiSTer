@@ -3,27 +3,11 @@ name: Build/release
 on: push
 
 jobs:
-  release-ubuntu-windows:
+  release-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
-
-      - name: Install Wine and Mono
-        run: |
-          # note: using 'apt-get -o Acquire::Retries=3' to dance around connectivity issues to Azure,
-          # use apt-spy2 to select closest apt mirror,
-          # which helps avoid connectivity issues in Azure;
-          # see https://github.com/actions/virtual-environments/issues/675
-          sudo gem install apt-spy2
-          sudo apt-spy2 check
-          sudo apt-spy2 fix --commit
-          sudo dpkg --add-architecture i386
-          sudo apt-get update 1>&2
-          sudo apt-get -o Acquire::Retries=3 install --install-recommends wine64 -y 1>&2
-          sudo apt-get -o Acquire::Retries=3 install --install-recommends wine32 -y 1>&2
-          sudo apt-get -o Acquire::Retries=3 install --install-recommends winetricks -y 1>&2
-          winetricks dotnet45
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
@@ -38,7 +22,6 @@ jobs:
           # GitHub token, automatically provided to the action
           # (No need to define this secret in the repo settings)
           github_token: ${{ secrets.github_token }}
-          args: --win --x64
 
           # If the commit is tagged with a version (e.g. "v1.0.0"),
           # release the app after building
@@ -48,6 +31,32 @@ jobs:
 
   release-macos:
     runs-on: macos-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18
+      - run: yarn install
+      - run: yarn prod
+
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          # GitHub token, automatically provided to the action
+          # (No need to define this secret in the repo settings)
+          github_token: ${{ secrets.github_token }}
+
+          # If the commit is tagged with a version (e.g. "v1.0.0"),
+          # release the app after building
+          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          USE_HARD_LINKS: false
+
+  release-windows:
+    runs-on: windows-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
