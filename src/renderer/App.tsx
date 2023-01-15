@@ -23,7 +23,10 @@ function App() {
 					<div className="flex flex-col gap-y-2 h-full overflow-auto">
 						<Catalog />
 					</div>
-					<div className="col-span-5 h-full overflow-auto">
+					<div
+						className="col-span-5 h-full overflow-auto grid"
+						style={{ gridTemplateRows: 'min-content max-content' }}
+					>
 						<Welcome className="mx-auto mt-10" />
 						<Plan />
 					</div>

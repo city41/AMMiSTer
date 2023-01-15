@@ -169,7 +169,7 @@ function createWindow() {
 				{
 					label: 'Refresh',
 					accelerator: 'CommandOrControl+R',
-					click: () => mainWindow!.reload(),
+					click: () => mainWindow!.webContents.reloadIgnoringCache(),
 				},
 				{
 					label: 'Dev Tools',
