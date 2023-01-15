@@ -184,7 +184,8 @@ function createWindow() {
 
 	// and load the index.html of the app.
 	const indexPath = isDev ? '../index.html' : './index.html';
-	mainWindow.loadFile(indexPath).finally(() => {
+
+	mainWindow.webContents.on('dom-ready', () => {
 		if (planToLoadAfterMainWindowIsReady) {
 			loadPlan(planToLoadAfterMainWindowIsReady);
 		} else {
@@ -196,6 +197,8 @@ function createWindow() {
 	mainWindow.on('closed', () => {
 		mainWindow = undefined;
 	});
+
+	mainWindow.loadFile(indexPath).finally(() => {});
 }
 
 // workaround for crashing on Windows
