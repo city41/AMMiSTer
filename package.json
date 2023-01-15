@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.12.6",
+	"version": "0.12.7",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -45,7 +45,7 @@
 		},
 		"win": {
 			"target": {
-				"target": "nsis",
+				"target": "msi",
 				"arch": [
 					"x64"
 				]
@@ -58,7 +58,10 @@
 			"perMachine": true
 		},
 		"linux": {
-			"target": "AppImage",
+			"target": [
+				"AppImage",
+				"deb"
+			],
 			"category": "Utility",
 			"icon": "dist/icon.png"
 		}
