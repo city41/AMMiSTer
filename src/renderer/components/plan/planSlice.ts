@@ -361,9 +361,9 @@ const planSlice = createSlice({
 
 				if (entry) {
 					const oldName = entry.directoryName;
-					entry.directoryName = newName;
 
-					state.isDirty = oldName !== newName;
+					entry.directoryName = newName;
+					state.isDirty = true;
 				}
 			}
 		},

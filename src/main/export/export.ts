@@ -172,7 +172,9 @@ function buildFileOperations(
 
 	const srcExactOps = srcExactPaths.flatMap<FileOperation>((srcOpPath) => {
 		const existsAtDest = destExactPaths.some((destOpPath) => {
-			return srcOpPath.destRelPath === destOpPath.relPath;
+			return (
+				srcOpPath.destRelPath.toLowerCase() === destOpPath.relPath.toLowerCase()
+			);
 		});
 
 		if (
@@ -204,9 +206,12 @@ function buildFileOperations(
 	const srcDatedOps = srcDatedPaths.flatMap<FileOperation>((srcOpPath) => {
 		const existsOrNewerAtDest = destDatedPaths.some((destOpPath) => {
 			return (
-				srcOpPath.destRelDirPath === destOpPath.relDirPath &&
-				srcOpPath.fileNameBase === destOpPath.fileNameBase &&
-				srcOpPath.extension === destOpPath.extension &&
+				srcOpPath.destRelDirPath.toLowerCase() ===
+					destOpPath.relDirPath.toLowerCase() &&
+				srcOpPath.fileNameBase.toLowerCase() ===
+					destOpPath.fileNameBase.toLowerCase() &&
+				srcOpPath.extension.toLowerCase() ===
+					destOpPath.extension.toLowerCase() &&
 				destOpPath.date.getTime() - srcOpPath.date.getTime() >= 0
 			);
 		});
@@ -239,7 +244,9 @@ function buildFileOperations(
 
 	const destExactOps = destExactPaths.flatMap<FileOperation>((destOpPath) => {
 		const existsAtSrc = srcExactPaths.some((srcOpPath) => {
-			return destOpPath.relPath === srcOpPath.destRelPath;
+			return (
+				destOpPath.relPath.toLowerCase() === srcOpPath.destRelPath.toLowerCase()
+			);
 		});
 
 		if (existsAtSrc) {
@@ -257,18 +264,23 @@ function buildFileOperations(
 	const destDatedOps = destDatedPaths.flatMap<FileOperation>((destOpPath) => {
 		const newerAtSrc = srcDatedPaths.some((srcOpPath) => {
 			return (
-				destOpPath.relDirPath === srcOpPath.destRelDirPath &&
-				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
-				destOpPath.extension === srcOpPath.extension &&
+				destOpPath.relDirPath.toLowerCase() ===
+					srcOpPath.destRelDirPath.toLowerCase() &&
+				destOpPath.fileNameBase.toLowerCase() ===
+					srcOpPath.fileNameBase.toLowerCase() &&
+				destOpPath.extension.toLowerCase() ===
+					srcOpPath.extension.toLowerCase() &&
 				destOpPath.date.getTime() - srcOpPath.date.getTime() < 0
 			);
 		});
 
 		const inSrc = srcDatedPaths.some((srcOpPath) => {
 			return (
-				destOpPath.relDirPath === srcOpPath.destRelDirPath &&
-				destOpPath.fileNameBase === srcOpPath.fileNameBase &&
-				destOpPath.extension === srcOpPath.extension
+				destOpPath.relDirPath.toLowerCase() ===
+					srcOpPath.destRelDirPath.toLowerCase() &&
+				destOpPath.fileNameBase.toLowerCase() ===
+					srcOpPath.fileNameBase.toLowerCase() &&
+				destOpPath.extension.toLowerCase() === srcOpPath.extension.toLowerCase()
 			);
 		});
 

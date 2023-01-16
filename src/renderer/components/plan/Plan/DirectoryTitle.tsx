@@ -33,6 +33,13 @@ function DirectoryTitle({
 }: DirectoryTitleProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
+	const [dirName, setDirName] = useState(node.title as string);
+
+	useEffect(() => {
+		if (node?.title) {
+			setDirName(node.title as string);
+		}
+	}, [node?.title]);
 
 	const [{ isDraggingOver }, dropRef] = useDrop(() => {
 		return {
@@ -64,14 +71,18 @@ function DirectoryTitle({
 		<Input
 			ref={inputRef}
 			className="border-none font-medium"
-			value={node.title as string}
+			value={dirName}
 			size={(node.title as string).length}
 			onChange={(e) => {
+				setDirName(e.target.value);
+			}}
+			onBlur={() => {
+				setIsEditing(false);
 				if (node.parentPath.length === 0) {
 					// TODO: can the plan itself not be handled separately?
-					onPlanRename(e.target.value);
+					onPlanRename(dirName);
 				} else {
-					const newName = e.target.value;
+					const newName = dirName;
 					onDirectoryRename({
 						parentPath: node.parentPath,
 						name: node.title as string,
@@ -80,7 +91,6 @@ function DirectoryTitle({
 					onSetFocusedId(node.parentPath.concat(newName).join('/'));
 				}
 			}}
-			onBlur={() => setIsEditing(false)}
 		/>
 	) : (
 		<div
