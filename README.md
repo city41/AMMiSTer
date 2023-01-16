@@ -22,6 +22,8 @@ Features:
 
 Planned upcoming features:
 
+- alternative arcade games
+- control where AMMiSTer checks for updates (ie what update dbs it uses)
 - Install cores not yet in a distribution. Good for trying out beta cores. When they get into a distribution, automatically upgrade to the official release.
 - More metadata for games, maybe links to YouTube long play videos to help decide if a game is worth of adding
 - Notes on games. Helps you rememember why a certain game is not in your plan
