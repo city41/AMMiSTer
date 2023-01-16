@@ -1,6 +1,6 @@
-# Alpha warning
+# Beta warning
 
-Until AMMiSTer reaches 1.0.0, it is considered "alpha". More features and improvements are coming. And there may be bugs I haven't found yet.
+Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improvements are coming. And there may be bugs I haven't found yet.
 
 # Releases
 
