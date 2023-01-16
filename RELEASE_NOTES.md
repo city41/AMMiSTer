@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.15.2
+
+- [All] Minor fixes and tweaks
+
 ## Version 0.15.0
 
 - [All] The welcome message is short and to the point
