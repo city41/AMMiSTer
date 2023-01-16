@@ -136,6 +136,7 @@ function Plan({
 			className={clsx('w-full h-full p-8', {
 				hidden: !plan,
 			})}
+			style={{ minHeight: '50vh' }}
 		>
 			<div className="w-full h-full rounded bg-white border border-gray-200 shadow p-4 pr-0 grid grid-cols-3">
 				<div className="plan-tree-container w-full overflow-x-auto overflow-y-auto col-span-2">

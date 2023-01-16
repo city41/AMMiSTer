@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.15.5
+
+- [All] Fix minor drag and drop issues
+
 ## Version 0.15.3
 
 - [All] Fix case sensitivity issue that was incorrectly deleting files

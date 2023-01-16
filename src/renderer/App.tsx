@@ -25,7 +25,7 @@ function App() {
 					</div>
 					<div
 						className="col-span-4 h-full overflow-auto grid"
-						style={{ gridTemplateRows: 'min-content max-content' }}
+						style={{ gridTemplateRows: 'max-content 1fr' }}
 					>
 						<Welcome className="mx-auto mt-10" />
 						<Plan />

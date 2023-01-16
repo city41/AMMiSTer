@@ -4,7 +4,7 @@ import { useDrop } from 'react-dnd';
 import { TreeItem } from 'react-sortable-tree';
 import { PlanTreeItem } from './types';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
-import { AddIcon, TrashIcon } from '../../../icons';
+import { TrashIcon } from '../../../icons';
 import { DirectoryEntry } from './DirectoryEntry';
 
 type FocusedDirectoryProps = {
@@ -36,7 +36,7 @@ function FocusedDirectory({
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			drop(item: any) {
 				onItemAdd({
-					parentPath: focusedId.split('/'),
+					parentPath: focusedId.replace(/^\//, '').split('/'),
 					db_id: item.node.db_id,
 					mraFileName: item.node.mraFileName,
 				});
@@ -77,59 +77,56 @@ function FocusedDirectory({
 					bulk add games
 				</a>
 			</h2>
-			{focusedNode.entries.length > 0 && (
-				<div className="relative h-full" ref={dropRef}>
-					<ul className="flex flex-col">
-						{focusedNode.entries.map((g, i) => {
-							let el;
-							let entryName: string;
-							if ('directoryName' in g) {
-								entryName = g.directoryName;
-								el = <DirectoryEntry className="py-2" directory={g} />;
-							} else {
-								entryName = g.gameName;
-								el = <CatalogEntry entry={g} hideInPlan />;
-							}
+			<div className="relative h-full" ref={dropRef}>
+				<ul className="flex flex-col">
+					{focusedNode.entries.map((g, i) => {
+						let el;
+						let entryName: string;
+						if ('directoryName' in g) {
+							entryName = g.directoryName;
+							el = <DirectoryEntry className="py-2" directory={g} />;
+						} else {
+							entryName = g.gameName;
+							el = <CatalogEntry entry={g} hideInPlan />;
+						}
 
-							return (
-								<li
-									key={i.toString() + entryName}
-									className="pl-4 pr-2 py-1 even:bg-gray-50 border border-b-gray-200 grid gap-x-2 items-center group"
-									style={{
-										gridTemplateColumns: 'minmax(0, 1fr) max-content',
+						return (
+							<li
+								key={i.toString() + entryName}
+								className="pl-4 pr-2 py-1 even:bg-gray-50 border border-b-gray-200 grid gap-x-2 items-center group"
+								style={{
+									gridTemplateColumns: 'minmax(0, 1fr) max-content',
+								}}
+							>
+								{el}
+								<TrashIcon
+									className="w-5 h-5 cursor-pointer invisible group-hover:visible"
+									onClick={() => {
+										const parentPath = focusedNode.parentPath.concat(
+											focusedNode.title as string
+										);
+										onItemDelete({ parentPath, name: entryName });
 									}}
-								>
-									{el}
-									<TrashIcon
-										className="w-5 h-5 cursor-pointer invisible group-hover:visible"
-										onClick={() => {
-											const parentPath = focusedNode.parentPath.concat(
-												focusedNode.title as string
-											);
-											onItemDelete({ parentPath, name: entryName });
-										}}
-									/>
-								</li>
-							);
-						})}
-						<li className="flex-1 bg-white" />
-					</ul>
-					{isDraggingOver && (
-						<>
-							<div className="absolute inset-0 bg-white opacity-90" />
-							<div className="absolute inset-0 flex flex-row justify-center xitems-center gap-x-2 mt-32 font-medium">
-								<AddIcon className="w-5 h-5" />
-								<div>{draggedTitle}</div>
-							</div>
-						</>
-					)}
-				</div>
-			)}
-			{focusedNode.immediateGameCount === 0 && (
-				<div className="text-sm italic text-gray-600 mx-auto my-8">
-					This folder is empty
-				</div>
-			)}
+								/>
+							</li>
+						);
+					})}
+					<li className="flex-1 bg-white" />
+				</ul>
+				{focusedNode.immediateGameCount === 0 && (
+					<div className="text-sm italic text-gray-600 ml-4 my-8">
+						This folder is empty
+					</div>
+				)}
+				{isDraggingOver && (
+					<>
+						<div className="absolute inset-0 bg-white opacity-90" />
+						<div className="absolute inset-0 flex flex-row justify-center xitems-center gap-x-2 mt-32 font-medium">
+							<div>add {draggedTitle}</div>
+						</div>
+					</>
+				)}
+			</div>
 		</div>
 	);
 }
