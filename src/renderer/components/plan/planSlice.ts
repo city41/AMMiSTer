@@ -363,7 +363,7 @@ const planSlice = createSlice({
 					const oldName = entry.directoryName;
 
 					entry.directoryName = newName;
-					state.isDirty = true;
+					state.isDirty = oldName !== newName;
 				}
 			}
 		},
