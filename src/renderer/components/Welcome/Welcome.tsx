@@ -25,7 +25,7 @@ function Welcome({
 	return (
 		<div
 			className={clsx(className, 'rounded p-4 bg-yellow-100 text-sm shadow-lg')}
-			style={{ maxWidth: 900, minWidth: 800 }}
+			style={{ maxWidth: 700, minWidth: 400 }}
 		>
 			<h1 className="flex flex-row justify-between">
 				<div className="text-xl font-medium text-yellow-800">
