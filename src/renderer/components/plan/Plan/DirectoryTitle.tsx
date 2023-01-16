@@ -108,7 +108,7 @@ function DirectoryTitle({
 			{titleEl}
 			{isDirty && <div>*</div>}
 			<div className="text-sm font-normal text-gray-500">
-				{node.immediateGameCount} / {node.totalGameCount} games
+				{node.immediateGameCount} / {node.totalGameCount}
 			</div>
 		</div>
 	);

@@ -17,20 +17,20 @@ function App() {
 		<DndProvider backend={HTML5Backend}>
 			<Provider store={store}>
 				<div
-					className="grid grid-cols-6 h-screen"
+					className="grid grid-cols-5 h-screen"
 					style={{ gridTemplateRows: '1fr max-content' }}
 				>
 					<div className="flex flex-col gap-y-2 h-full overflow-auto">
 						<Catalog />
 					</div>
 					<div
-						className="col-span-5 h-full overflow-auto grid"
+						className="col-span-4 h-full overflow-auto grid"
 						style={{ gridTemplateRows: 'min-content max-content' }}
 					>
 						<Welcome className="mx-auto mt-10" />
 						<Plan />
 					</div>
-					<Footer className="col-span-6" />
+					<Footer className="col-span-5" />
 				</div>
 				<UpdateModal />
 				<ExportModal />
