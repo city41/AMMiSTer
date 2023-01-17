@@ -207,6 +207,7 @@ function Plan({
 
 							result.title = (
 								<DirectoryTitle
+									key={node.title as string}
 									node={node}
 									isDirty={!!node.isDirty}
 									onSetFocusedId={(focusedId) => setFocusedId(focusedId)}

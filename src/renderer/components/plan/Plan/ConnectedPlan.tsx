@@ -33,7 +33,7 @@ function ConnectedPlan() {
 	async function handleNewPlan() {
 		const catalog = await window.ipcAPI.getCurrentCatalog();
 		if (!catalog) {
-			alert('Please update first');
+			alert('Please build a catalog first');
 		} else {
 			dispatch(loadNewPlan());
 		}
@@ -51,7 +51,7 @@ function ConnectedPlan() {
 		window.ipcAPI.menu_loadDemoPlan(async () => {
 			const catalog = await window.ipcAPI.getCurrentCatalog();
 			if (!catalog) {
-				alert('Please update first');
+				alert('Please build a catalog first');
 			} else {
 				dispatch(loadDemoPlan());
 			}

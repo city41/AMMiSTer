@@ -351,10 +351,6 @@ const planSlice = createSlice({
 
 				const parent = getNode(state.plan, parentPath);
 
-				if (parent === state.plan && newName.toLowerCase() === 'favorites') {
-					newName = 'favorites';
-				}
-
 				const entry = parent.games.find((g) => {
 					return 'directoryName' in g && g.directoryName === name;
 				}) as PlanGameDirectoryEntry;
@@ -387,7 +383,10 @@ const planSlice = createSlice({
 				createDirectoriesIfNeeded(state.plan, ['favorites']);
 
 				const favDir = state.plan.games.find((e) => {
-					return 'directoryName' in e && e.directoryName === 'favorites';
+					return (
+						'directoryName' in e &&
+						e.directoryName.toLowerCase() === 'favorites'
+					);
 				}) as PlanGameDirectoryEntry;
 
 				const currentIndex = favDir.games.findIndex((g) => {

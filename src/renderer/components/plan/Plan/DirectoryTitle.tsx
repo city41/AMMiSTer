@@ -35,12 +35,6 @@ function DirectoryTitle({
 	const [isEditing, setIsEditing] = useState(false);
 	const [dirName, setDirName] = useState(node.title as string);
 
-	useEffect(() => {
-		if (node?.title) {
-			setDirName(node.title as string);
-		}
-	}, [node?.title]);
-
 	const [{ isDraggingOver }, dropRef] = useDrop(() => {
 		return {
 			accept: 'CatalogEntry',
