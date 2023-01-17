@@ -4,6 +4,11 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.15.6
+
+- [All] Fix: "Open Catalog" menu item now works before a catalog exists
+- [All] Fix: the favorite folder can have any case, ie "Favorites" or "FaVoRiTes" for example
+
 ## Version 0.15.5
 
 - [All] Fix minor drag and drop issues
