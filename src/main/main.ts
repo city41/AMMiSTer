@@ -1,6 +1,7 @@
 import path from 'node:path';
 import Debug from 'debug';
 import settings from 'electron-settings';
+import mkdirp from 'mkdirp';
 import { BrowserWindow, app, dialog, ipcMain, Menu, shell } from 'electron';
 
 import * as catalog from './catalog';
@@ -130,7 +131,8 @@ function createWindow() {
 					label: 'Open Folder',
 					click: async () => {
 						const gameCacheDir = await getGameCacheDir();
-						shell.showItemInFolder(path.resolve(gameCacheDir, 'catalog.json'));
+						await mkdirp(gameCacheDir);
+						shell.openPath(gameCacheDir);
 					},
 				},
 			],
