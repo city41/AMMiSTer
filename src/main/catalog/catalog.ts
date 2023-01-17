@@ -4,10 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
-import { promisify } from 'node:util';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
-import _imageSize from 'image-size';
 import { JsonCache } from '../util/JsonCache';
 import uniqBy from 'lodash/uniqBy';
 
@@ -19,14 +17,15 @@ import {
 	CatalogFileEntry,
 	DBJSON,
 	FileEntry,
+	GameMetadata,
+	MetadataDB,
 	MissingRomEntry,
 	Update,
 	UpdateCallback,
 	UpdateReason,
 } from './types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
-
-const imageSize = promisify(_imageSize);
+import { isEqual } from 'lodash';
 
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
@@ -36,10 +35,50 @@ const xmlParser = new XMLParser({
 	numberParseOptions: { leadingZeros: false, hex: false },
 });
 
-const orientationCache = new JsonCache<'vertical' | 'horizontal'>(
-	'orientation.json'
-);
 const archive404Cache = new JsonCache<boolean>('archive404.json');
+const mameSlugCache = new JsonCache<boolean>('mameSlug.json');
+
+const METADATADB_URL =
+	'https://raw.githubusercontent.com/Toryalai1/MiSTer_ArcadeDatabase/db/mad_db.json.zip';
+
+/**
+ * Some entries in the metadatadb don't match up with MAME slugs,
+ * this map fixes that
+ * TODO: can this be done better?
+ */
+const slugMap: Record<string, string> = {
+	amidars: 'amidar',
+	alienaru: 'alienar',
+	atlantis2: 'atlantis',
+	beastfp: 'suprglob',
+	crush2: 'crush',
+	demoderm: 'demoderb',
+	devilfsg: 'devlfsh',
+	eeekkp: 'eeekk',
+	gallopm72: 'cosmccop',
+	lupin3a: 'lupin3',
+	mimonscr: 'mimonkey',
+	mooncrgx: 'mooncrst',
+	nspiritj: 'nspirit',
+	rpatroln: 'raptrol',
+	tigerhb1: 'tigerh',
+	twotigerc: 'twotiger',
+	victorycb: 'victoryc',
+	xsleenab: 'xsleena',
+};
+
+async function getMetadataDb(): Promise<MetadataDB> {
+	const rawMetadataDb = (await getDbJson(
+		METADATADB_URL
+	)) as unknown as Promise<MetadataDB>;
+
+	return Object.entries(rawMetadataDb).reduce<MetadataDB>((accum, entry) => {
+		return {
+			...accum,
+			[slugMap[entry[0]] ?? entry[0]]: entry[1],
+		};
+	}, {});
+}
 
 /**
  * Pulls down the db file from the given url. Most db files are zipped,
@@ -200,44 +239,36 @@ async function downloadUpdatesForDb(
 	return updates;
 }
 
-async function determineOrientationAndRomSlug(
+async function determineMAMESlug(
 	romEntries: CatalogFileEntry[],
 	fallbackSlug?: string | null
-): Promise<{
-	orientation: 'vertical' | 'horizontal' | null;
-	romSlug: string | null;
-}> {
+): Promise<string | null> {
 	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
 
 	if (fallbackSlug) {
 		slugs.push(fallbackSlug);
 	}
 
-	const debugHeader = `determineOrientationAndRomSlug(${slugs.join(',')})`;
+	const debugHeader = `determineMAMESlug(${slugs.join(',')})`;
 	debug(debugHeader);
 
 	for (const slug of slugs) {
-		const cachedOrientation = orientationCache.get(slug);
+		const cachedSlug = mameSlugCache.get(slug);
 
-		if (cachedOrientation) {
-			debug(
-				`${debugHeader}: got orientation for ${slug} from cache: ${JSON.stringify(
-					cachedOrientation
-				)}`
-			);
-			return {
-				orientation: cachedOrientation,
-				romSlug: slug,
-			};
+		if (cachedSlug) {
+			debug(`${debugHeader}: got ${slug} from cache`);
+			return slug;
 		}
 
 		const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${slug}.png`;
 		const tmpDir = path.resolve(os.tmpdir(), 'ammister');
-		const tmpPath = path.resolve(tmpDir, `orientation-image-${slug}.png`);
+		const tmpPath = path.resolve(tmpDir, `image-${slug}.png`);
 		debug(`${debugHeader}: tmpPath: ${tmpPath}`);
 		await mkdirp(tmpDir);
 		try {
 			await downloadFile(imageUrl, tmpPath, 'image/png');
+			mameSlugCache.set(slug, true);
+			return slug;
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
 			debug(
@@ -245,35 +276,9 @@ async function determineOrientationAndRomSlug(
 			);
 			continue;
 		}
-
-		let dimension;
-		try {
-			dimension = await imageSize(tmpPath);
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			debug(`${debugHeader}: imageSize failed with: ${message}`);
-			return { orientation: null, romSlug: slug };
-		}
-
-		if (!dimension || !dimension.width || !dimension.height) {
-			debug(`${debugHeader}: imageSize failed to get the dimensions`);
-			return { orientation: null, romSlug: slug };
-		}
-
-		debug(
-			`${debugHeader}: dimension, w: ${dimension.width} h: ${dimension.height}`
-		);
-
-		if (dimension.height > dimension.width) {
-			orientationCache.set(slug, 'vertical');
-			return { orientation: 'vertical', romSlug: slug };
-		} else {
-			orientationCache.set(slug, 'horizontal');
-			return { orientation: 'horizontal', romSlug: slug };
-		}
 	}
 
-	return { orientation: null, romSlug: null };
+	return null;
 }
 
 /**
@@ -330,7 +335,8 @@ function xmlToArray(val: string | string[] | null | undefined): string[] {
 async function parseMraToCatalogEntry(
 	db_id: string,
 	mraFilePath: string,
-	rbfFiles: string[]
+	rbfFiles: string[],
+	metadataDb: MetadataDB
 ): Promise<CatalogEntry> {
 	try {
 		const gameCacheDir = await getGameCacheDir();
@@ -386,7 +392,7 @@ async function parseMraToCatalogEntry(
 			}
 		}
 
-		const { romSlug, orientation } = await determineOrientationAndRomSlug(
+		const romSlug = await determineMAMESlug(
 			romCatalogFileEntries,
 			setname || parent
 		);
@@ -396,14 +402,37 @@ async function parseMraToCatalogEntry(
 			yearReleased = null;
 		}
 
+		const metadataEntry = (
+			romSlug ? metadataDb[romSlug] ?? {} : {}
+		) as Partial<GameMetadata>;
+
 		const catalogEntry: CatalogEntry = {
 			db_id,
 			gameName: name,
+			romSlug: romSlug ?? null,
 			manufacturer: xmlToArray(manufacturer),
 			yearReleased,
 			categories: xmlToArray(category),
-			orientation,
 			mameVersion: mameversion,
+			alternative: metadataEntry.alternative ?? false,
+			bootleg: metadataEntry.bootleg ?? false,
+			flip: metadataEntry.flip ?? false,
+			num_buttons: metadataEntry.num_buttons ?? null,
+			players: metadataEntry.players ?? null,
+			region: metadataEntry.region ?? null,
+			resolution: metadataEntry.resolution ?? null,
+			rotation:
+				typeof metadataEntry.rotation === 'number'
+					? metadataEntry.rotation
+					: null,
+			series: metadataEntry.series ?? [],
+			move_inputs: metadataEntry.move_inputs ?? [],
+			platform: metadataEntry.platform ?? [],
+			special_controls:
+				!metadataEntry.special_controls ||
+				isEqual(metadataEntry.special_controls, ['n-a'])
+					? []
+					: metadataEntry.special_controls,
 			titleScreenshotUrl: romSlug
 				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romSlug}.png`
 				: null,
@@ -444,7 +473,10 @@ async function parseMraToCatalogEntry(
  * For a directory where a db's files have been dumped into, creates
  * an AMMister catalog for it
  */
-async function getCatalogForDir(dbDirPath: string): Promise<Partial<Catalog>> {
+async function getCatalogForDir(
+	dbDirPath: string,
+	metadataDb: MetadataDB
+): Promise<Partial<Catalog>> {
 	const dbId = path.basename(dbDirPath);
 	const mraFiles = await (
 		await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))
@@ -467,7 +499,7 @@ async function getCatalogForDir(dbDirPath: string): Promise<Partial<Catalog>> {
 	});
 
 	const entryPromises = mraFiles.map(async (mraPath) => {
-		return parseMraToCatalogEntry(dbId, mraPath, rbfFiles);
+		return parseMraToCatalogEntry(dbId, mraPath, rbfFiles, metadataDb);
 	});
 
 	const entries = await Promise.all(entryPromises);
@@ -481,7 +513,7 @@ async function getCatalogForDir(dbDirPath: string): Promise<Partial<Catalog>> {
  * Examines all the files found in gameCache and builds an AMMister
  * Catalog for it
  */
-async function buildGameCatalog(): Promise<Catalog> {
+async function buildGameCatalog(metadataDb: MetadataDB): Promise<Catalog> {
 	const gameCacheDir = await getGameCacheDir();
 
 	const gameCacheDirFiles = await fsp.readdir(gameCacheDir);
@@ -490,7 +522,7 @@ async function buildGameCatalog(): Promise<Catalog> {
 	});
 
 	const dirCatalogPromises = dbIdDirs.map((dbIdDir) => {
-		return getCatalogForDir(path.resolve(gameCacheDir, dbIdDir));
+		return getCatalogForDir(path.resolve(gameCacheDir, dbIdDir), metadataDb);
 	});
 
 	const dirCatalogs = await Promise.all(dirCatalogPromises);
@@ -717,12 +749,19 @@ async function updateCatalog(
 		const gameCacheDir = await getGameCacheDir();
 		await mkdirp(gameCacheDir);
 
-		await orientationCache.init();
+		await mameSlugCache.init();
 		await archive404Cache.init();
 
 		const updates: Update[] = [];
 
 		const currentCatalog = await getCurrentCatalog();
+
+		callback({
+			fresh: !currentCatalog,
+			message: 'Getting the latest MiSTer Arcade Database...',
+		});
+
+		const metadataDb = await getMetadataDb();
 
 		let updateDbErrorOccurred = false;
 
@@ -774,13 +813,22 @@ async function updateCatalog(
 			catalog = currentCatalog;
 		}
 
-		if (!catalog) {
-			catalogUpdated = true;
-			callback({
-				fresh: !currentCatalog,
-				message: 'Building catalog... (this may take a bit)',
-			});
-			catalog = await buildGameCatalog();
+		callback({
+			fresh: !currentCatalog,
+			message: 'Building catalog... (this may take a bit)',
+		});
+		const newlyBuiltCatalog = await buildGameCatalog(metadataDb);
+
+		if (catalog) {
+			const { updatedAt: _ignored, ...justCatalog } = catalog;
+			const { updatedAt: __ignored, ...justNewlyBuiltCatalog } =
+				newlyBuiltCatalog;
+			catalogUpdated = !isEqual(justCatalog, justNewlyBuiltCatalog);
+			if (catalogUpdated) {
+				catalog = newlyBuiltCatalog;
+			}
+		} else {
+			catalog = newlyBuiltCatalog;
 		}
 
 		const missingRoms = await determineMissingRoms(catalog);
@@ -815,7 +863,7 @@ async function updateCatalog(
 		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
 
-		await orientationCache.save();
+		await mameSlugCache.save();
 		await archive404Cache.save();
 
 		const message = catalogUpdated ? 'Update finished' : 'No updates available';

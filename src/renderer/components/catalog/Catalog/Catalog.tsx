@@ -29,8 +29,7 @@ function Catalog({ catalog }: InternalCatalogProps) {
 				ge.categories.some((c) => c.toLowerCase().includes(f)) ||
 				ge.gameName.toLowerCase().includes(f) ||
 				ge.yearReleased?.toString().includes(f) ||
-				ge.manufacturer.some((m) => m.toLowerCase().includes(f)) ||
-				ge.orientation?.toLowerCase().includes(f)
+				ge.manufacturer.some((m) => m.toLowerCase().includes(f))
 			);
 		},
 		[filter]

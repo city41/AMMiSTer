@@ -7,8 +7,13 @@ type GameAspect =
 	| 'gameName'
 	| 'manufacturer'
 	| 'categories'
-	| 'orientation'
+	| 'series'
+	| 'platform'
+	| 'move_inputs'
+	| 'special_controls'
+	| 'rotation'
 	| 'yearReleased'
+	| 'num_buttons'
 	| 'core';
 
 type CriteriaProps = {
@@ -29,6 +34,10 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 		case 'core':
 		case 'gameName':
 		case 'categories':
+		case 'series':
+		case 'platform':
+		case 'move_inputs':
+		case 'special_controls':
 		case 'manufacturer': {
 			return (
 				<>
@@ -37,7 +46,7 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 				</>
 			);
 		}
-		case 'orientation': {
+		case 'rotation': {
 			return (
 				<>
 					<option value="is">is</option>
@@ -45,7 +54,8 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 				</>
 			);
 		}
-		case 'yearReleased': {
+		case 'yearReleased':
+		case 'num_buttons': {
 			return (
 				<>
 					<option value="is">is</option>
@@ -73,15 +83,18 @@ function ValueInput({
 		case 'core':
 		case 'gameName':
 		case 'categories':
+		case 'series':
+		case 'platform':
+		case 'move_inputs':
+		case 'special_controls':
+		case 'yearReleased':
+		case 'num_buttons':
 		case 'manufacturer': {
 			return (
 				<Input className="px-2" type="text" value={value} onChange={onChange} />
 			);
 		}
-		case 'yearReleased': {
-			return <Input type="number" value={value} onChange={onChange} />;
-		}
-		case 'orientation': {
+		case 'rotation': {
 			return (
 				<select value={value} onChange={onChange}>
 					<option value="horizontal">Horizontal</option>
@@ -116,8 +129,13 @@ function Criteria({
 				<option value="manufacturer">Manufacturer</option>
 				<option value="categories">Category</option>
 				<option value="yearReleased">Year</option>
-				<option value="orientation">Orientation</option>
+				<option value="rotation">Rotation</option>
 				<option value="core">Core</option>
+				<option value="series">Series</option>
+				<option value="platform">Platform</option>
+				<option value="move_inputs">Controls</option>
+				<option value="special_controls">Special Controls</option>
+				<option value="num_buttons">No. of Buttons</option>
 			</select>
 			<select
 				className="px-2 py-1"

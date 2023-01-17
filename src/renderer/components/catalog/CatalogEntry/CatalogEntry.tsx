@@ -1,6 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
-import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
+import type {
+	CatalogEntry as CatalogEntryType,
+	GameMetadata,
+} from '../../../../main/catalog/types';
 import { FavoriteIcon, NotFavoriteIcon, DangerIcon } from '../../../icons';
 
 type PublicCatalogEntryProps = {
@@ -17,20 +20,18 @@ type InternalCatalogEntryProps = {
 	onToggleFavorite: () => void;
 };
 
-function Monitor({
-	orientation,
-}: {
-	orientation: 'vertical' | 'horizontal' | null;
-}) {
-	if (orientation === null) {
+function Monitor({ rotation }: { rotation: GameMetadata['rotation'] }) {
+	if (typeof rotation !== 'number') {
 		return null;
 	}
 
+	const title = rotation === 0 ? 'horizontal' : 'vertical';
+
 	return (
 		<div
-			title={orientation}
+			title={title}
 			className={clsx('rounded-sm border border-indigo-500 w-4 h-3', {
-				'transform rotate-90': orientation === 'vertical',
+				'transform rotate-90': rotation !== 0,
 			})}
 		/>
 	);
@@ -71,7 +72,7 @@ function CatalogEntry({
 				{!hideIcons && (
 					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
 						{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
-						<Monitor orientation={entry.orientation} />
+						<Monitor rotation={entry.rotation} />
 						{typeof isFavorite === 'boolean' && (
 							<FavIcon
 								onClick={onToggleFavorite}

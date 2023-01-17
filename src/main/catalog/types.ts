@@ -91,16 +91,37 @@ export type Update = {
 export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
 
 /**
+ * The metadata for games as stored in Toryalai1's db
+ * https://github.com/Toryalai1/MiSTer_ArcadeDatabase/tree/db
+ */
+export type GameMetadata = {
+	manufacturer: string[];
+	categories: string[];
+	series: string[];
+	platform: string[];
+	move_inputs: string[];
+	special_controls: string[];
+	alternative: boolean;
+	bootleg: boolean;
+	flip: boolean;
+	rotation: 0 | 90 | 270 | null;
+	num_buttons: number | null;
+	players: string | null;
+	region: string | null;
+	resolution: string | null;
+};
+
+export type MetadataDB = Record<string, GameMetadata>;
+
+/**
  * The full local representation of a Mister arcade game. Has
  * all of the metadata and info on all of its files
  */
-export type CatalogEntry = {
+export type CatalogEntry = GameMetadata & {
 	db_id: string;
+	romSlug: string | null;
 	gameName: string;
-	manufacturer: string[];
-	categories: string[];
 	yearReleased: number | null;
-	orientation: 'vertical' | 'horizontal' | null;
 	mameVersion: string;
 	titleScreenshotUrl: string | null;
 	gameplayScreenshotUrl: string | null;

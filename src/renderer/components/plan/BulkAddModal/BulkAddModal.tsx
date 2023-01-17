@@ -83,8 +83,8 @@ function BulkAddModal({
 
 																if (prop === 'gameAspect') {
 																	// TODO: such a nasty hack...
-																	if (value === 'orientation') {
-																		newCc.value = 'horizontal';
+																	if (value === 'rotation') {
+																		newCc.value = 0;
 																	} else {
 																		newCc.value = '';
 																	}

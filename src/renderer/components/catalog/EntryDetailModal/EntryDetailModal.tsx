@@ -17,14 +17,15 @@ function EntryDetailModal({
 	return (
 		<Modal isOpen={isOpen} closeButton onRequestClose={onRequestClose}>
 			<div
-				className="px-4 py-5 sm:px-6"
+				className="px-4 py-4 sm:px-6"
 				style={{ minWidth: '80vw', maxWidth: 900 }}
 			>
 				<h1 className="text-lg font-medium leading-6 text-gray-900">
 					{entry.gameName}
 				</h1>
 				<p className="mt-1 max-w-2xl text-sm text-gray-500">
-					{entry.manufacturer} {entry.yearReleased}
+					{entry.manufacturer}, {entry.yearReleased}
+					{entry.region ? ',' : ''} {entry.region}
 				</p>
 			</div>
 			<div className="flex flex-col items-stretch">
@@ -43,8 +44,8 @@ function EntryDetailModal({
 					</div>
 				)}
 				<dl className="bg-white">
-					{entry.categories.length > 0 && (
-						<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					{entry.categories?.length > 0 && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 							<dt className="text-sm font-medium text-gray-500">
 								Categor{entry.categories.length > 1 ? 'ies' : 'y'}
 							</dt>
@@ -53,19 +54,82 @@ function EntryDetailModal({
 							</dd>
 						</div>
 					)}
-					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					{entry.series?.length > 0 && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">Series</dt>
+							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+								{entry.series.join(', ')}
+							</dd>
+						</div>
+					)}
+					{entry.players && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">Players</dt>
+							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+								{entry.players}
+							</dd>
+						</div>
+					)}
+					{(entry.num_buttons ||
+						entry.move_inputs?.length > 0 ||
+						entry.special_controls?.length > 0) && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">Controls</dt>
+							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+								{(entry.special_controls ?? []).join(', ')}
+								{entry.special_controls?.length > 0 &&
+								(entry.move_inputs?.length > 0 || entry.num_buttons)
+									? ', '
+									: ''}
+								{(entry.move_inputs ?? []).join(', ')}
+								{entry.move_inputs?.length > 0 ? ',' : ''}
+								{!!entry.num_buttons && (
+									<span>
+										{' '}
+										{entry.num_buttons} button
+										{entry.num_buttons === 1 ? '' : 's'}
+									</span>
+								)}
+							</dd>
+						</div>
+					)}
+					{(typeof entry.rotation === 'number' || entry.resolution) && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">Monitor</dt>
+							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+								{typeof entry.rotation === 'number' && (
+									<span>
+										{entry.rotation === 0 ? 'Horizontal' : 'Vertical'}
+										{entry.rotation !== 0
+											? ` (${entry.rotation}deg${
+													entry.flip ? ', flippable' : ''
+											  })`
+											: ''}
+									</span>
+								)}
+								<span>
+									{entry.rotation !== null && !!entry.resolution ? ', ' : ''}
+									{entry.resolution ? `${entry.resolution}` : ''}
+								</span>
+							</dd>
+						</div>
+					)}
+					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">MAME Version</dt>
 						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							{entry.mameVersion}
+							{entry.mameVersion}{' '}
+							{entry.romSlug && <span>({entry.romSlug})</span>}
 						</dd>
 					</div>
-					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt className="text-sm font-medium text-gray-500">Orientation</dt>
-						<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-							{entry.orientation}
-						</dd>
-					</div>
-					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					{entry.platform?.length > 0 && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">Platform</dt>
+							<dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+								{entry.platform.join(', ')}
+							</dd>
+						</div>
+					)}
+					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt className="text-sm font-medium text-gray-500">MRA</dt>
 						<dd
 							className={clsx(
@@ -78,7 +142,7 @@ function EntryDetailModal({
 							{entry.files.mra.fileName}
 						</dd>
 					</div>
-					<div className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt
 							className={clsx('text-sm font-medium text-gray-500', {
 								'text-red-700': !entry.files.rbf,
@@ -101,7 +165,7 @@ function EntryDetailModal({
 						return (
 							<div
 								key={r.fileName}
-								className="even:bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
+								className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
 							>
 								<dt
 									className={clsx('text-sm font-medium text-gray-500', {

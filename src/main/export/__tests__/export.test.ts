@@ -5,7 +5,37 @@ import { SrcFileOperationPath, DestFileOperationPath } from '../types';
 describe('export', function () {
 	describe('#buildFileOperations', function () {
 		describe('exact ops', function () {
-			it('should return zero operations if src and dest are the same', function () {
+			it('should return zero operations if src and dest are the same (no mras)', function () {
+				const srcOpPaths: SrcFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						db_id: 'mockdb',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
+						fileName: 'foo_20230101',
+						fileNameBase: 'foo',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				const destOpPaths: DestFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						relDirPath: '_Arcade/cores',
+						fileName: 'foo_20230101',
+						fileNameBase: 'foo',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[]
+				);
+			});
+
+			it('should return copy operations if src and dest are the same (with mras)', function () {
 				const srcOpPaths: SrcFileOperationPath[] = [
 					{
 						type: 'exact',
@@ -42,7 +72,13 @@ describe('export', function () {
 				];
 
 				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
-					[]
+					[
+						{
+							action: 'copy',
+							destPath: '_Arcade/sub/dir/foo.mra',
+							srcPath: 'mockdb/_Arcade/foo.mra',
+						},
+					]
 				);
 			});
 

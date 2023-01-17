@@ -4,6 +4,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.16.0
+
+- [All] A lot more metadata for games thanks to Toryalai's arcade database.
+
+If you already have a catalog, just check for updates to add the new metadata. You can see the new metadata in details about a game (click a game's title),
+and also use it for bulk adding (such as adding all games with 4 buttons)
+
 ## Version 0.15.6
 
 - [All] Fix: "Open Catalog" menu item now works before a catalog exists
