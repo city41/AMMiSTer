@@ -16,15 +16,21 @@ import { BatchGroupBy } from './BatchGroupBy';
 
 const batchGroupBy = new BatchGroupBy();
 
-type EnumBulkAddCriteria = {
-	gameAspect: 'orientation';
+type RotationBulkAddCriteria = {
+	gameAspect: 'rotation';
 	operator: 'is' | 'is-not';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
 type StringArrayBulkAddCriteria = {
-	gameAspect: 'manufacturer' | 'categories';
+	gameAspect:
+		| 'manufacturer'
+		| 'categories'
+		| 'move_inputs'
+		| 'series'
+		| 'platform'
+		| 'special_controls';
 	operator: 'is' | 'is-not';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
@@ -38,14 +44,14 @@ type StringBulkAddCriteria = {
 };
 
 type NumberBulkAddCriteria = {
-	gameAspect: 'yearReleased';
+	gameAspect: 'yearReleased' | 'num_buttons';
 	operator: 'is' | 'is-not' | 'gte' | 'lte';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 };
 
 type BulkAddCriteria =
-	| EnumBulkAddCriteria
+	| RotationBulkAddCriteria
 	| StringArrayBulkAddCriteria
 	| StringBulkAddCriteria
 	| NumberBulkAddCriteria;
@@ -264,7 +270,7 @@ const planSlice = createSlice({
 				const { parentPath, name } = action.payload;
 				const parent = getNode(state.plan, parentPath);
 
-				let initialCount = parent.games.length;
+				const initialCount = parent.games.length;
 
 				parent.games = parent.games.filter((g) => {
 					if ('directoryName' in g) {
@@ -341,8 +347,7 @@ const planSlice = createSlice({
 			}>
 		) {
 			if (state.plan) {
-				const { parentPath, name } = action.payload;
-				let { newName } = action.payload;
+				const { parentPath, name, newName } = action.payload;
 
 				// dont allow empty directory names
 				if (!newName || !newName.trim()) {
@@ -496,13 +501,11 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 		const allCatalogEntries = Object.values(restOfCatalog).flat(1);
 
 		const horizontalCapcomEntries = allCatalogEntries.filter(
-			(ce) =>
-				ce.manufacturer.includes('Capcom') && ce.orientation === 'horizontal'
+			(ce) => ce.manufacturer.includes('Capcom') && ce.rotation === 0
 		);
 
 		const horizontalSegaEntries = allCatalogEntries.filter(
-			(ce) =>
-				ce.manufacturer.includes('Sega') && ce.orientation === 'horizontal'
+			(ce) => ce.manufacturer.includes('Sega') && ce.rotation === 0
 		);
 
 		const capcomFighters = horizontalCapcomEntries.filter((ce) =>
@@ -592,6 +595,10 @@ function matchesCriteria(
 
 	switch (criteria.gameAspect) {
 		case 'manufacturer':
+		case 'series':
+		case 'move_inputs':
+		case 'special_controls':
+		case 'platform':
 		case 'categories': {
 			if (criteria.operator === 'is') {
 				return (entryValue as string[]).some((ev) =>
@@ -603,27 +610,37 @@ function matchesCriteria(
 				);
 			}
 		}
-		case 'orientation': {
+		case 'rotation': {
 			if (criteria.operator === 'is') {
-				return (entryValue as 'vertical' | 'horizontal') === criteria.value;
+				if (criteria.value === 'horizontal') {
+					return entryValue === 0;
+				} else {
+					return entryValue === 90 || entryValue === 270;
+				}
 			} else {
-				return (entryValue as 'vertical' | 'horizontal') !== criteria.value;
+				if (criteria.value === 'horizontal') {
+					return entryValue === 90 || entryValue === 270;
+				} else {
+					return entryValue === 0;
+				}
 			}
 		}
-		case 'yearReleased': {
-			const yearValue = entryValue as number;
+		case 'yearReleased':
+		case 'num_buttons': {
+			const numericValue = entryValue as number;
+			const criteriaValue = parseInt(criteria.value, 10);
 			switch (criteria.operator) {
 				case 'gte': {
-					return yearValue >= criteria.value;
+					return numericValue >= criteriaValue;
 				}
 				case 'lte': {
-					return yearValue <= criteria.value;
+					return numericValue <= criteriaValue;
 				}
 				case 'is': {
-					return yearValue === criteria.value;
+					return numericValue === criteriaValue;
 				}
 				case 'is-not': {
-					return yearValue !== criteria.value;
+					return numericValue !== criteriaValue;
 				}
 				default: {
 					return false;

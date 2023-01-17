@@ -2,6 +2,7 @@ import React from 'react';
 import { Meta } from '@storybook/react';
 import { EntryDetailModal } from './EntryDetailModal';
 import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
+import { mockCatalogEntry } from '../mockCatalogEntry';
 
 const meta: Meta = {
 	title: 'EntryDetailModal',
@@ -10,54 +11,43 @@ const meta: Meta = {
 
 export default meta;
 
-const completeEntry: CatalogEntryType = {
-	db_id: 'jtcores',
-	gameName: 'Street Fighter Alpha 2 (Euro 960229)',
-	categories: ['Fighting'],
-	titleScreenshotUrl:
-		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/sfa2.png',
-	gameplayScreenshotUrl:
-		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/sfa2.png',
-	mameVersion: '0229',
-	manufacturer: ['Capcom'],
-	orientation: 'horizontal',
-	yearReleased: 1996,
-	files: {
-		mra: {
-			type: 'mra',
-			db_id: 'jtcores',
-			fileName: 'Street Fighter Alpha 2 (Euro 960229).mra',
-			md5: 'dummy hash',
-			relFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
-		},
-		rbf: {
-			type: 'rbf',
-			db_id: 'jtcores',
-			fileName: 'jtcps2_20220819.rbf',
-			md5: 'dummy hash',
-			relFilePath: '_Arcade/cores/jtcps2_20220819.rbf',
-		},
-		roms: [
-			{
-				type: 'rom',
-				db_id: 'jtcores',
-				fileName: 'sfa2.zip',
-				md5: 'dummy hash',
-				relFilePath: 'games/mame/sfa2.zip',
-			},
-			{
-				type: 'rom',
-				db_id: 'jtcores',
-				fileName: 'qsound.zip',
-				md5: 'dummy hash',
-				relFilePath: 'games/mame/qsound.zip',
-			},
-		],
-	},
-};
+const completeEntry = mockCatalogEntry;
 
 export const Basic = () => {
 	return <EntryDetailModal isOpen entry={completeEntry} />;
+};
+
+export const MissingCategories = () => {
+	const entry = {
+		...completeEntry,
+		categories: [],
+	};
+
+	entry.files.roms[0].md5 = undefined;
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MultipleCategories = () => {
+	const entry = {
+		...completeEntry,
+		categories: ['aaa', 'bbb', 'ccc'],
+	};
+
+	entry.files.roms[0].md5 = undefined;
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MultipleSeries = () => {
+	const entry = {
+		...completeEntry,
+		series: ['Street Fighter', 'Marvel'],
+	};
+
+	entry.files.roms[0].md5 = undefined;
+
+	return <EntryDetailModal isOpen entry={entry} />;
 };
 
 export const MissingRom = () => {
@@ -92,6 +82,90 @@ export const MissingScreenshots = () => {
 		...completeEntry,
 		titleScreenshotUrl: null,
 		gameplayScreenshotUrl: null,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const OneButton = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		num_buttons: 1,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MissingMoveInput = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		move_inputs: [],
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const SpecialControls = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		special_controls: ['trackball'],
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const SpecialControlsOnly = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		special_controls: ['trackball'],
+		num_buttons: null,
+		move_inputs: [],
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MissingResolution = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		resolution: null,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MissingRotation = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		rotation: null,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const Rotation90 = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		rotation: 90,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const Rotation270 = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		rotation: 270,
+	};
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const Rotation270Flippable = () => {
+	const entry: CatalogEntryType = {
+		...completeEntry,
+		rotation: 270,
+		flip: true,
 	};
 
 	return <EntryDetailModal isOpen entry={entry} />;

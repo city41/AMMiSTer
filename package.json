@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.15.6",
+	"version": "0.16.0",
 	"description": "A File Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -80,7 +80,6 @@
 		"decompress": "^4.2.1",
 		"electron-settings": "^4.0.2",
 		"fast-xml-parser": "^4.0.12",
-		"image-size": "^1.0.2",
 		"lodash": "^4.17.21",
 		"mkdirp": "^1.0.4",
 		"react": "^18.2.0",
@@ -109,7 +108,6 @@
 		"@types/axios": "^0.14.0",
 		"@types/debug": "^4.1.7",
 		"@types/decompress": "^4.2.4",
-		"@types/image-size": "^0.8.0",
 		"@types/jest": "^29.1.2",
 		"@types/lodash": "^4.14.191",
 		"@types/mkdirp": "^1.0.2",

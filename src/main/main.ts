@@ -271,10 +271,6 @@ ipcMain.handle(
 	}
 );
 
-ipcMain.handle('catalog:buildGameCatalog', async () => {
-	return catalog.buildGameCatalog();
-});
-
 ipcMain.on('catalog:updateCatalog', async (event) => {
 	const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
 		'catalog-check-for-updates'

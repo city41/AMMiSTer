@@ -71,7 +71,7 @@ function FocusedDirectory({
 					className="text-blue-600 text-sm underline cursor-pointer"
 					onClick={() =>
 						// TODO: can the plan name be lopped off cleaner?
-						onBulkAdd(focusedId.replace(new RegExp(`^\/?${planName}\/?`), ''))
+						onBulkAdd(focusedId.replace(new RegExp(`^/?${planName}/?`), ''))
 					}
 				>
 					bulk add games
