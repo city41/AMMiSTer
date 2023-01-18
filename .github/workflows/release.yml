@@ -3,11 +3,16 @@ name: Build/release
 on: push
 
 jobs:
-  release-ubuntu:
+  release-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
+
+      - name: rpm
+        run: |
+          sudo apt update 1>&2
+          sudo apt install --install-recommends rpm -y 1>&2
 
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
