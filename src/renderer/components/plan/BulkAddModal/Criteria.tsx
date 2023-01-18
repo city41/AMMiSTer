@@ -1,7 +1,8 @@
 import React from 'react';
 import clsx from 'clsx';
 import { CloseIcon } from '../../../icons';
-import { Input } from '../../Input';
+import { Catalog } from '../../../../main/catalog/types';
+import memoize from 'lodash/memoize';
 
 type GameAspect =
 	| 'gameName'
@@ -13,11 +14,11 @@ type GameAspect =
 	| 'special_controls'
 	| 'rotation'
 	| 'yearReleased'
-	| 'num_buttons'
-	| 'core';
+	| 'num_buttons';
 
 type CriteriaProps = {
 	className?: string;
+	catalog: Catalog;
 	gameAspect: GameAspect;
 	operator: 'is' | 'is-not' | 'lte' | 'gte';
 	value: string;
@@ -31,21 +32,13 @@ type CriteriaProps = {
 
 function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	switch (gameAspect) {
-		case 'core':
 		case 'gameName':
 		case 'categories':
 		case 'series':
 		case 'platform':
 		case 'move_inputs':
 		case 'special_controls':
-		case 'manufacturer': {
-			return (
-				<>
-					<option value="is">matches</option>
-					<option value="is-not">does not match</option>
-				</>
-			);
-		}
+		case 'manufacturer':
 		case 'rotation': {
 			return (
 				<>
@@ -68,19 +61,55 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	}
 }
 
+const getAllOptionValues = memoize(
+	function (catalog: Catalog, gameAspect: GameAspect): string[] {
+		const { updatedAt: ignored, ...restOfCatalog } = catalog;
+
+		const entries = Object.values(restOfCatalog).flat(1);
+
+		const rawValues = entries.flatMap((e) => {
+			let v = e[gameAspect];
+
+			if (v === null || v === undefined) {
+				return [];
+			}
+
+			v = String(v);
+
+			if (!v) {
+				return [];
+			}
+
+			if (Array.isArray(v)) {
+				return v;
+			}
+
+			return [v];
+		});
+
+		return Array.from(new Set(rawValues)).sort();
+	},
+	(catalog: Catalog, gameAspect: GameAspect) => {
+		return `${catalog.updatedAt}-${gameAspect}`;
+	}
+);
+
 function ValueInput({
+	className,
 	gameAspect,
 	value,
 	onChange,
+	catalog,
 }: {
+	className?: string;
 	gameAspect: GameAspect;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	onChange: React.ChangeEventHandler<any>;
+	catalog: Catalog;
 }) {
 	switch (gameAspect) {
-		case 'core':
 		case 'gameName':
 		case 'categories':
 		case 'series':
@@ -91,12 +120,20 @@ function ValueInput({
 		case 'num_buttons':
 		case 'manufacturer': {
 			return (
-				<Input className="px-2" type="text" value={value} onChange={onChange} />
+				<select className={className} value={value} onChange={onChange}>
+					{getAllOptionValues(catalog, gameAspect).map((o) => {
+						return (
+							<option key={o} value={o}>
+								{o}
+							</option>
+						);
+					})}
+				</select>
 			);
 		}
 		case 'rotation': {
 			return (
-				<select value={value} onChange={onChange}>
+				<select className={className} value={value} onChange={onChange}>
 					<option value="horizontal">Horizontal</option>
 					<option value="vertical">Vertical</option>
 				</select>
@@ -112,11 +149,15 @@ function Criteria({
 	value,
 	onDelete,
 	onChange,
+	catalog,
 }: CriteriaProps) {
 	return (
 		<div
-			className={clsx(className, 'grid gap-x-2 p-2')}
-			style={{ gridTemplateColumns: 'min-content min-content 1fr max-content' }}
+			className={clsx(
+				className,
+				'grid gap-x-3 px-2 py-1 first:-mt-1 items-center justify-center'
+			)}
+			style={{ gridTemplateColumns: '40% max-content 40% max-content' }}
 		>
 			<select
 				className="px-2 py-1"
@@ -147,11 +188,13 @@ function Criteria({
 				<OperatorOptions gameAspect={gameAspect} />
 			</select>
 			<ValueInput
+				className="px-2 py-1"
 				gameAspect={gameAspect}
 				value={value}
 				onChange={(e) => {
 					onChange({ prop: 'value', value: e.target.value });
 				}}
+				catalog={catalog}
 			/>
 			<CloseIcon className="w-5 h-5 cursor-pointer" onClick={onDelete} />
 		</div>
