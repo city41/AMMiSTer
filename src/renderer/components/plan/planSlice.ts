@@ -37,7 +37,7 @@ type StringArrayBulkAddCriteria = {
 };
 
 type StringBulkAddCriteria = {
-	gameAspect: 'gameName';
+	gameAspect: 'gameName' | 'region';
 	operator: 'is' | 'is-not';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
@@ -584,7 +584,11 @@ function matchesCriteria(
 	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
 
 	if (entryValue === null || entryValue === undefined) {
-		return false;
+		return !criteria.value;
+	}
+
+	if (Array.isArray(entryValue) && entryValue.length === 0) {
+		return !criteria.value;
 	}
 
 	switch (criteria.gameAspect) {
@@ -637,6 +641,7 @@ function matchesCriteria(
 				}
 			}
 		}
+		case 'region':
 		case 'gameName': {
 			const valS = entryValue as string;
 			switch (criteria.operator) {
