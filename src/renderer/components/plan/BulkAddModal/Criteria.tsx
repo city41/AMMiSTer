@@ -6,6 +6,7 @@ import memoize from 'lodash/memoize';
 
 type GameAspect =
 	| 'gameName'
+	| 'region'
 	| 'manufacturer'
 	| 'categories'
 	| 'series'
@@ -24,15 +25,16 @@ type CriteriaProps = {
 	value: string;
 	onDelete: () => void;
 	onChange: (args: {
-		prop: 'gameAspect' | 'operator' | 'value';
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		value: any;
+		gameAspect: GameAspect;
+		operator: string;
+		value: string;
 	}) => void;
 };
 
 function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	switch (gameAspect) {
 		case 'gameName':
+		case 'region':
 		case 'categories':
 		case 'series':
 		case 'platform':
@@ -76,10 +78,6 @@ const getAllOptionValues = memoize(
 
 			v = String(v);
 
-			if (!v) {
-				return [];
-			}
-
 			if (Array.isArray(v)) {
 				return v;
 			}
@@ -93,6 +91,11 @@ const getAllOptionValues = memoize(
 		return `${catalog.updatedAt}-${gameAspect}`;
 	}
 );
+
+function getFirstValueFor(catalog: Catalog, gameAspect: GameAspect): string {
+	const values = getAllOptionValues(catalog, gameAspect);
+	return values[0];
+}
 
 function ValueInput({
 	className,
@@ -111,6 +114,7 @@ function ValueInput({
 }) {
 	switch (gameAspect) {
 		case 'gameName':
+		case 'region':
 		case 'categories':
 		case 'series':
 		case 'platform':
@@ -163,13 +167,18 @@ function Criteria({
 				className="px-2 py-1"
 				value={gameAspect}
 				onChange={(e) => {
-					onChange({ prop: 'gameAspect', value: e.target.value });
+					onChange({
+						gameAspect: e.target.value as GameAspect,
+						operator: 'is',
+						value: getFirstValueFor(catalog, e.target.value as GameAspect),
+					});
 				}}
 			>
 				<option value="gameName">Title</option>
 				<option value="manufacturer">Manufacturer</option>
 				<option value="categories">Category</option>
 				<option value="yearReleased">Year</option>
+				<option value="region">Region</option>
 				<option value="rotation">Rotation</option>
 				<option value="core">Core</option>
 				<option value="series">Series</option>
@@ -182,7 +191,7 @@ function Criteria({
 				className="px-2 py-1"
 				value={operator}
 				onChange={(e) => {
-					onChange({ prop: 'operator', value: e.target.value });
+					onChange({ gameAspect, operator: e.target.value, value });
 				}}
 			>
 				<OperatorOptions gameAspect={gameAspect} />
@@ -192,7 +201,7 @@ function Criteria({
 				gameAspect={gameAspect}
 				value={value}
 				onChange={(e) => {
-					onChange({ prop: 'value', value: e.target.value });
+					onChange({ gameAspect, operator, value: e.target.value });
 				}}
 				catalog={catalog}
 			/>

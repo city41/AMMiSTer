@@ -84,30 +84,11 @@ function BulkAddModal({
 														return cs.filter((cc) => cc !== c);
 													});
 												}}
-												onChange={({
-													prop,
-													value,
-												}: {
-													prop: keyof BulkAddCriteria;
-													value: string;
-												}) => {
+												onChange={(incomingCC) => {
 													setCriterias((cs) => {
 														return cs.map((cc) => {
 															if (cc === c) {
-																const newCc = {
-																	...cc,
-																	[prop]: value,
-																} as BulkAddCriteria;
-
-																if (prop === 'gameAspect') {
-																	// TODO: such a nasty hack...
-																	if (value === 'rotation') {
-																		newCc.value = 0;
-																	} else {
-																		newCc.value = '';
-																	}
-																}
-																return newCc;
+																return incomingCC as BulkAddCriteria;
 															} else {
 																return cc;
 															}
