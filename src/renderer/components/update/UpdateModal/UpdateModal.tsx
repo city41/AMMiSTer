@@ -9,6 +9,7 @@ type InternalUpdateModalProps = {
 	updates?: Update[] | null;
 	fresh?: boolean;
 	error?: UpdateError;
+	duration?: number;
 	onClose: () => void;
 };
 
@@ -18,6 +19,7 @@ function UpdateModal({
 	updates,
 	fresh,
 	error,
+	duration,
 	onClose,
 }: InternalUpdateModalProps) {
 	const updateComplete = Array.isArray(updates);
@@ -54,15 +56,34 @@ function UpdateModal({
 		);
 	} else {
 		if (Array.isArray(updates)) {
+			let durationEl = null;
+
+			if (typeof duration === 'number') {
+				const seconds = duration / 1000;
+				const minutes = seconds / 60;
+
+				const durMsg =
+					minutes < 1
+						? `${Math.round(seconds)} seconds`
+						: `${minutes.toFixed(2)} minutes`;
+
+				durationEl = (
+					<div className="text-xs text-gray-400 mt-4">took {durMsg}</div>
+				);
+			}
+
 			if (updates.length === 0) {
 				body = (
-					<p className="text-sm text-gray-500">
-						Update check complete, nothing new to update
-					</p>
+					<>
+						<p className="text-sm text-gray-500">
+							Update check complete, nothing new to update
+						</p>
+						{durationEl}
+					</>
 				);
 			} else {
 				body = (
-					<div>
+					<div className="flex flex-col gap-y-2">
 						<ul>
 							{updates.map((u) => (
 								<li
@@ -76,6 +97,7 @@ function UpdateModal({
 								</li>
 							))}
 						</ul>
+						{durationEl}
 					</div>
 				);
 			}
@@ -111,7 +133,7 @@ function UpdateModal({
 						<div className="text-sm flex flex-col gap-y-1">
 							<div>This is the first time updating.</div>
 							<div>
-								Expect this to take 10-30+ minutes with a good internet
+								Expect this to take 5-20+ minutes with a good internet
 								connection.
 							</div>
 							<div>After this one, updates will be quick.</div>

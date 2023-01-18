@@ -26,6 +26,7 @@ import {
 } from './types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { isEqual } from 'lodash';
+import { batch } from '../util/batch';
 
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
@@ -36,7 +37,6 @@ const xmlParser = new XMLParser({
 });
 
 const archive404Cache = new JsonCache<boolean>('archive404.json');
-const mameSlugCache = new JsonCache<boolean>('mameSlug.json');
 
 const METADATADB_URL =
 	'https://raw.githubusercontent.com/Toryalai1/MiSTer_ArcadeDatabase/db/mad_db.json.zip';
@@ -215,23 +215,29 @@ async function downloadUpdatesForDb(
 
 	const updates: Update[] = [];
 
-	for (const fileEntry of fileEntries) {
-		const update = await determineUpdate(fileEntry);
+	const batches = batch(fileEntries);
 
-		if (update) {
-			debug(
-				`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
-			);
-			cb(null, update);
-			try {
-				await updateFile(update);
-				updates.push(update);
-			} catch (e) {
-				const message = e instanceof Error ? e.message : String(e);
-				cb(message, update);
-				break;
+	for (const batch of batches) {
+		const batchPromises = batch.map(async (fileEntry) => {
+			const update = await determineUpdate(fileEntry);
+
+			if (update) {
+				debug(
+					`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
+				);
+				cb(null, update);
+				try {
+					await updateFile(update);
+					updates.push(update);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, update);
+					throw e;
+				}
 			}
-		}
+		});
+
+		await Promise.all(batchPromises);
 	}
 
 	debug('Finished updating for', db.db_id, 'updates.length', updates.length);
@@ -239,10 +245,10 @@ async function downloadUpdatesForDb(
 	return updates;
 }
 
-async function determineMAMESlug(
+function determineMAMESlug(
 	romEntries: CatalogFileEntry[],
 	fallbackSlug?: string | null
-): Promise<string | null> {
+): string | null {
 	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
 
 	if (fallbackSlug) {
@@ -253,31 +259,17 @@ async function determineMAMESlug(
 	debug(debugHeader);
 
 	for (const slug of slugs) {
-		const cachedSlug = mameSlugCache.get(slug);
+		const isCorrectSlug = slugMap[slug];
 
-		if (cachedSlug) {
-			debug(`${debugHeader}: got ${slug} from cache`);
+		if (isCorrectSlug) {
+			debug(`${debugHeader}: got ${slug} from slugMap`);
 			return slug;
-		}
-
-		const imageUrl = `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${slug}.png`;
-		const tmpDir = path.resolve(os.tmpdir(), 'ammister');
-		const tmpPath = path.resolve(tmpDir, `image-${slug}.png`);
-		debug(`${debugHeader}: tmpPath: ${tmpPath}`);
-		await mkdirp(tmpDir);
-		try {
-			await downloadFile(imageUrl, tmpPath, 'image/png');
-			mameSlugCache.set(slug, true);
-			return slug;
-		} catch (e) {
-			const message = e instanceof Error ? e.message : String(e);
-			debug(
-				`${debugHeader}: downloadFile for ${imageUrl} failed with: ${message}`
-			);
-			continue;
 		}
 	}
 
+	debug(
+		`${debugHeader}: failed to find a slug in slugMap for ${slugs.join(',')}`
+	);
 	return null;
 }
 
@@ -392,10 +384,7 @@ async function parseMraToCatalogEntry(
 			}
 		}
 
-		const romSlug = await determineMAMESlug(
-			romCatalogFileEntries,
-			setname || parent
-		);
+		const romSlug = determineMAMESlug(romCatalogFileEntries, setname || parent);
 
 		let yearReleased: number | null = parseInt(year, 10);
 		if (isNaN(yearReleased)) {
@@ -636,24 +625,6 @@ async function downloadRom(
 	}
 }
 
-/**
- * Divides the missing rom entries into batches, allowing parallel downloads.
- * This allows faster downloads, as a lot of requests to archive.org will 404,
- * and so downloading in serial is really slowed down by these 404s
- */
-function batchMissingRoms(romEntries: MissingRomEntry[]): MissingRomEntry[][] {
-	const batchSize = 4;
-
-	const batches: MissingRomEntry[][] = [];
-
-	while (romEntries.length > 0) {
-		const batch = romEntries.splice(0, batchSize);
-		batches.push(batch);
-	}
-
-	return batches;
-}
-
 async function downloadRoms(
 	romEntries: MissingRomEntry[],
 	cb: (update: Update) => void
@@ -665,8 +636,7 @@ async function downloadRoms(
 		return a.romFile.localeCompare(b.romFile);
 	});
 
-	// TODO: batching can mean downloading shared roms (ie qsound.zip) more than once
-	const batches = batchMissingRoms(sortedRomEntries);
+	const batches = batch(sortedRomEntries);
 
 	for (const batch of batches) {
 		const downloadPromises = batch.map((r) => {
@@ -734,6 +704,8 @@ function addMisingRomsToCatalog(
 async function updateCatalog(
 	providedCallback: UpdateCallback
 ): Promise<{ updates: Update[]; catalog: Catalog }> {
+	const start = Date.now();
+
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
 		providedCallback(args);
@@ -749,7 +721,6 @@ async function updateCatalog(
 		const gameCacheDir = await getGameCacheDir();
 		await mkdirp(gameCacheDir);
 
-		await mameSlugCache.init();
 		await archive404Cache.init();
 
 		const updates: Update[] = [];
@@ -815,7 +786,7 @@ async function updateCatalog(
 
 		callback({
 			fresh: !currentCatalog,
-			message: 'Building catalog... (this may take a bit)',
+			message: 'Building catalog...',
 		});
 		const newlyBuiltCatalog = await buildGameCatalog(metadataDb);
 
@@ -863,16 +834,18 @@ async function updateCatalog(
 		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
 
-		await mameSlugCache.save();
 		await archive404Cache.save();
 
 		const message = catalogUpdated ? 'Update finished' : 'No updates available';
+
+		const duration = Date.now() - start;
 
 		callback({
 			message,
 			complete: true,
 			catalog: finalCatalog,
 			updates: updates.concat(romUpdates),
+			duration,
 		});
 
 		return { updates, catalog: finalCatalog };
