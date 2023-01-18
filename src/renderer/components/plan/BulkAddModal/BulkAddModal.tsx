@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Catalog } from '../../../../main/catalog/types';
 import { Modal, ModalProps } from '../../Modal';
 import { Criteria as CriteriaCmp } from './Criteria';
 import { Button } from '../../Button';
@@ -8,6 +9,7 @@ import { BulkAddCriteria } from '../planSlice';
 type PublicBulkAddModalProps = ModalProps & { className?: string };
 
 type InternalBulkAddModalProps = {
+	catalog: Catalog;
 	destination: string;
 	onApply: (criteria: BulkAddCriteria[]) => void;
 };
@@ -15,14 +17,23 @@ type InternalBulkAddModalProps = {
 function BulkAddModal({
 	className,
 	destination,
+	catalog,
 	onApply,
 	...rest
 }: PublicBulkAddModalProps & InternalBulkAddModalProps) {
+	const firstManufacturer = useMemo(() => {
+		const { updatedAt, ...restOfCatalog } = catalog;
+		const entries = Object.values(restOfCatalog).flat(1);
+		const manufacturers = entries.flatMap((e) => e.manufacturer).sort();
+
+		return manufacturers[0];
+	}, [catalog]);
+
 	const [criterias, setCriterias] = useState<BulkAddCriteria[]>([
 		{
-			gameAspect: 'gameName',
+			gameAspect: 'manufacturer',
 			operator: 'is',
-			value: 'Street Fighter',
+			value: firstManufacturer,
 		},
 	]);
 
@@ -55,7 +66,7 @@ function BulkAddModal({
 											return cs.concat({
 												gameAspect: 'manufacturer',
 												operator: 'is',
-												value: '',
+												value: firstManufacturer,
 											});
 										});
 									}}
@@ -67,12 +78,19 @@ function BulkAddModal({
 										<li key={i} className="even:bg-white">
 											<CriteriaCmp
 												{...c}
+												catalog={catalog}
 												onDelete={() => {
 													setCriterias((cs) => {
 														return cs.filter((cc) => cc !== c);
 													});
 												}}
-												onChange={({ prop, value }) => {
+												onChange={({
+													prop,
+													value,
+												}: {
+													prop: keyof BulkAddCriteria;
+													value: string;
+												}) => {
 													setCriterias((cs) => {
 														return cs.map((cc) => {
 															if (cc === c) {

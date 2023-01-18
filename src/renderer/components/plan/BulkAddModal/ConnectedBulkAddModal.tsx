@@ -16,8 +16,9 @@ function ConnectedBulkAddModal({
 	onClose,
 }: ConnectedBulkAddModalProps) {
 	const [modalOpen, setModalOpen] = useState(isOpen);
-	const plan = useSelector((state: AppState) => {
-		return state.plan.present.plan;
+
+	const catalog = useSelector((state: AppState) => {
+		return state.catalog.catalog;
 	});
 
 	function handleApply(criteria: BulkAddCriteria[]) {
@@ -25,10 +26,15 @@ function ConnectedBulkAddModal({
 		setModalOpen(false);
 	}
 
+	if (!catalog) {
+		return null;
+	}
+
 	return (
 		<BulkAddModal
 			isOpen={modalOpen}
 			destination={destination}
+			catalog={catalog}
 			onRequestClose={() => {
 				setModalOpen(false);
 				onClose();

@@ -37,7 +37,7 @@ type StringArrayBulkAddCriteria = {
 };
 
 type StringBulkAddCriteria = {
-	gameAspect: 'gameName' | 'core';
+	gameAspect: 'gameName';
 	operator: 'is' | 'is-not';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
@@ -581,13 +581,7 @@ function matchesCriteria(
 	entry: CatalogEntry,
 	criteria: BulkAddCriteria
 ): boolean {
-	let entryValue;
-
-	if (criteria.gameAspect === 'core') {
-		entryValue = entry.files.rbf?.fileName;
-	} else {
-		entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
-	}
+	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
 
 	if (entryValue === null || entryValue === undefined) {
 		return false;
@@ -601,13 +595,9 @@ function matchesCriteria(
 		case 'platform':
 		case 'categories': {
 			if (criteria.operator === 'is') {
-				return (entryValue as string[]).some((ev) =>
-					ev.toLowerCase().includes(criteria.value.toString().toLowerCase())
-				);
+				return (entryValue as string[]).some((ev) => ev === criteria.value);
 			} else {
-				return !(entryValue as string[]).some((ev) =>
-					ev.toLowerCase().includes(criteria.value.toString().toLowerCase())
-				);
+				return !(entryValue as string[]).some((ev) => ev === criteria.value);
 			}
 		}
 		case 'rotation': {
@@ -647,15 +637,14 @@ function matchesCriteria(
 				}
 			}
 		}
-		case 'core':
 		case 'gameName': {
 			const valS = entryValue as string;
 			switch (criteria.operator) {
 				case 'is': {
-					return valS.toLowerCase().includes(criteria.value.toLowerCase());
+					return valS === criteria.value;
 				}
 				case 'is-not': {
-					return !valS.toLowerCase().includes(criteria.value.toLowerCase());
+					return valS !== criteria.value;
 				}
 			}
 		}
