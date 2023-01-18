@@ -674,6 +674,8 @@ async function exportToMister(
 	config: FileClientConnectConfig,
 	providedCallback: ExportCallback
 ) {
+	const start = Date.now();
+
 	exportLogger = await createExportLogger(
 		plan.directoryName,
 		exportToMister.name
@@ -689,8 +691,6 @@ async function exportToMister(
 	};
 
 	try {
-		const start = Date.now();
-
 		callback({
 			exportType: 'mister',
 			message: `Connecting to MiSTer at ${config.host}...`,

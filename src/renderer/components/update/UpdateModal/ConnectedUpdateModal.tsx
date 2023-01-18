@@ -8,13 +8,14 @@ import { UpdateModal } from './UpdateModal';
 function ConnectedUpdateModal() {
 	const [modalClosed, setModalClosed] = useState(false);
 
-	const { message, fresh, complete, error } = useSelector(
+	const { message, fresh, complete, error, duration } = useSelector(
 		(state: AppState) =>
 			state.catalog.updateCatalogStatus ?? {
 				message: '',
 				fresh: undefined,
 				complete: undefined,
 				error: undefined,
+				duration: undefined,
 			}
 	);
 
@@ -38,6 +39,8 @@ function ConnectedUpdateModal() {
 			message={message}
 			fresh={fresh}
 			updates={updates}
+			error={error}
+			duration={duration}
 			onClose={() => setModalClosed(true)}
 		/>
 	);

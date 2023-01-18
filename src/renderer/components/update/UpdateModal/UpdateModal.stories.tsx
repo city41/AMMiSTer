@@ -45,11 +45,20 @@ export const Checking = () => {
 };
 
 export const NoUpdates = () => {
-	return <UpdateModal isOpen updates={[]} onClose={() => {}} />;
+	return (
+		<UpdateModal isOpen updates={[]} onClose={() => {}} duration={12345} />
+	);
 };
 
 export const Updates = () => {
-	return <UpdateModal isOpen updates={[update1, update2]} onClose={() => {}} />;
+	return (
+		<UpdateModal
+			isOpen
+			updates={[update1, update2]}
+			onClose={() => {}}
+			duration={23456}
+		/>
+	);
 };
 
 export const IsFreshUpdate = () => {
@@ -71,7 +80,14 @@ export const LotsOfUpdates = () => {
 		updates.push(update2);
 	}
 
-	return <UpdateModal isOpen updates={updates} onClose={() => {}} />;
+	return (
+		<UpdateModal
+			isOpen
+			updates={updates}
+			onClose={() => {}}
+			duration={456798}
+		/>
+	);
 };
 
 export const UnknownError = () => {

@@ -155,6 +155,7 @@ export type UpdateStatus = {
 	catalog?: Catalog;
 	updates?: Update[];
 	error?: UpdateError;
+	duration?: number;
 };
 
 export type UpdateCallback = (status: UpdateStatus) => void;
