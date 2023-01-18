@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.17.0
+
+- [All] Bulk add no longer requires typing in a value. All the manufacturers, categories, etc are all available to pick from.
+
 ## Version 0.16.0
 
 - [All] A lot more metadata for games thanks to Toryalai's arcade database.
