@@ -148,7 +148,7 @@ function BulkAddModal({
 								{criteriaMatch.map((cm) => {
 									return (
 										<CatalogEntry
-											key={cm.gameName}
+											key={cm.files.mra.fileName}
 											className="bg-white border border-gray-200 p-1 shadow-lg"
 											entry={cm}
 											hideIcons
