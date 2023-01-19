@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { getAllSettings, setSetting } from '../settings/settingsSlice';
+import { AppState, dispatch } from '../../store';
 import { Welcome, PublicWelcomeProps } from './Welcome';
 
 function ConnectedWelcome(props: PublicWelcomeProps) {
-	const [showWelcome, setShowWelcome] = useState(false);
 	const [version, setVersion] = useState('');
 
 	useEffect(() => {
 		window.ipcAPI.getVersion().then((v) => {
 			setVersion(v);
 		});
+		dispatch(getAllSettings());
 	}, []);
 
-	useEffect(() => {
-		window.ipcAPI.getWelcomeDismissed().then((welcomeDismissed) => {
-			setShowWelcome(!welcomeDismissed);
-		});
-	}, [setShowWelcome]);
+	const settings = useSelector((state: AppState) => {
+		return state.settings.settings;
+	});
 
 	function handleDismiss() {
-		window.ipcAPI.setWelcomeDismissed();
-		setShowWelcome(false);
+		dispatch(setSetting('welcome-dismissed', true));
 	}
 
-	if (showWelcome) {
+	if (settings && !settings['welcome-dismissed']) {
 		return (
 			<Welcome {...props} appVersion={version} onDismiss={handleDismiss} />
 		);

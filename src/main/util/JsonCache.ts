@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import settings from 'electron-settings';
+import * as settings from '../settings';
 
 type JsonValue = string | number | boolean;
 
@@ -11,7 +11,7 @@ class JsonCache<T extends JsonValue> {
 	constructor(private fileName: string) {}
 
 	async _cachePath() {
-		const rootDir = await settings.get('rootDir');
+		const rootDir = await settings.getSetting('rootDir');
 
 		if (!rootDir) {
 			throw new Error(`JsonCache: rootDir setting not found`);

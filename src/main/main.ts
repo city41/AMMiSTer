@@ -1,23 +1,19 @@
 import path from 'node:path';
 import Debug from 'debug';
-import settings from 'electron-settings';
 import mkdirp from 'mkdirp';
 import { BrowserWindow, app, dialog, ipcMain, Menu, shell } from 'electron';
 
 import * as catalog from './catalog';
 import * as plan from './plan';
 import * as exportPlan from './export';
+import * as settings from './settings';
 
-import { DBJSON } from './catalog/types';
 import { Plan } from './plan/types';
 import { FileClientConnectConfig } from './export/types';
 import { getGameCacheDir } from './util/fs';
-
-const SETTINGS_FILE = 'ammister-settings.json';
+import { Settings, SettingsValue } from './settings/types';
 
 const debug = Debug('main/main.ts');
-
-debug('versions', JSON.stringify(process.versions));
 
 let mainWindow: BrowserWindow | undefined;
 
@@ -91,6 +87,13 @@ function createWindow() {
 					accelerator: 'CommandOrControl+shift+S',
 					click: async () => {
 						mainWindow!.webContents.send('menu:savePlanAs');
+					},
+				},
+				{
+					label: 'Settings...',
+					accelerator: 'CommandOrControl+,',
+					click: async () => {
+						mainWindow!.webContents.send('menu:settings');
 					},
 				},
 				{
@@ -224,12 +227,7 @@ app
 		app.on('activate', () => {
 			if (BrowserWindow.getAllWindows.length === 0) createWindow();
 		});
-		settings.configure({
-			fileName: SETTINGS_FILE,
-			prettify: true,
-			numSpaces: 2,
-		});
-		await settings.set('rootDir', app.getPath('userData'));
+		await settings.init(app.getPath('userData'));
 	})
 	.finally(() => {});
 
@@ -251,14 +249,27 @@ ipcMain.handle('main:getVersion', async () => {
 	return app.getVersion();
 });
 
-ipcMain.handle('settings:getWelcomeDismissed', async () => {
-	const result = await settings.get('welcome-dismissed');
-	return result?.toString() === 'true';
+ipcMain.handle('settings:getAllSettings', async () => {
+	return settings.getAllSettings();
 });
 
-ipcMain.handle('settings:setWelcomeDismissed', () => {
-	return settings.set('welcome-dismissed', 'true');
+ipcMain.handle('settings:getSetting', async (_event, key: keyof Settings) => {
+	return settings.getSetting(key);
 });
+
+ipcMain.handle(
+	'settings:setAllSettings',
+	async (_event, newSettings: Settings) => {
+		return settings.setAllSettings(newSettings);
+	}
+);
+
+ipcMain.handle(
+	'settings:setSetting',
+	async (_event, key: keyof Settings, value: SettingsValue) => {
+		return settings.setSetting(key, value);
+	}
+);
 
 ipcMain.handle('catalog:getDbJson', async (_event, url: string) => {
 	return catalog.getDbJson(url);

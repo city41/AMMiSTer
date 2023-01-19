@@ -16,6 +16,7 @@ type PublicCatalogEntryProps = {
 type InternalCatalogEntryProps = {
 	isInPlan?: boolean;
 	isFavorite?: boolean;
+	downloadingRoms?: boolean;
 	onClick?: () => void;
 	onToggleFavorite: () => void;
 };
@@ -43,6 +44,7 @@ function CatalogEntry({
 	hideIcons,
 	isInPlan,
 	isFavorite,
+	downloadingRoms,
 	hideInPlan,
 	onClick,
 	onToggleFavorite,
@@ -51,7 +53,9 @@ function CatalogEntry({
 	const missingFile =
 		!entry.files.mra ||
 		!entry.files.rbf ||
-		(entry.files.roms.length > 0 && entry.files.roms.every((r) => !r.md5));
+		(downloadingRoms &&
+			entry.files.roms.length > 0 &&
+			entry.files.roms.every((r) => !r.md5));
 
 	return (
 		<div className={className}>

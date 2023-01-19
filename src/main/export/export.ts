@@ -2,7 +2,7 @@ import path from 'node:path';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
 import mkdirp from 'mkdirp';
-import settings from 'electron-settings';
+import * as settings from '../settings';
 import winston from 'winston';
 import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
 import {
@@ -30,7 +30,7 @@ import _ from 'lodash';
 let exportLogger: winston.Logger;
 
 async function createExportLogger(planName: string, initiator: string) {
-	const rootDir = await settings.get('rootDir');
+	const rootDir = await settings.getSetting('rootDir');
 
 	return winston.createLogger({
 		level: 'info',
@@ -59,7 +59,7 @@ async function createExportLogger(planName: string, initiator: string) {
 const ONE_WEEK_MILLIS = 7 * 24 * 60 * 60 * 1000;
 
 async function clearOldLogs(initiator: string) {
-	const rootDirSetting = await settings.get('rootDir');
+	const rootDirSetting = await settings.getSetting('rootDir');
 
 	if (!rootDirSetting) {
 		throw new Error('clearOldLogs: rootDir setting not found');
