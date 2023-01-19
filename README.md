@@ -25,12 +25,13 @@ Features:
 - [x] Check for updated/new cores and corresponding MAME ROMs
 - [x] Export your decided game structure into a local directory on your computer or directly onto a MiSTer
 - [x] Favoriting games
+- [x] More metadata for games
 - [ ] Alternative arcade games
 - [ ] Control where AMMiSTer checks for updates (ie what update dbs it uses)
 - [ ] Install cores not yet in a distribution. Good for trying out beta cores. When they get into a distribution, automatically upgrade to the official release.
-- [ ] More metadata for games, maybe links to YouTube long play videos to help decide if a game is worth of adding
 - [ ] Notes on games. Helps you remember why a certain game is not in your plan
-- [ ] Load a game into MAME to help even more decide if it belongs on your MiSTer
+- [ ] Start a game from AMMiSTer on a target MiSTer
+- [ ] Notifications when there are new updates
 
 **Built with:** TypeScript, React, Tailwind, Electron  
 **Target platforms:** Linux, MacOS, Windows  
