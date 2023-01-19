@@ -1,7 +1,7 @@
 {
 	"name": "ammister",
 	"version": "0.18.0",
-	"description": "A File Manager for the MiSTer",
+	"description": "An Arcade Game Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
 		"build-slug-map": "node scripts/buildSlugMap.js",
