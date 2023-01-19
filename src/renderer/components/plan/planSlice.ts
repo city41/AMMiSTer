@@ -62,6 +62,7 @@ type InternalPlanState = {
 	// null -> main told us there is no plan
 	plan: Plan | null | undefined;
 	isDirty: boolean;
+	criteriaMatch: CatalogEntry[] | null;
 };
 
 type PlanState = StateWithHistory<InternalPlanState>;
@@ -69,6 +70,7 @@ type PlanState = StateWithHistory<InternalPlanState>;
 const initialState: InternalPlanState = {
 	plan: undefined,
 	isDirty: false,
+	criteriaMatch: null,
 };
 
 function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
@@ -417,6 +419,15 @@ const planSlice = createSlice({
 				state.isDirty = true;
 			}
 		},
+		setCriteriaMatch(
+			state: InternalPlanState,
+			action: PayloadAction<CatalogEntry[]>
+		) {
+			state.criteriaMatch = action.payload;
+		},
+		resetCriteriaMatch(state: InternalPlanState) {
+			state.criteriaMatch = null;
+		},
 	},
 });
 
@@ -673,15 +684,14 @@ function getEntriesBasedOnCriteria(
 	return contenders;
 }
 
-const bulkAdd =
-	({
-		criteria,
-		destination,
-	}: {
-		criteria: BulkAddCriteria[];
-		destination: string;
-	}): PlanSliceThunk =>
-	(dispatch, getState) => {
+function bulkAdd({
+	criteria,
+	destination,
+}: {
+	criteria: BulkAddCriteria[];
+	destination: string;
+}): PlanSliceThunk {
+	return (dispatch, getState) => {
 		const catalog = getState().catalog.catalog;
 		const plan = getState().plan.present.plan;
 
@@ -704,9 +714,24 @@ const bulkAdd =
 				);
 			});
 
+			dispatch(planSlice.actions.resetCriteriaMatch());
+
 			batchGroupBy.end();
 		}
 	};
+}
+
+function buildCriteriaMatch(criteria: BulkAddCriteria[]): PlanSliceThunk {
+	return (dispatch, getState) => {
+		const catalog = getState().catalog.catalog;
+		const plan = getState().plan.present.plan;
+
+		if (catalog && plan) {
+			const criteriaMatch = getEntriesBasedOnCriteria(catalog, criteria);
+			dispatch(planSlice.actions.setCriteriaMatch(criteriaMatch));
+		}
+	};
+}
 
 const reducer = planSlice.reducer;
 const {
@@ -718,6 +743,7 @@ const {
 	directoryRename,
 	toggleDirectoryExpansion,
 	toggleFavorite,
+	resetCriteriaMatch,
 } = planSlice.actions;
 
 const undoableReducer = undoable(reducer, {
@@ -726,6 +752,9 @@ const undoableReducer = undoable(reducer, {
 		'plan/loadDemoPlan',
 		'plan/savePlan',
 		'plan/savePlanAs',
+		'plan/buildCriteriaMatch',
+		planSlice.actions.setCriteriaMatch.toString(),
+		planSlice.actions.resetCriteriaMatch.toString(),
 		planSlice.actions.clearDirty.toString(),
 	]),
 	groupBy: batchGroupBy.init(),
@@ -749,6 +778,8 @@ export {
 	toggleDirectoryExpansion,
 	toggleFavorite,
 	bulkAdd,
+	buildCriteriaMatch,
+	resetCriteriaMatch,
 	undo,
 	redo,
 };

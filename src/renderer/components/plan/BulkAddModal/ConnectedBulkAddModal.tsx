@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { BulkAddModal } from './BulkAddModal';
 import { dispatch, AppState } from '../../../store';
-import { BulkAddCriteria, bulkAdd } from '../planSlice';
+import {
+	BulkAddCriteria,
+	bulkAdd,
+	buildCriteriaMatch,
+	resetCriteriaMatch,
+} from '../planSlice';
 import { useSelector } from 'react-redux';
 
 type ConnectedBulkAddModalProps = {
@@ -21,9 +26,22 @@ function ConnectedBulkAddModal({
 		return state.catalog.catalog;
 	});
 
+	const criteriaMatch = useSelector((state: AppState) => {
+		return state.plan.present.criteriaMatch;
+	});
+
 	function handleApply(criteria: BulkAddCriteria[]) {
 		dispatch(bulkAdd({ criteria, destination }));
 		setModalOpen(false);
+	}
+
+	function handleCriteriaChange(criteria: BulkAddCriteria[]) {
+		dispatch(buildCriteriaMatch(criteria));
+	}
+
+	function handleClose() {
+		setModalOpen(false);
+		onClose();
 	}
 
 	if (!catalog) {
@@ -35,11 +53,14 @@ function ConnectedBulkAddModal({
 			isOpen={modalOpen}
 			destination={destination}
 			catalog={catalog}
-			onRequestClose={() => {
-				setModalOpen(false);
-				onClose();
-			}}
+			criteriaMatch={criteriaMatch}
+			onCriteriaChange={handleCriteriaChange}
+			onRequestClose={handleClose}
 			onApply={handleApply}
+			onCancel={() => {
+				dispatch(resetCriteriaMatch());
+				handleClose();
+			}}
 		/>
 	);
 }

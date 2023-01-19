@@ -72,10 +72,7 @@ function BaseFeedbackModal({
 						</div>
 					</div>
 				</div>
-				<div className="bg-gray-50 px-6 py-3 flex flex-row-reverse gap-x-2">
-					<Button disabled={!okButtonEnabled} onClick={onOkClick}>
-						{okButtonText ?? 'Okay'}
-					</Button>
+				<div className="bg-gray-50 px-6 py-3 flex flex-row justify-end gap-x-2">
 					{!!onCancelClick && (
 						<Button
 							disabled={!cancelButtonEnabled || canceling}
@@ -85,6 +82,9 @@ function BaseFeedbackModal({
 							{canceling ? 'Canceling...' : 'Cancel'}
 						</Button>
 					)}
+					<Button disabled={!okButtonEnabled} onClick={onOkClick}>
+						{okButtonText ?? 'Okay'}
+					</Button>
 				</div>
 			</div>
 		</Modal>
