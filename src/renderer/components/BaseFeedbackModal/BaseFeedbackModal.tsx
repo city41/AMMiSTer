@@ -11,6 +11,9 @@ type BaseFeedbackModalProps = ModalProps & {
 	okButtonEnabled?: boolean;
 	okButtonText?: string;
 	onOkClick: () => void;
+	onCancelClick?: () => void;
+	canceling?: boolean;
+	cancelButtonEnabled?: boolean;
 };
 
 function BaseFeedbackModal({
@@ -20,6 +23,9 @@ function BaseFeedbackModal({
 	okButtonEnabled,
 	okButtonText,
 	onOkClick,
+	onCancelClick,
+	canceling,
+	cancelButtonEnabled,
 	children,
 	className,
 	...rest
@@ -66,10 +72,19 @@ function BaseFeedbackModal({
 						</div>
 					</div>
 				</div>
-				<div className="bg-gray-50 px-6 py-3 flex flex-row-reverse">
+				<div className="bg-gray-50 px-6 py-3 flex flex-row-reverse gap-x-2">
 					<Button disabled={!okButtonEnabled} onClick={onOkClick}>
 						{okButtonText ?? 'Okay'}
 					</Button>
+					{!!onCancelClick && (
+						<Button
+							disabled={!cancelButtonEnabled || canceling}
+							variant="danger"
+							onClick={onCancelClick}
+						>
+							{canceling ? 'Canceling...' : 'Cancel'}
+						</Button>
+					)}
 				</div>
 			</div>
 		</Modal>

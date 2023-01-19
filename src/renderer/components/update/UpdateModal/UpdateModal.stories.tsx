@@ -40,13 +40,32 @@ export const Checking = () => {
 			isOpen
 			message="Getting latest for MiSTer main"
 			onClose={() => {}}
+			onCancelClick={() => {}}
+		/>
+	);
+};
+
+export const Canceled = () => {
+	return (
+		<UpdateModal
+			isOpen
+			message="Update canceled"
+			onClose={() => {}}
+			onCancelClick={() => {}}
+			canceled
 		/>
 	);
 };
 
 export const NoUpdates = () => {
 	return (
-		<UpdateModal isOpen updates={[]} onClose={() => {}} duration={12345} />
+		<UpdateModal
+			isOpen
+			updates={[]}
+			onClose={() => {}}
+			duration={12345}
+			onCancelClick={() => {}}
+		/>
 	);
 };
 
@@ -57,6 +76,7 @@ export const Updates = () => {
 			updates={[update1, update2]}
 			onClose={() => {}}
 			duration={23456}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -69,6 +89,7 @@ export const IsFreshUpdate = () => {
 			fresh
 			message="Downloading foo.zip"
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -86,6 +107,7 @@ export const LotsOfUpdates = () => {
 			updates={updates}
 			onClose={() => {}}
 			duration={456798}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -97,6 +119,7 @@ export const UnknownError = () => {
 			updates={null}
 			error={{ type: 'unknown', message: `Can't call foo of undefined` }}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -108,6 +131,7 @@ export const ConnectError = () => {
 			updates={null}
 			error={{ type: 'connect-fail' }}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -128,6 +152,7 @@ export const FileError = () => {
 				},
 			}}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };

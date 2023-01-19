@@ -8,7 +8,7 @@ import { UpdateModal } from './UpdateModal';
 function ConnectedUpdateModal() {
 	const [modalClosed, setModalClosed] = useState(false);
 
-	const { message, fresh, complete, error, duration } = useSelector(
+	const { message, fresh, complete, error, duration, canceled } = useSelector(
 		(state: AppState) =>
 			state.catalog.updateCatalogStatus ?? {
 				message: '',
@@ -16,6 +16,7 @@ function ConnectedUpdateModal() {
 				complete: undefined,
 				error: undefined,
 				duration: undefined,
+				canceled: undefined,
 			}
 	);
 
@@ -33,6 +34,10 @@ function ConnectedUpdateModal() {
 		}
 	}, [complete]);
 
+	function handleCancelClick() {
+		window.ipcAPI.cancelUpdateCatalog();
+	}
+
 	return (
 		<UpdateModal
 			isOpen={typeof complete === 'boolean' && !modalClosed}
@@ -41,7 +46,9 @@ function ConnectedUpdateModal() {
 			updates={updates}
 			error={error}
 			duration={duration}
+			canceled={canceled}
 			onClose={() => setModalClosed(true)}
+			onCancelClick={handleCancelClick}
 		/>
 	);
 }

@@ -156,6 +156,8 @@ export type UpdateStatus = {
 	updates?: Update[];
 	error?: UpdateError;
 	duration?: number;
+	canceled?: boolean;
 };
 
-export type UpdateCallback = (status: UpdateStatus) => void;
+// return true to keep going, false to cancel
+export type UpdateCallback = (status: UpdateStatus) => boolean;

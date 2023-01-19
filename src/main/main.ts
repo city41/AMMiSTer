@@ -264,12 +264,10 @@ ipcMain.handle('catalog:getDbJson', async (_event, url: string) => {
 	return catalog.getDbJson(url);
 });
 
-ipcMain.handle(
-	'catalog:downloadUpdatesForDb',
-	async (_event, dbToUpdate: DBJSON) => {
-		return catalog.downloadUpdatesForDb(dbToUpdate, () => {});
-	}
-);
+let updateProceeding = true;
+ipcMain.handle('catalog:cancelUpdateCatalog', () => {
+	updateProceeding = false;
+});
 
 ipcMain.on('catalog:updateCatalog', async (event) => {
 	const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
@@ -279,10 +277,12 @@ ipcMain.on('catalog:updateCatalog', async (event) => {
 	if (menuItem) {
 		menuItem.enabled = false;
 	}
+	updateProceeding = true;
 
 	catalog
 		.updateCatalog((status) => {
 			event.reply('catalog:updateCatalog-status', status);
+			return updateProceeding;
 		})
 		.finally(() => {
 			if (menuItem) {

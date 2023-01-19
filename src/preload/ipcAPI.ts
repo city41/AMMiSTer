@@ -37,6 +37,10 @@ const ipcAPI = {
 		ipcRenderer.send('catalog:updateCatalog');
 	},
 
+	cancelUpdateCatalog() {
+		return ipcRenderer.invoke('catalog:cancelUpdateCatalog');
+	},
+
 	newPlan(): Promise<Plan> {
 		return ipcRenderer.invoke('plan:newPlan');
 	},
