@@ -74,6 +74,8 @@ const updateCatalog = (): CatalogSliceThunk => async (dispatch) => {
 		if (status.updates) {
 			dispatch(catalogSlice.actions.setUpdates(status.updates));
 		}
+
+		return true;
 	});
 };
 

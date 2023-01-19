@@ -10,7 +10,9 @@ type InternalUpdateModalProps = {
 	fresh?: boolean;
 	error?: UpdateError;
 	duration?: number;
+	canceled?: boolean;
 	onClose: () => void;
+	onCancelClick: () => void;
 };
 
 function UpdateModal({
@@ -20,13 +22,17 @@ function UpdateModal({
 	fresh,
 	error,
 	duration,
+	canceled,
 	onClose,
+	onCancelClick,
 }: InternalUpdateModalProps) {
 	const updateComplete = Array.isArray(updates);
 
 	let body = null;
 
-	if (error) {
+	if (canceled) {
+		body = <p className="text-sm text-gray-500">Build catalog canceled</p>;
+	} else if (error) {
 		let errorTitle = '';
 		let errorMessage = '';
 		switch (error.type) {
@@ -120,8 +126,10 @@ function UpdateModal({
 			className="h-full"
 			isOpen={isOpen}
 			title={title}
-			okButtonEnabled={updateComplete}
+			okButtonEnabled={updateComplete || canceled}
 			onOkClick={onClose}
+			onCancelClick={onCancelClick}
+			cancelButtonEnabled={!canceled}
 			icon={GiftIcon}
 			errorOccured={!!error}
 		>

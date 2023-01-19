@@ -50,6 +50,7 @@ const exportToDirectory =
 						exportType: 'directory',
 					})
 				);
+				return true;
 			});
 		} else {
 			alert('Please load or create a plan first');
@@ -71,6 +72,7 @@ const exportToMister =
 						exportType: 'mister',
 					})
 				);
+				return true;
 			});
 		} else {
 			alert('Please load or create a plan first');
