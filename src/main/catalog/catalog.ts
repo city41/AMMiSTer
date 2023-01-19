@@ -27,6 +27,7 @@ import {
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { isEqual } from 'lodash';
 import { batch } from '../util/batch';
+import { slugMap } from './slugMap';
 
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
@@ -46,7 +47,7 @@ const METADATADB_URL =
  * this map fixes that
  * TODO: can this be done better?
  */
-const slugMap: Record<string, string> = {
+const slugPatchMap: Record<string, string> = {
 	amidars: 'amidar',
 	alienaru: 'alienar',
 	atlantis2: 'atlantis',
@@ -75,7 +76,7 @@ async function getMetadataDb(): Promise<MetadataDB> {
 	return Object.entries(rawMetadataDb).reduce<MetadataDB>((accum, entry) => {
 		return {
 			...accum,
-			[slugMap[entry[0]] ?? entry[0]]: entry[1],
+			[slugPatchMap[entry[0]] ?? entry[0]]: entry[1],
 		};
 	}, {});
 }
