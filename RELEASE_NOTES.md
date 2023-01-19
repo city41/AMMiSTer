@@ -4,6 +4,14 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.18.0
+
+- [Linux] Added an rpm version. I don't use an rpm based distro, so might have issues?
+- [All] Bulk add now has region, and some other minor fixes
+- [All] Building the catalog for the first time is about 20% faster than before
+- [All] Can cancel the catalog build
+- [All] Bulk add now previews what games would be added, making exploring easier
+
 ## Version 0.17.0
 
 - [All] Bulk add no longer requires typing in a value. All the manufacturers, categories, etc are all available to pick from.
