@@ -1,5 +1,5 @@
 import path from 'node:path';
-import settings from 'electron-settings';
+import * as settings from '../settings';
 
 const GAME_CACHE_DIR = 'gameCache';
 
@@ -8,7 +8,7 @@ const GAME_CACHE_DIR = 'gameCache';
  * if called before it has been established
  */
 export async function getGameCacheDir(): Promise<string> {
-	const rootDir = await settings.get('rootDir');
+	const rootDir = await settings.getSetting('rootDir');
 
 	if (!rootDir) {
 		throw new Error('db#getGameCacheDir: rootDir is not set in settings');

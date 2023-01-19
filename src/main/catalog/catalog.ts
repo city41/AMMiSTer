@@ -28,6 +28,7 @@ import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { isEqual } from 'lodash';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
+import * as settings from '../settings';
 
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
@@ -724,6 +725,8 @@ async function updateCatalog(
 
 	let proceeding = true;
 
+	const downloadRomsSetting = await settings.getSetting('downloadRoms');
+
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
 		proceeding = providedCallback(args);
@@ -831,7 +834,7 @@ async function updateCatalog(
 		}
 
 		let missingRoms: MissingRomEntry[] = [];
-		if (proceeding) {
+		if (proceeding && downloadRomsSetting) {
 			missingRoms = await determineMissingRoms(catalog);
 			debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
 		}
@@ -843,7 +846,7 @@ async function updateCatalog(
 			});
 		}
 		let romUpdates: Update[] = [];
-		if (proceeding) {
+		if (proceeding && missingRoms.length > 0) {
 			romUpdates = await downloadRoms(missingRoms, (update) => {
 				callback({
 					fresh: !currentCatalog,

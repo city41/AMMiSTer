@@ -6,6 +6,7 @@ import { Catalog } from './components/catalog/Catalog';
 import { EntryDetailModal } from './components/catalog/EntryDetailModal';
 import { ExportModal } from './components/export/ExportModal';
 import { ExportRemoteConfigModal } from './components/export/ExportRemoteConfigModal';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { Footer } from './components/Footer';
 import { Plan } from './components/plan/Plan';
 import { Welcome } from './components/Welcome';
@@ -36,6 +37,7 @@ function App() {
 				<ExportModal />
 				<ExportRemoteConfigModal />
 				<EntryDetailModal />
+				<SettingsModal />
 			</Provider>
 		</DndProvider>
 	);

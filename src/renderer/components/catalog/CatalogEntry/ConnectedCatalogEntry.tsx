@@ -72,6 +72,10 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 		return state.plan.present.plan;
 	});
 
+	const settings = useSelector((state: AppState) => {
+		return state.settings.settings;
+	});
+
 	function handleClick() {
 		dispatch(setDetailEntry(props.entry));
 	}
@@ -92,6 +96,7 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 				onClick={handleClick}
 				isInPlan={isInPlan}
 				isFavorite={isFavorite}
+				downloadingRoms={!!settings?.downloadRoms}
 				onToggleFavorite={handleToggleFavorite}
 			/>
 		</div>

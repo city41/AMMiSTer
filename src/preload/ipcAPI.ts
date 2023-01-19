@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron';
+import { Settings, SettingsValue } from 'src/main/settings/types';
 import { Catalog, UpdateCallback, UpdateStatus } from 'src/main/catalog/types';
 import { ExportStatus, FileClientConnectConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
@@ -8,12 +9,23 @@ const ipcAPI = {
 		return ipcRenderer.invoke('main:getVersion');
 	},
 
-	getWelcomeDismissed(): Promise<boolean> {
-		return ipcRenderer.invoke('settings:getWelcomeDismissed');
+	getAllSettings(): Promise<Settings> {
+		return ipcRenderer.invoke('settings:getAllSettings');
 	},
 
-	setWelcomeDismissed(): Promise<boolean> {
-		return ipcRenderer.invoke('settings:setWelcomeDismissed');
+	setAllSettings(settings: Settings): Promise<void> {
+		return ipcRenderer.invoke('settings:setAllSettings', settings);
+	},
+
+	getSetting(key: keyof Settings): Promise<SettingsValue> {
+		return ipcRenderer.invoke('settings:getSetting', key);
+	},
+
+	setSetting(
+		key: keyof Settings,
+		value: SettingsValue
+	): Promise<SettingsValue> {
+		return ipcRenderer.invoke('settings:setSetting', key, value);
 	},
 
 	getCurrentCatalog(): Promise<Catalog | null> {
@@ -137,6 +149,10 @@ const ipcAPI = {
 
 	menu_exportToMister(callback: () => void) {
 		ipcRenderer.on('menu:exportToMister', callback);
+	},
+
+	menu_settings(callback: () => void) {
+		ipcRenderer.on('menu:settings', callback);
 	},
 };
 
