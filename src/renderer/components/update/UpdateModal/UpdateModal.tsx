@@ -129,7 +129,7 @@ function UpdateModal({
 			okButtonEnabled={updateComplete || canceled}
 			onOkClick={onClose}
 			onCancelClick={onCancelClick}
-			cancelButtonEnabled={!canceled}
+			cancelButtonEnabled={!canceled && !Array.isArray(updates)}
 			icon={GiftIcon}
 			errorOccured={!!error}
 		>

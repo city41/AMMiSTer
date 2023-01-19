@@ -1,4 +1,6 @@
 import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Meta } from '@storybook/react';
 import { BulkAddModal } from './BulkAddModal';
 import { mockCatalogEntry } from '../../catalog/mockCatalogEntry';
@@ -22,7 +24,10 @@ export const Basic = () => {
 		<BulkAddModal
 			isOpen
 			destination=""
+			criteriaMatch={null}
+			onCriteriaChange={() => {}}
 			onApply={() => {}}
+			onCancel={() => {}}
 			catalog={mockCatalog}
 		/>
 	);
@@ -33,8 +38,43 @@ export const InSubDirectory = () => {
 		<BulkAddModal
 			isOpen
 			destination="Capcom/games/fighters"
+			criteriaMatch={null}
+			onCriteriaChange={() => {}}
 			onApply={() => {}}
+			onCancel={() => {}}
 			catalog={mockCatalog}
 		/>
+	);
+};
+
+export const HasMatches = () => {
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<BulkAddModal
+				isOpen
+				destination="Capcom/games/fighters"
+				criteriaMatch={[mockCatalogEntry, mockCatalogEntry]}
+				onCriteriaChange={() => {}}
+				onApply={() => {}}
+				onCancel={() => {}}
+				catalog={mockCatalog}
+			/>
+		</DndProvider>
+	);
+};
+
+export const NothingMatched = () => {
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<BulkAddModal
+				isOpen
+				destination="Capcom/games/fighters"
+				criteriaMatch={[]}
+				onCriteriaChange={() => {}}
+				onApply={() => {}}
+				onCancel={() => {}}
+				catalog={mockCatalog}
+			/>
+		</DndProvider>
 	);
 };
