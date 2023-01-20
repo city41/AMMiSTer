@@ -43,6 +43,11 @@ function ExportModal({
 				errorMessage = `An error occured with ${error.fileOp?.action} of ${error.fileOp?.destPath}`;
 				break;
 			}
+			case 'network-error': {
+				errorTitle = 'Network Error';
+				errorMessage = error.message ?? '';
+				break;
+			}
 			case 'unknown': {
 				errorTitle = 'Something happened';
 				errorMessage = `An unknown error occurred: ${

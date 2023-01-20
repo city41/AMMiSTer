@@ -3,7 +3,7 @@ import { ReadStream } from 'original-fs';
 export type ExportType = 'directory' | 'mister';
 
 export type ExportError = {
-	type: 'connect-fail' | 'file-error' | 'unknown';
+	type: 'connect-fail' | 'file-error' | 'network-error' | 'unknown';
 	fileOp?: FileOperation;
 	message?: string;
 };

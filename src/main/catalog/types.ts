@@ -143,7 +143,7 @@ export type Catalog = {
 } & Record<string, CatalogEntry[]>;
 
 export type UpdateError = {
-	type: 'connect-fail' | 'file-error' | 'unknown';
+	type: 'connect-fail' | 'file-error' | 'network-error' | 'unknown';
 	fileEntry?: FileEntry;
 	message?: string;
 };

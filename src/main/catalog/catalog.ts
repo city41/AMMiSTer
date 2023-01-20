@@ -635,16 +635,18 @@ async function downloadRom(
 		if (message.includes('status code 404')) {
 			debug('downloadRom, adding 404 to cache for', remoteUrl);
 			archive404Cache.set(remoteUrl, true);
+		} else {
+			debug('downloadRom, error', remoteUrl, message);
+			throw e;
 		}
-
-		debug('downloadRom, error', remoteUrl, message);
-		return null;
 	}
+
+	return null;
 }
 
 async function downloadRoms(
 	romEntries: MissingRomEntry[],
-	cb: (update: Update) => boolean
+	cb: (err: string | null, rom: Update | null) => boolean
 ): Promise<Update[]> {
 	const allRomUpdates: Update[] = [];
 
@@ -659,31 +661,30 @@ async function downloadRoms(
 
 	for (const batch of batches) {
 		const downloadPromises = batch.map((r) => {
-			return downloadRom(r)
-				.then((result) => {
-					if (result === null) {
-						return downloadRom(r, DEFAULT_MAME_VERSION);
-					} else {
-						return result;
-					}
-				})
-				.catch((e) => {
-					debug(`downloadRom promise rejected for ${r.romFile}: ${e}`);
-					return null;
-				});
+			return downloadRom(r).then((result) => {
+				if (result === null) {
+					return downloadRom(r, DEFAULT_MAME_VERSION);
+				} else {
+					return result;
+				}
+			});
 		});
 
-		const updates = (await Promise.all(downloadPromises)).filter(
-			// we will quietly ignore fulfilled updates as the user doesn't need to know.
-			// fulfilled means some other romEntry also had this rom and downloaded it earlier,
-			// such as qsound.zip for all cps2 games. This is very unlikely/impossible as
-			// the first thing we do is uniqBy the mising rom entries
-			(u) => !!u && u.updateReason !== 'fulfilled'
-		) as unknown as Update[];
-
-		for (const update of updates) {
-			allRomUpdates.push(update);
-			proceeding = proceeding && cb(update);
+		try {
+			const updates = (await Promise.all(downloadPromises)).filter(
+				// we will quietly ignore fulfilled updates as the user doesn't need to know.
+				// fulfilled means some other romEntry also had this rom and downloaded it earlier,
+				// such as qsound.zip for all cps2 games. This is very unlikely/impossible as
+				// the first thing we do is uniqBy the mising rom entries
+				(u) => !!u && u.updateReason !== 'fulfilled'
+			) as unknown as Update[];
+			for (const update of updates) {
+				allRomUpdates.push(update);
+				proceeding = proceeding && cb(null, update);
+			}
+		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
+			proceeding = proceeding && cb(message, null);
 		}
 
 		if (!proceeding) {
@@ -853,11 +854,21 @@ async function updateCatalog(
 		}
 		let romUpdates: Update[] = [];
 		if (proceeding && missingRoms.length > 0) {
-			romUpdates = await downloadRoms(missingRoms, (update) => {
-				callback({
-					fresh: !currentCatalog,
-					message: `Downloaded ROM ${update.fileEntry.fileName}`,
-				});
+			romUpdates = await downloadRoms(missingRoms, (err, update) => {
+				if (err) {
+					callback({
+						message: '',
+						error: { type: 'network-error' },
+					});
+
+					proceeding = false;
+				} else {
+					callback({
+						fresh: !currentCatalog,
+						message: `Downloaded ROM ${update!.fileEntry.fileName}`,
+					});
+				}
+
 				return proceeding;
 			});
 		}

@@ -46,6 +46,11 @@ function UpdateModal({
 				errorMessage = `An error occured with ${error.fileEntry?.fileName}`;
 				break;
 			}
+			case 'network-error': {
+				errorTitle = 'Network Error';
+				errorMessage = error.message ?? '';
+				break;
+			}
 			case 'unknown': {
 				errorTitle = 'Something happened';
 				errorMessage = `An unknown error occurred: ${

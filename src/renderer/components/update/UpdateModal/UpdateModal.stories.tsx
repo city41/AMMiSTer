@@ -156,3 +156,18 @@ export const FileError = () => {
 		/>
 	);
 };
+
+export const NetworkError = () => {
+	return (
+		<UpdateModal
+			isOpen
+			updates={null}
+			error={{
+				message: 'error http://foo/foo.zip certificate is not valid',
+				type: 'network-error',
+			}}
+			onClose={() => {}}
+			onCancelClick={() => {}}
+		/>
+	);
+};

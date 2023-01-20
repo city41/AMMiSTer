@@ -84,3 +84,18 @@ export const FileDeleteError = () => {
 		/>
 	);
 };
+
+export const NetworkError = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			error={{
+				type: 'network-error',
+				message: 'error http://foo/foo.zip certificate is not valid',
+			}}
+			onClose={() => {}}
+		/>
+	);
+};
