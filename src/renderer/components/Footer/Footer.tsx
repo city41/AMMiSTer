@@ -1,9 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
-import semVerCompare from 'semver-compare';
 import { GiftIcon } from '../../icons';
 // @ts-expect-error not bothering with image types
 import iconPng from './icon.png';
+import { versionIsNewer } from './versionIsNewer';
 
 type PublicFooterProps = {
 	className?: string;
@@ -17,14 +17,6 @@ type InternalFooterProps = {
 
 const REPO_URL = 'https://github.com/city41/AMMiSTer/';
 const RELEASES_PAGE = `${REPO_URL}releases`;
-
-function versionIsNewer(mainVersion: string, localVersion: string): boolean {
-	if (!mainVersion.trim()) {
-		return false;
-	}
-
-	return semVerCompare(mainVersion, localVersion) > 0;
-}
 
 function Footer({
 	className,
