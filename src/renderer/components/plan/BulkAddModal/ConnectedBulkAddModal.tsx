@@ -41,6 +41,7 @@ function ConnectedBulkAddModal({
 
 	function handleClose() {
 		setModalOpen(false);
+		dispatch(resetCriteriaMatch());
 		onClose();
 	}
 
@@ -58,7 +59,6 @@ function ConnectedBulkAddModal({
 			onRequestClose={handleClose}
 			onApply={handleApply}
 			onCancel={() => {
-				dispatch(resetCriteriaMatch());
 				handleClose();
 			}}
 		/>

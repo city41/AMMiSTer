@@ -695,7 +695,7 @@ function bulkAdd({
 		const catalog = getState().catalog.catalog;
 		const plan = getState().plan.present.plan;
 
-		if (catalog && plan) {
+		if (catalog && plan && criteria.length > 0) {
 			const entriesToAdd = getEntriesBasedOnCriteria(catalog, criteria);
 			const path = destination
 				.trim()
@@ -727,8 +727,12 @@ function buildCriteriaMatch(criteria: BulkAddCriteria[]): PlanSliceThunk {
 		const plan = getState().plan.present.plan;
 
 		if (catalog && plan) {
-			const criteriaMatch = getEntriesBasedOnCriteria(catalog, criteria);
-			dispatch(planSlice.actions.setCriteriaMatch(criteriaMatch));
+			if (criteria.length > 0) {
+				const criteriaMatch = getEntriesBasedOnCriteria(catalog, criteria);
+				dispatch(planSlice.actions.setCriteriaMatch(criteriaMatch));
+			} else {
+				dispatch(planSlice.actions.resetCriteriaMatch());
+			}
 		}
 	};
 }
