@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.19.1
+
+- [All] Report on a network error if it occurs
+
 ## Version 0.19.0
 
 - [All] Start of settings (under the file menu). First setting: whether to download ROMs from archive.org
