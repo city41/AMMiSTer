@@ -4,6 +4,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.19.0
+
+- [All] Start of settings (under the file menu). First setting: whether to download ROMs from archive.org
+- [All] Added atrac7's Coin Op Collection DB
+
+ALERT: the "download ROMs" settings defaults to "no". Early adopters, you might be surprised by that.
+
 ## Version 0.18.1
 
 - [All] Fix a bulk add bug where rotation was not working correctly
