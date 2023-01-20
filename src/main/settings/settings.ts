@@ -68,7 +68,7 @@ async function addRecentPlan(planPath: string): Promise<void> {
 		recentPlans.pop();
 	}
 
-	return setSetting('recentPlans', recentPlans);
+	await setSetting('recentPlans', recentPlans);
 }
 
 function onSettingChange(listener: SettingChangeListener) {

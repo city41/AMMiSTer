@@ -21,6 +21,7 @@ import { FileClientConnectConfig } from './export/types';
 import { getGameCacheDir } from './util/fs';
 import { Settings, SettingsValue } from './settings/types';
 import { getUniqueBaseName } from './util/getUniqueBaseName';
+import { openPlanDialog, savePlanDialog } from './util/dialog';
 
 const debug = Debug('main/main.ts');
 
@@ -38,6 +39,7 @@ async function loadPlan(planPath: string) {
 		mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
 		lastPlanSavePath = planPath;
 		await settings.addRecentPlan(planPath);
+		await settings.setSetting('mostRecentPlanDir', path.dirname(planPath));
 	} else {
 		debug(
 			'loadPlan: plan.openPlan returned null, returning null to let the UI know there is no plan',
@@ -66,12 +68,10 @@ async function buildMainMenu(): Promise<void> {
 					label: 'Open Plan...',
 					accelerator: 'CommandOrControl+O',
 					click: async () => {
-						const result = await dialog.showOpenDialog(mainWindow!, {
-							filters: [{ name: 'Plans', extensions: ['amip'] }],
-						});
+						const openPlanPath = await openPlanDialog(mainWindow!);
 
-						if (!result.canceled) {
-							loadPlan(result.filePaths[0]);
+						if (openPlanPath) {
+							loadPlan(openPlanPath);
 						}
 					},
 				},
@@ -225,8 +225,9 @@ async function createWindow() {
 		return { action: 'deny' };
 	});
 
-	settings.onSettingChange((key) => {
+	settings.onSettingChange((key, value) => {
 		if (key === 'recentPlans') {
+			debug('onSettingsChange', key, value);
 			buildMainMenu();
 		}
 	});
@@ -362,14 +363,15 @@ ipcMain.handle('plan:newPlan', () => {
 });
 
 ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
-	const result = await dialog.showSaveDialog(mainWindow!, {
-		filters: [{ name: 'Plans', extensions: ['amip'] }],
-	});
+	const planSavePath = await savePlanDialog(mainWindow!);
 
-	if (!result.canceled && result.filePath) {
-		lastPlanSavePath = result.filePath;
-		plan.savePlan(p, result.filePath);
-		settings.addRecentPlan(result.filePath);
+	if (planSavePath) {
+		// savePlan will return the actual path that the plan got saved to
+		// typically it adds '.amip' if it is missing
+		const savedPlanPath = await plan.savePlan(p, planSavePath);
+		lastPlanSavePath = savedPlanPath;
+		await settings.addRecentPlan(savedPlanPath);
+
 		return true;
 	}
 
@@ -378,12 +380,10 @@ ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
 
 ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 	if (!lastPlanSavePath) {
-		const result = await dialog.showSaveDialog(mainWindow!, {
-			filters: [{ name: 'Plans', extensions: ['amip'] }],
-		});
+		const planSavePath = await savePlanDialog(mainWindow!);
 
-		if (!result.canceled && result.filePath) {
-			lastPlanSavePath = result.filePath;
+		if (planSavePath) {
+			lastPlanSavePath = planSavePath;
 		}
 	}
 
@@ -397,7 +397,16 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 });
 
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
+	const mostRecentExportDir = await settings.getSetting<string | undefined>(
+		'mostRecentExportDir'
+	);
+
+	const defaultPathProp = mostRecentExportDir
+		? { defaultPath: mostRecentExportDir }
+		: {};
+
 	const result = await dialog.showOpenDialog(mainWindow!, {
+		...defaultPathProp,
 		properties: ['openDirectory', 'createDirectory'],
 	});
 
@@ -418,6 +427,7 @@ ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 				if (menuItem) {
 					menuItem.enabled = true;
 				}
+				settings.setSetting('mostRecentExportDir', result.filePaths[0]);
 			});
 	}
 });
