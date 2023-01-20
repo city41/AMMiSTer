@@ -145,10 +145,10 @@ function BulkAddModal({
 								{criteriaMatch.length === 1 ? '' : 's'} matched
 							</div>
 							<div className="flex flex-row flex-wrap gap-x-3 gap-y-3 justify-center">
-								{criteriaMatch.map((cm) => {
+								{criteriaMatch.map((cm, i) => {
 									return (
 										<CatalogEntry
-											key={cm.gameName}
+											key={`${i}-${cm.files.mra.fileName}`}
 											className="bg-white border border-gray-200 p-1 shadow-lg"
 											entry={cm}
 											hideIcons
