@@ -7,6 +7,8 @@ export type Settings = {
 	downloadRoms: boolean;
 	'welcome-dismissed': boolean;
 	recentPlans: string[];
+	mostRecentExportDir?: string;
+	mostRecentPlanDir?: string;
 };
 
 export type SettingChangeListener = (

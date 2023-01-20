@@ -78,14 +78,16 @@ function newPlan(): Plan {
 	};
 }
 
-async function savePlan(plan: Plan, filePath: string): Promise<void> {
+async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	if (path.extname(filePath) !== '.amip') {
 		filePath += '.amip';
 	}
 
 	plan.updatedAt = Date.now();
 	const planJson = JSON.stringify(plan, null, 2);
-	return fsp.writeFile(filePath, planJson);
+	await fsp.writeFile(filePath, planJson);
+
+	return filePath;
 }
 
 async function openPlan(path: string): Promise<Plan | null> {
