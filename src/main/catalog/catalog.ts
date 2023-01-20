@@ -107,6 +107,10 @@ async function getDbJson(url: string): Promise<DBJSON> {
 	return require(extractedJsonPaths[0]) as DBJSON;
 }
 
+function cleanDbId(db_id: string): string {
+	return db_id.replace(/\//g, '_').replace(/\\/g, '_');
+}
+
 /**
  * Takes a db as pulled from the internet and converts it
  * into FileEntrys for easier processing
@@ -119,7 +123,7 @@ function convertDbToFileEntries(db: DBJSON): FileEntry[] {
 		const { hash, size } = e[1];
 
 		return {
-			db_id: db.db_id,
+			db_id: cleanDbId(db.db_id),
 			type: path.extname(relFilePath).substring(1) as 'mra' | 'rbf',
 			relFilePath,
 			fileName: path.basename(relFilePath),
@@ -546,6 +550,8 @@ const dbs: Record<string, string> = {
 		'https://raw.githubusercontent.com/jotego/jtcores_mister/main/jtbindb.json.zip',
 	theypsilon_unofficial_distribution:
 		'https://raw.githubusercontent.com/theypsilon/Distribution_Unofficial_MiSTer/main/unofficialdb.json.zip',
+	'atrac17_Coin-Op_Collection':
+		'https://raw.githubusercontent.com/atrac17/Coin-Op_Collection/db/db.json.zip',
 };
 
 async function determineMissingRoms(

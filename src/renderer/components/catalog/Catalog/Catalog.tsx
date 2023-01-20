@@ -13,7 +13,8 @@ type InternalCatalogProps = {
 const DbIdToDisplay: Record<string, string> = {
 	distribution_mister: 'MiSTer main',
 	jtcores: 'Jotego',
-	theypsilon_unofficial_distribution: 'Ypsilon Unofficial',
+	theypsilon_unofficial_distribution: 'Ypsilon',
+	'atrac17_Coin-Op_Collection': 'atrac17: Coin Op Collection',
 };
 
 function Catalog({ catalog }: InternalCatalogProps) {
@@ -55,9 +56,12 @@ function Catalog({ catalog }: InternalCatalogProps) {
 		return [
 			<li
 				key={db_id}
-				className="py-2 pl-1.5 font-bold sticky top-0 z-40 bg-indigo-50 text-indigo-600 flex flex-row gap-x-2 items-baseline border-b border-t border-b-indigo-500 border-t-indigo-500 first:border-t-transparent"
+				className="py-2 px-1.5 font-bold sticky top-0 z-40 bg-indigo-50 text-indigo-600 grid gap-x-2 items-baseline border-b border-t border-b-indigo-500 border-t-indigo-500 first:border-t-transparent"
+				style={{ gridTemplateColumns: '1fr max-content' }}
 			>
-				<div>{DbIdToDisplay[db_id]}</div>
+				<div className="whitespace-nowrap text-ellipsis overflow-hidden">
+					{DbIdToDisplay[db_id]}
+				</div>
 				<div className="font-normal text-sm text-gray-500">
 					{games.length} game{games.length === 1 ? '' : 's'}
 					{filter.trim() ? ' that match' : ''}
