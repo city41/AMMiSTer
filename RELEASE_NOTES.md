@@ -4,6 +4,11 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.18.1
+
+- [All] Fix a bulk add bug where rotation was not working correctly
+- [All] Fix a builk add bug where once Ghouls 'n' Ghosts showed up, all the games would mess up
+
 ## Version 0.18.0
 
 - [Linux] Added an rpm version. I don't use an rpm based distro, so might have issues?
