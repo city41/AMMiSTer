@@ -93,6 +93,10 @@ const getAllOptionValues = memoize(
 );
 
 function getFirstValueFor(catalog: Catalog, gameAspect: GameAspect): string {
+	if (gameAspect === 'rotation') {
+		return 'horizontal';
+	}
+
 	const values = getAllOptionValues(catalog, gameAspect);
 	return values[0];
 }
@@ -180,7 +184,6 @@ function Criteria({
 				<option value="yearReleased">Year</option>
 				<option value="region">Region</option>
 				<option value="rotation">Rotation</option>
-				<option value="core">Core</option>
 				<option value="series">Series</option>
 				<option value="platform">Platform</option>
 				<option value="move_inputs">Controls</option>
