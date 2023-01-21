@@ -24,6 +24,7 @@ import {
 	UpdateCallback,
 	UpdateReason,
 } from './types';
+import { UpdateDbConfig } from '../settings/types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { isEqual } from 'lodash';
 import { batch } from '../util/batch';
@@ -543,17 +544,6 @@ async function buildGameCatalog(metadataDb: MetadataDB): Promise<Catalog> {
 	return catalog as Catalog;
 }
 
-const dbs: Record<string, string> = {
-	distribution_mister:
-		'https://raw.githubusercontent.com/MiSTer-devel/Distribution_MiSTer/main/db.json.zip',
-	jtcores:
-		'https://raw.githubusercontent.com/jotego/jtcores_mister/main/jtbindb.json.zip',
-	theypsilon_unofficial_distribution:
-		'https://raw.githubusercontent.com/theypsilon/Distribution_Unofficial_MiSTer/main/unofficialdb.json.zip',
-	'atrac17_Coin-Op_Collection':
-		'https://raw.githubusercontent.com/atrac17/Coin-Op_Collection/db/db.json.zip',
-};
-
 async function determineMissingRoms(
 	catalog: Catalog
 ): Promise<MissingRomEntry[]> {
@@ -733,6 +723,8 @@ async function updateCatalog(
 	let proceeding = true;
 
 	const downloadRomsSetting = await settings.getSetting('downloadRoms');
+	const updateDbs = await settings.getSetting<UpdateDbConfig[]>('updateDbs');
+	const enabledUpdateDbs = updateDbs.filter((db) => db.enabled);
 
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
@@ -765,17 +757,17 @@ async function updateCatalog(
 
 		let updateDbErrorOccurred = false;
 
-		for (const [dbId, dbUrl] of Object.entries(dbs)) {
+		for (const updateDb of enabledUpdateDbs) {
 			if (!proceeding) {
 				break;
 			}
 
 			callback({
 				fresh: !currentCatalog,
-				message: `Checking for anything new in ${dbId}`,
+				message: `Checking for anything new in ${updateDb.displayName}`,
 			});
 
-			const dbResult = await getDbJson(dbUrl);
+			const dbResult = await getDbJson(updateDb.url);
 
 			const dbUpdates = await downloadUpdatesForDb(dbResult, (err, update) => {
 				if (err) {

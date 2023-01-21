@@ -23,7 +23,7 @@ export const Basic = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div style={{ width: 240 }}>
-				<Catalog catalog={catalog} />
+				<Catalog catalog={catalog} updateDbConfigs={[]} />
 			</div>
 		</DndProvider>
 	);
