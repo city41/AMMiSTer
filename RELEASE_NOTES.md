@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.21.0
+
+- [All] Settings: choose which DBs to get updates from
+
 ## Version 0.20.0
 
 - [All] File menu: recently opened plans
