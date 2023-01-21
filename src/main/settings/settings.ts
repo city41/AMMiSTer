@@ -1,7 +1,10 @@
+import fs from 'node:fs';
 import electronSettings from 'electron-settings';
-import { Settings, SettingsValue } from './types';
+import { SettingChangeListener, Settings, SettingsValue } from './types';
 
 const SETTINGS_FILE = 'ammister-settings.json';
+
+const settingsChangeListeners: SettingChangeListener[] = [];
 
 async function init(userDataPath: string): Promise<void> {
 	electronSettings.configure({
@@ -30,14 +33,55 @@ async function getSetting<T>(key: keyof Settings): Promise<T> {
 }
 
 async function setSetting<T extends SettingsValue>(
-	key: string,
+	key: keyof Settings,
 	value: T
 ): Promise<void> {
-	return electronSettings.set(key, value);
+	await electronSettings.set(key, value);
+	settingsChangeListeners.forEach((scl) => scl(key, value));
 }
 
 async function setAllSettings(newSettings: Settings): Promise<void> {
 	return electronSettings.set(newSettings);
 }
 
-export { init, getAllSettings, getSetting, setSetting, setAllSettings };
+async function getRecentPlans(): Promise<string[]> {
+	const recentPlans = await getSetting<string[]>('recentPlans');
+
+	// clear out any plans that have since been deleted
+	return (recentPlans ?? []).filter((rp) => {
+		try {
+			return fs.statSync(rp).isFile();
+		} catch (e) {
+			return false;
+		}
+	});
+}
+
+async function addRecentPlan(planPath: string): Promise<void> {
+	const recentPlans = await getRecentPlans();
+
+	if (!recentPlans.some((rp) => rp === planPath)) {
+		recentPlans.unshift(planPath);
+	}
+
+	while (recentPlans.length > 3) {
+		recentPlans.pop();
+	}
+
+	return setSetting('recentPlans', recentPlans);
+}
+
+function onSettingChange(listener: SettingChangeListener) {
+	settingsChangeListeners.push(listener);
+}
+
+export {
+	init,
+	getAllSettings,
+	getSetting,
+	setSetting,
+	setAllSettings,
+	getRecentPlans,
+	addRecentPlan,
+	onSettingChange,
+};

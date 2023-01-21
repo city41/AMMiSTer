@@ -1,7 +1,15 @@
 import path from 'node:path';
 import Debug from 'debug';
 import mkdirp from 'mkdirp';
-import { BrowserWindow, app, dialog, ipcMain, Menu, shell } from 'electron';
+import {
+	BrowserWindow,
+	app,
+	dialog,
+	ipcMain,
+	Menu,
+	shell,
+	MenuItemConstructorOptions,
+} from 'electron';
 
 import * as catalog from './catalog';
 import * as plan from './plan';
@@ -12,6 +20,7 @@ import { Plan } from './plan/types';
 import { FileClientConnectConfig } from './export/types';
 import { getGameCacheDir } from './util/fs';
 import { Settings, SettingsValue } from './settings/types';
+import { getUniqueBaseName } from './util/getUniqueBaseName';
 
 const debug = Debug('main/main.ts');
 
@@ -28,6 +37,7 @@ async function loadPlan(planPath: string) {
 		debug('loadPlan: sending opened plan to mainWindow', planPath);
 		mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
 		lastPlanSavePath = planPath;
+		await settings.addRecentPlan(planPath);
 	} else {
 		debug(
 			'loadPlan: plan.openPlan returned null, returning null to let the UI know there is no plan',
@@ -37,23 +47,10 @@ async function loadPlan(planPath: string) {
 	}
 }
 
-function createWindow() {
-	mainWindow = new BrowserWindow({
-		width: 800,
-		height: 600,
-		webPreferences: {
-			devTools: isDev,
-			preload: path.join(__dirname, '../preload.bundle.js'),
-			webSecurity: !isDev,
-		},
-	});
+async function buildMainMenu(): Promise<void> {
+	const recentPlans = await settings.getRecentPlans();
 
-	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-		shell.openExternal(url);
-		return { action: 'deny' };
-	});
-
-	const menuTemplate = [
+	const menuTemplate: MenuItemConstructorOptions[] = [
 		{
 			label: 'File',
 			submenu: [
@@ -61,6 +58,9 @@ function createWindow() {
 					label: 'New Plan',
 					accelerator: 'CommandOrControl+N',
 					click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
+				},
+				{
+					type: 'separator',
 				},
 				{
 					label: 'Open Plan...',
@@ -74,6 +74,21 @@ function createWindow() {
 							loadPlan(result.filePaths[0]);
 						}
 					},
+				},
+				{
+					label: 'Open Recent',
+					id: 'open-recent',
+					submenu: recentPlans.map((rp) => {
+						return {
+							label: getUniqueBaseName(rp, recentPlans),
+							click: () => {
+								loadPlan(rp);
+							},
+						};
+					}),
+				},
+				{
+					type: 'separator',
 				},
 				{
 					label: 'Save Plan',
@@ -90,11 +105,17 @@ function createWindow() {
 					},
 				},
 				{
+					type: 'separator',
+				},
+				{
 					label: 'Settings...',
 					accelerator: 'CommandOrControl+,',
 					click: async () => {
 						mainWindow!.webContents.send('menu:settings');
 					},
+				},
+				{
+					type: 'separator',
 				},
 				{
 					label: 'Quit',
@@ -186,6 +207,31 @@ function createWindow() {
 	}
 
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
+}
+
+async function createWindow() {
+	mainWindow = new BrowserWindow({
+		width: 800,
+		height: 600,
+		webPreferences: {
+			devTools: isDev,
+			preload: path.join(__dirname, '../preload.bundle.js'),
+			webSecurity: !isDev,
+		},
+	});
+
+	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+		shell.openExternal(url);
+		return { action: 'deny' };
+	});
+
+	settings.onSettingChange((key) => {
+		if (key === 'recentPlans') {
+			buildMainMenu();
+		}
+	});
+
+	await buildMainMenu();
 
 	// and load the index.html of the app.
 	const indexPath = isDev ? '../index.html' : './index.html';
@@ -195,7 +241,12 @@ function createWindow() {
 			loadPlan(planToLoadAfterMainWindowIsReady);
 		} else {
 			const commandLinePlan = isDev ? process.argv[2] : process.argv[1];
-			loadPlan(commandLinePlan);
+			if (
+				typeof commandLinePlan === 'string' &&
+				commandLinePlan.endsWith('amip')
+			) {
+				loadPlan(commandLinePlan);
+			}
 		}
 	});
 
@@ -222,12 +273,12 @@ if (process.platform === 'win32') {
 app
 	.whenReady()
 	.then(async () => {
-		createWindow();
+		await settings.init(app.getPath('userData'));
+		await createWindow();
 
 		app.on('activate', () => {
 			if (BrowserWindow.getAllWindows.length === 0) createWindow();
 		});
-		await settings.init(app.getPath('userData'));
 	})
 	.finally(() => {});
 
@@ -318,6 +369,7 @@ ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
 	if (!result.canceled && result.filePath) {
 		lastPlanSavePath = result.filePath;
 		plan.savePlan(p, result.filePath);
+		settings.addRecentPlan(result.filePath);
 		return true;
 	}
 
@@ -337,6 +389,7 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 
 	if (lastPlanSavePath) {
 		plan.savePlan(p, lastPlanSavePath);
+		settings.addRecentPlan(lastPlanSavePath);
 		return true;
 	}
 
