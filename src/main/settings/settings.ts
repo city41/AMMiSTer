@@ -26,6 +26,12 @@ async function init(userDataPath: string): Promise<void> {
 	if (!hasUpdateDbs) {
 		await setSetting('updateDbs', defaultUpdateDbs);
 	}
+
+	const hasExportOptimization = await hasSetting('exportOptimization');
+
+	if (!hasExportOptimization) {
+		await setSetting('exportOptimization', 'space');
+	}
 }
 
 async function getAllSettings(): Promise<Settings> {
