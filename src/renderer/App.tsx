@@ -12,34 +12,37 @@ import { Plan } from './components/plan/Plan';
 import { Welcome } from './components/Welcome';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
 	return (
-		<DndProvider backend={HTML5Backend}>
-			<Provider store={store}>
-				<div
-					className="grid grid-cols-4 h-screen"
-					style={{ gridTemplateRows: '1fr max-content' }}
-				>
-					<div className="flex flex-col gap-y-2 h-full overflow-auto">
-						<Catalog />
-					</div>
+		<ErrorBoundary>
+			<DndProvider backend={HTML5Backend}>
+				<Provider store={store}>
 					<div
-						className="col-span-3 h-full overflow-auto grid"
-						style={{ gridTemplateRows: 'max-content 1fr' }}
+						className="grid grid-cols-4 h-screen"
+						style={{ gridTemplateRows: '1fr max-content' }}
 					>
-						<Welcome className="mx-auto mt-10" />
-						<Plan />
+						<div className="flex flex-col gap-y-2 h-full overflow-auto">
+							<Catalog />
+						</div>
+						<div
+							className="col-span-3 h-full overflow-auto grid"
+							style={{ gridTemplateRows: 'max-content 1fr' }}
+						>
+							<Welcome className="mx-auto mt-10" />
+							<Plan />
+						</div>
+						<Footer className="col-span-4" />
 					</div>
-					<Footer className="col-span-4" />
-				</div>
-				<UpdateModal />
-				<ExportModal />
-				<ExportRemoteConfigModal />
-				<EntryDetailModal />
-				<SettingsModal />
-			</Provider>
-		</DndProvider>
+					<UpdateModal />
+					<ExportModal />
+					<ExportRemoteConfigModal />
+					<EntryDetailModal />
+					<SettingsModal />
+				</Provider>
+			</DndProvider>
+		</ErrorBoundary>
 	);
 }
 

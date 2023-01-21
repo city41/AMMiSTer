@@ -144,6 +144,13 @@ async function buildMainMenu(): Promise<void> {
 					accelerator: 'CommandOrControl+Y',
 					click: () => mainWindow!.webContents.send('menu:redo'),
 				},
+				{
+					type: 'separator',
+				},
+				{
+					label: 'Copy',
+					role: 'copy',
+				},
 			],
 		},
 		{
