@@ -4,7 +4,12 @@ function versionIsNewer(
 	mainVersion: string | null | undefined,
 	localVersion: string
 ): boolean {
-	if (!mainVersion || !mainVersion.trim()) {
+	if (
+		!mainVersion ||
+		!mainVersion.trim() ||
+		!localVersion ||
+		!localVersion.trim()
+	) {
 		return false;
 	}
 

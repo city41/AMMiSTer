@@ -73,6 +73,21 @@ const initialState: InternalPlanState = {
 	criteriaMatch: null,
 };
 
+function getAllGamesInPlan(planDir: PlanGameDirectory): CatalogEntry[] {
+	const games: CatalogEntry[] = [];
+
+	for (const entry of planDir) {
+		if ('gameName' in entry) {
+			games.push(entry);
+		} else {
+			const subGames = getAllGamesInPlan(entry.games);
+			games.push(...subGames);
+		}
+	}
+
+	return games;
+}
+
 function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
 	let dir: PlanGameDirectory = [plan];
 	let foundDirEntry: PlanGameDirectoryEntry | undefined = undefined;
@@ -687,9 +702,11 @@ function getEntriesBasedOnCriteria(
 function bulkAdd({
 	criteria,
 	destination,
+	addOnlyNew,
 }: {
 	criteria: BulkAddCriteria[];
 	destination: string;
+	addOnlyNew: boolean;
 }): PlanSliceThunk {
 	return (dispatch, getState) => {
 		const catalog = getState().catalog.catalog;
@@ -703,15 +720,24 @@ function bulkAdd({
 				.map((seg) => seg.trim())
 				.filter((seg) => !!seg);
 
-			batchGroupBy.start();
+			// if addOnlyNew is not set, we'll pretend the plan is empty to
+			// just send all games through
+			const allGamesInPlan = addOnlyNew ? getAllGamesInPlan(plan.games) : [];
 
+			batchGroupBy.start();
 			entriesToAdd.forEach((entry) => {
-				dispatch(
-					planSlice.actions.addCatalogEntry({
-						parentPath: [plan.directoryName].concat(path),
-						catalogEntry: entry,
-					})
-				);
+				if (
+					allGamesInPlan.every(
+						(g) => g.files.mra.fileName !== entry.files.mra.fileName
+					)
+				) {
+					dispatch(
+						planSlice.actions.addCatalogEntry({
+							parentPath: [plan.directoryName].concat(path),
+							catalogEntry: entry,
+						})
+					);
+				}
 			});
 
 			dispatch(planSlice.actions.resetCriteriaMatch());
@@ -786,5 +812,6 @@ export {
 	resetCriteriaMatch,
 	undo,
 	redo,
+	getAllGamesInPlan,
 };
 export type { PlanState, BulkAddCriteria };

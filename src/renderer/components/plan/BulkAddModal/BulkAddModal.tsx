@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import Toggle from 'react-toggle';
 import {
 	Catalog,
 	CatalogEntry as CatalogEntryType,
@@ -10,15 +11,17 @@ import { Button } from '../../Button';
 import { AddIcon, ArrowLeftIcon } from '../../../icons';
 import { BulkAddCriteria } from '../planSlice';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
+import { HelpButton } from '../../HelpButton';
 
 type PublicBulkAddModalProps = ModalProps & { className?: string };
 
 type InternalBulkAddModalProps = {
 	catalog: Catalog;
+	allGamesInPlan: CatalogEntryType[];
 	destination: string;
 	criteriaMatch: CatalogEntryType[] | null;
 	onCriteriaChange: (criteria: BulkAddCriteria[]) => void;
-	onApply: (criteria: BulkAddCriteria[]) => void;
+	onApply: (criteria: BulkAddCriteria[], addOnlyNew: boolean) => void;
 	onCancel: () => void;
 };
 
@@ -26,6 +29,7 @@ function BulkAddModal({
 	className,
 	destination,
 	catalog,
+	allGamesInPlan,
 	criteriaMatch,
 	onCriteriaChange,
 	onApply,
@@ -40,6 +44,7 @@ function BulkAddModal({
 		return manufacturers[0];
 	}, [catalog]);
 
+	const [addOnlyNew, setAddOnlyNew] = useState(false);
 	const [criterias, _setCriterias] = useState<BulkAddCriteria[]>([]);
 
 	function setCriterias(
@@ -49,6 +54,16 @@ function BulkAddModal({
 		onCriteriaChange(newCriterias);
 		_setCriterias(newCriterias);
 	}
+
+	const gamesToAddCount = useMemo(() => {
+		return (criteriaMatch ?? []).filter(
+			(cm) =>
+				!addOnlyNew ||
+				allGamesInPlan.every(
+					(gip) => gip.files.mra.fileName !== cm.files.mra.fileName
+				)
+		).length;
+	}, [addOnlyNew, allGamesInPlan, criteriaMatch]);
 
 	return (
 		<Modal {...rest} closeButton>
@@ -149,7 +164,17 @@ function BulkAddModal({
 									return (
 										<CatalogEntry
 											key={`${i}-${cm.files.mra.fileName}`}
-											className="bg-white border border-gray-200 p-1 shadow-lg"
+											className={clsx(
+												'bg-white border border-gray-200 p-1 shadow-lg',
+												{
+													'opacity-30':
+														addOnlyNew &&
+														allGamesInPlan.some(
+															(g) =>
+																g.files.mra.fileName === cm.files.mra.fileName
+														),
+												}
+											)}
 											entry={cm}
 											hideIcons
 										/>
@@ -160,25 +185,49 @@ function BulkAddModal({
 					)}
 				</div>
 				<div
-					className={clsx('flex flex-row justify-end gap-x-2 p-2', {
-						'border-t border-gray-300': !!criteriaMatch,
-					})}
+					className={clsx(
+						'flex flex-row justify-between items-center gap-x-2 px-6 py-2',
+						{
+							'border-t border-gray-300': !!criteriaMatch,
+						}
+					)}
 				>
-					<Button variant="danger" onClick={onCancel}>
-						Cancel
-					</Button>
-					<Button
-						onClick={() => {
-							onApply(criterias);
-						}}
-						disabled={!criteriaMatch?.length}
-					>
-						{criteriaMatch?.length
-							? `Add ${criteriaMatch.length} game${
-									criteriaMatch.length === 1 ? '' : 's'
-							  }`
-							: 'Add Games'}
-					</Button>
+					<div className="flex flex-row gap-x-2 items-center">
+						<Toggle
+							id="only-add-new-to-plan"
+							checked={addOnlyNew}
+							onChange={() => {
+								setAddOnlyNew((aon) => !aon);
+							}}
+						/>
+						<label
+							htmlFor="only-add-new-to-plan"
+							className="text-xs text-gray-600"
+						>
+							Only add games not already in the plan
+							<HelpButton popupClassName="bottom-0 ml-2">
+								Any game already in the plan somewhere else will be skipped if
+								this is toggled on
+							</HelpButton>
+						</label>
+					</div>
+					<div className="flex flex-row gap-x-2">
+						<Button variant="danger" onClick={onCancel}>
+							Cancel
+						</Button>
+						<Button
+							onClick={() => {
+								onApply(criterias, addOnlyNew);
+							}}
+							disabled={gamesToAddCount === 0}
+						>
+							{gamesToAddCount > 0
+								? `Add ${gamesToAddCount} game${
+										gamesToAddCount === 1 ? '' : 's'
+								  }`
+								: 'Add Games'}
+						</Button>
+					</div>
 				</div>
 			</div>
 		</Modal>

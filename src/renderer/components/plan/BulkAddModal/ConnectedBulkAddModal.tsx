@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BulkAddModal } from './BulkAddModal';
 import { dispatch, AppState } from '../../../store';
 import {
@@ -6,6 +6,7 @@ import {
 	bulkAdd,
 	buildCriteriaMatch,
 	resetCriteriaMatch,
+	getAllGamesInPlan,
 } from '../planSlice';
 import { useSelector } from 'react-redux';
 
@@ -26,12 +27,24 @@ function ConnectedBulkAddModal({
 		return state.catalog.catalog;
 	});
 
+	const plan = useSelector((state: AppState) => {
+		return state.plan.present.plan;
+	});
+
+	const allGamesInPlan = useMemo(() => {
+		if (!plan) {
+			return [];
+		} else {
+			return getAllGamesInPlan(plan.games);
+		}
+	}, [plan]);
+
 	const criteriaMatch = useSelector((state: AppState) => {
 		return state.plan.present.criteriaMatch;
 	});
 
-	function handleApply(criteria: BulkAddCriteria[]) {
-		dispatch(bulkAdd({ criteria, destination }));
+	function handleApply(criteria: BulkAddCriteria[], addOnlyNew: boolean) {
+		dispatch(bulkAdd({ criteria, destination, addOnlyNew }));
 		setModalOpen(false);
 	}
 
@@ -54,6 +67,7 @@ function ConnectedBulkAddModal({
 			isOpen={modalOpen}
 			destination={destination}
 			catalog={catalog}
+			allGamesInPlan={allGamesInPlan}
 			criteriaMatch={criteriaMatch}
 			onCriteriaChange={handleCriteriaChange}
 			onRequestClose={handleClose}

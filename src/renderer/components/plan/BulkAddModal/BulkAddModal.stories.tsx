@@ -29,6 +29,7 @@ export const Basic = () => {
 			onApply={() => {}}
 			onCancel={() => {}}
 			catalog={mockCatalog}
+			allGamesInPlan={[]}
 		/>
 	);
 };
@@ -43,6 +44,7 @@ export const InSubDirectory = () => {
 			onApply={() => {}}
 			onCancel={() => {}}
 			catalog={mockCatalog}
+			allGamesInPlan={[]}
 		/>
 	);
 };
@@ -58,6 +60,7 @@ export const HasMatches = () => {
 				onApply={() => {}}
 				onCancel={() => {}}
 				catalog={mockCatalog}
+				allGamesInPlan={[]}
 			/>
 		</DndProvider>
 	);
@@ -65,16 +68,15 @@ export const HasMatches = () => {
 
 export const NothingMatched = () => {
 	return (
-		<DndProvider backend={HTML5Backend}>
-			<BulkAddModal
-				isOpen
-				destination="Capcom/games/fighters"
-				criteriaMatch={[]}
-				onCriteriaChange={() => {}}
-				onApply={() => {}}
-				onCancel={() => {}}
-				catalog={mockCatalog}
-			/>
-		</DndProvider>
+		<BulkAddModal
+			isOpen
+			destination="Capcom/games/fighters"
+			criteriaMatch={[]}
+			onCriteriaChange={() => {}}
+			onApply={() => {}}
+			onCancel={() => {}}
+			catalog={mockCatalog}
+			allGamesInPlan={[]}
+		/>
 	);
 };
