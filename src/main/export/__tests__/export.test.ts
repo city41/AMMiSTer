@@ -1,6 +1,71 @@
 import path from 'node:path';
-import { buildFileOperations, buildFileOperationPath } from '../export';
-import { SrcFileOperationPath, DestFileOperationPath } from '../types';
+import { Mock } from 'ts-mockery';
+import {
+	buildFileOperations,
+	buildDestFileOperationPath,
+	doExport,
+} from '../export';
+import {
+	SrcFileOperationPath,
+	DestFileOperationPath,
+	FileClient,
+} from '../types';
+import { Plan } from '../../plan/types';
+import { Catalog, CatalogEntry } from '../../catalog/types';
+import { Settings } from '../../settings/types';
+import * as settings from '../../settings';
+import * as catalog from '../../catalog';
+
+const getSettingMock = jest.fn().mockResolvedValue('mock-setting');
+
+jest.mock('node:fs', () => {
+	return {
+		createReadStream: jest.fn().mockReturnValue(''),
+	};
+});
+jest.mock('node:fs/promises', () => {
+	return {
+		readdir: jest.fn().mockResolvedValue([]),
+		readFile: jest.fn().mockResolvedValue(''),
+		writeFile: jest.fn().mockResolvedValue(''),
+	};
+});
+jest.mock('winston', () => {
+	return {
+		format: {
+			errors: jest.fn(),
+			metadata: jest.fn(),
+			json: jest.fn(),
+			combine: jest.fn(),
+		},
+		createLogger: jest.fn().mockReturnValue({
+			debug: jest.fn(),
+			info: jest.fn(),
+			error: jest.fn(),
+			child: jest.fn().mockReturnValue({
+				debug: jest.fn(),
+				info: jest.fn(),
+				error: jest.fn(),
+			}),
+			close: jest.fn(),
+		}),
+		transports: {
+			File: jest.fn(),
+		},
+	};
+});
+
+jest.mock('../../settings', () => {
+	return {
+		getSetting: jest.fn().mockResolvedValue('mock-setting'),
+	};
+});
+
+jest.mock('../../catalog', () => {
+	return {
+		getCurrentCatalog: jest.fn().mockResolvedValue({}),
+	};
+});
 
 describe('export', function () {
 	describe('#buildFileOperations', function () {
@@ -225,14 +290,16 @@ describe('export', function () {
 
 	describe('#buildFileOperationPath', function () {
 		it('should return exact file paths as exact file operation path', function () {
-			expect(buildFileOperationPath('_Arcade/foo.mra')).toEqual({
+			expect(buildDestFileOperationPath('_Arcade/foo.mra')).toEqual({
 				type: 'exact',
 				relPath: '_Arcade/foo.mra',
 			});
 		});
 
 		it('should return dated file paths as dated-filename file operation path', function () {
-			expect(buildFileOperationPath('_Arcade/cores/foo_20230101.mra')).toEqual({
+			expect(
+				buildDestFileOperationPath('_Arcade/cores/foo_20230101.mra')
+			).toEqual({
 				type: 'dated-filename',
 				relDirPath: '_Arcade/cores',
 				fileName: 'foo_20230101.mra',
@@ -243,30 +310,90 @@ describe('export', function () {
 		});
 
 		it('should return a file path that looks like it is dated but is invalid as exact', function () {
-			expect(buildFileOperationPath('_Arcade/cores/foo_21111111.mra')).toEqual({
+			expect(
+				buildDestFileOperationPath('_Arcade/cores/foo_21111111.mra')
+			).toEqual({
 				type: 'exact',
 				relPath: '_Arcade/cores/foo_21111111.mra',
 			});
 
-			expect(buildFileOperationPath('_Arcade/cores/foo_2111.mra')).toEqual({
+			expect(buildDestFileOperationPath('_Arcade/cores/foo_2111.mra')).toEqual({
 				type: 'exact',
 				relPath: '_Arcade/cores/foo_2111.mra',
 			});
 
 			// date is 9 chars, one too long
-			expect(buildFileOperationPath('_Arcade/cores/foo_212345678.mra')).toEqual(
-				{
-					type: 'exact',
-					relPath: '_Arcade/cores/foo_212345678.mra',
-				}
-			);
+			expect(
+				buildDestFileOperationPath('_Arcade/cores/foo_212345678.mra')
+			).toEqual({
+				type: 'exact',
+				relPath: '_Arcade/cores/foo_212345678.mra',
+			});
 
 			expect(
-				buildFileOperationPath('_Arcade/cores/farInTheFuture_30230101.mra')
+				buildDestFileOperationPath('_Arcade/cores/farInTheFuture_30230101.mra')
 			).toEqual({
 				type: 'exact',
 				relPath: '_Arcade/cores/farInTheFuture_30230101.mra',
 			});
+		});
+	});
+
+	describe('doExport', function () {
+		it('should do a very basic export', async function () {
+			const plan = Mock.of<Plan>({
+				directoryName: 'mock plan',
+				games: [
+					Mock.of<CatalogEntry>({
+						db_id: 'mock_db',
+						files: {
+							mra: {
+								db_id: 'mock_db',
+								type: 'mra',
+								relFilePath: '_Arcade/foo.mra',
+								fileName: 'foo.mra',
+							} as const,
+							roms: [],
+						},
+					}),
+				],
+			});
+
+			const callback = jest.fn();
+			const mockClient = Mock.of<FileClient>({
+				connect: jest.fn().mockResolvedValue(''),
+				disconnect: jest.fn().mockResolvedValue(''),
+				getMountPath: jest.fn().mockReturnValue(''),
+				getDestinationPathJoiner: jest.fn().mockReturnValue(path.join),
+				mkDir: jest.fn().mockResolvedValue(''),
+				listDir: jest.fn().mockResolvedValue(''),
+				putFile: jest.fn().mockResolvedValue(''),
+			});
+
+			const clientFactory = () => mockClient;
+
+			await doExport(plan, callback, 'unit-tests', 'mister', clientFactory);
+
+			const callbackMessages = callback.mock.calls.map((c) => c[0].message);
+
+			expect(callbackMessages).toEqual([
+				'Connecting...',
+				'Determining what needs to be copied...',
+				'Copying: _Arcade/foo.mra',
+				'Cleaning up empty directories',
+				'Export complete in 0.00 seconds',
+			]);
+		});
+
+		it('should do a speed optimized export', async function () {
+			// settings.getSetting = jest
+			// 	.fn()
+			// 	.mockImplementation((key: keyof Settings) => {
+			// 		if (key === 'exportOptimization') {
+			// 			return 'speed';
+			// 		}
+			// 		return 'mock-setting';
+			// 	});
 		});
 	});
 });

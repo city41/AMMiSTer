@@ -80,16 +80,20 @@ export type FileClientConnectConfig = {
 	password: string;
 };
 
+export type PathJoiner = (...segments: string[]) => string;
+
 export interface FileClient {
-	connect: (config: FileClientConnectConfig) => Promise<void>;
-	disconnect: () => Promise<void>;
+	connect(): Promise<void>;
+	disconnect(): Promise<void>;
+	getMountPath(): string;
+	getDestinationPathJoiner(): PathJoiner;
 
-	listDir: (dirPath: string) => Promise<string[]>;
-	isDir: (filePath: string) => Promise<boolean>;
-	mkDir: (dirPath: string, recursive?: boolean) => Promise<void>;
-	rmDir: (dirPath: string) => Promise<void>;
+	listDir(dirPath: string): Promise<string[]>;
+	isDir(filePath: string): Promise<boolean>;
+	mkDir(dirPath: string, recursive?: boolean): Promise<void>;
+	rmDir(dirPath: string): Promise<void>;
 
-	putFile: (data: ReadStream, destPath: string) => Promise<string>;
-	deleteFile: (filePath: string) => Promise<void>;
-	exists: (filePath: string) => Promise<boolean>;
+	putFile(data: ReadStream, destPath: string): Promise<string>;
+	deleteFile(filePath: string): Promise<void>;
+	exists(filePath: string): Promise<boolean>;
 }

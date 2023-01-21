@@ -1,16 +1,22 @@
 import path from 'node:path';
-import { ReadStream } from 'original-fs';
+import { ReadStream } from 'fs';
 import { Client, FileInfo } from 'basic-ftp';
 import winston from 'winston';
 import { FileClient, FileClientConnectConfig } from './types';
+import { misterPathJoiner } from '../util/fs';
 
 const TIMEOUT_MS = 15 * 1000;
 
 class FTPFileClient implements FileClient {
 	private ftp: Client;
 	private isDirCache: Record<string, FileInfo[]>;
+	private mountPath: string;
 
-	constructor(private logger: winston.Logger) {
+	constructor(
+		private logger: winston.Logger,
+		mountPathSegments: string[],
+		private connectConfig: FileClientConnectConfig
+	) {
 		this.ftp = new Client(TIMEOUT_MS);
 		this.isDirCache = {};
 
@@ -21,14 +27,26 @@ class FTPFileClient implements FileClient {
 		this.ftp.ftp.log = (message: string) => {
 			this.logger.info({ ftpLog: message });
 		};
+
+		// this will be something like ['media', '_Arcade'], and is
+		// the root destination to write to
+		this.mountPath = misterPathJoiner(...mountPathSegments);
 	}
 
-	async connect(config: FileClientConnectConfig): Promise<void> {
-		this.logger.info({ [this.connect.name]: config });
+	getMountPath() {
+		return this.mountPath;
+	}
+
+	getDestinationPathJoiner() {
+		return misterPathJoiner;
+	}
+
+	async connect(): Promise<void> {
+		this.logger.info({ [this.connect.name]: this.connectConfig });
 		await this.ftp.access({
-			host: config.host,
-			user: config.username,
-			password: config.password,
+			host: this.connectConfig.host,
+			user: this.connectConfig.username,
+			password: this.connectConfig.password,
 		});
 	}
 
@@ -60,8 +78,8 @@ class FTPFileClient implements FileClient {
 		}
 	}
 
-	async mkDir(dirPath: string, _recursive?: boolean): Promise<void> {
-		this.logger.info({ [this.mkDir.name]: dirPath });
+	async mkDir(dirPath: string, recursive?: boolean): Promise<void> {
+		this.logger.info({ [this.mkDir.name]: { dirPath, recursive } });
 		await this.ftp.ensureDir(dirPath);
 		// ensureDir also changes the directory
 		await this.ftp.cd('/');
