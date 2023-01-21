@@ -4,6 +4,11 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.20.0
+
+- [All] File menu: recently opened plans
+- [All] Remembers recently used directories for plans and export to directory
+
 ## Version 0.19.1
 
 - [All] Report on a network error if it occurs
