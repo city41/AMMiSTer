@@ -18,6 +18,10 @@ function ConnectedCatalog() {
 		return s.plan.present.plan;
 	});
 
+	const settings = useSelector((s: AppState) => {
+		return s.settings.settings;
+	});
+
 	function handleBuildCatalog() {
 		dispatch(updateCatalog());
 	}
@@ -29,11 +33,19 @@ function ConnectedCatalog() {
 		return null;
 	}
 
+	// still waiting for the settings from main. This should virtually never
+	//  happen but still good to guard against
+	if (!settings) {
+		return null;
+	}
+
 	if (catalog === null) {
 		return <CatalogEmptyState onClick={handleBuildCatalog} />;
 	}
 
-	return <Catalog catalog={catalog} />;
+	return (
+		<Catalog catalog={catalog} updateDbConfigs={settings?.updateDbs ?? []} />
+	);
 }
 
 export { ConnectedCatalog };

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import electronSettings from 'electron-settings';
 import { SettingChangeListener, Settings, SettingsValue } from './types';
+import { defaultUpdateDbs } from './defaultUpdateDbs';
 
 const SETTINGS_FILE = 'ammister-settings.json';
 
@@ -14,10 +15,16 @@ async function init(userDataPath: string): Promise<void> {
 	});
 	await electronSettings.set('rootDir', userDataPath);
 
-	const hasDownloadRoms = await electronSettings.has('downloadRoms');
+	const hasDownloadRoms = await hasSetting('downloadRoms');
 
 	if (!hasDownloadRoms) {
-		await electronSettings.set('downloadRoms', false);
+		await setSetting('downloadRoms', false);
+	}
+
+	const hasUpdateDbs = await hasSetting('updateDbs');
+
+	if (!hasUpdateDbs) {
+		await setSetting('updateDbs', defaultUpdateDbs);
 	}
 }
 
@@ -25,6 +32,10 @@ async function getAllSettings(): Promise<Settings> {
 	const settings = (await electronSettings.get()) as unknown as Settings;
 
 	return settings;
+}
+
+async function hasSetting(key: keyof Settings): Promise<boolean> {
+	return electronSettings.has(key);
 }
 
 async function getSetting<T>(key: keyof Settings): Promise<T> {

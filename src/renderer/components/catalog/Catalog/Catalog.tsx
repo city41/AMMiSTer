@@ -4,24 +4,17 @@ import {
 	Catalog as CatalogType,
 	CatalogEntry as CatalogEntryType,
 } from '../../../../main/catalog/types';
+import { UpdateDbConfig } from '../../../../main/settings/types';
 import { CatalogEntry } from '../CatalogEntry';
 
 type InternalCatalogProps = {
 	catalog: CatalogType;
+	updateDbConfigs: UpdateDbConfig[];
 };
 
-const DbIdToDisplay: Record<string, string> = {
-	distribution_mister: 'MiSTer main',
-	jtcores: 'Jotego',
-	theypsilon_unofficial_distribution: 'Ypsilon',
-	'atrac17_Coin-Op_Collection': 'atrac17: Coin Op Collection',
-};
-
-function Catalog({ catalog }: InternalCatalogProps) {
+function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 	const [filter, setFilter] = useState('');
 	const { updatedAt, ...restOfCatalog } = catalog;
-
-	const dbs = Object.entries(restOfCatalog);
 
 	const filterFn = useCallback(
 		(ge: CatalogEntryType) => {
@@ -35,10 +28,16 @@ function Catalog({ catalog }: InternalCatalogProps) {
 		},
 		[filter]
 	);
-	const lis = dbs.flatMap((db) => {
-		const [db_id, gameEntries] = db;
+
+	const lis = updateDbConfigs.flatMap((db) => {
+		if (!db.enabled) {
+			return [];
+		}
+
+		const gameEntries = restOfCatalog[db.db_id];
 		const filtered = filter.trim() ? gameEntries.filter(filterFn) : gameEntries;
-		const games = filtered.filter(filterFn).map((ge, i) => {
+
+		const games = filtered.map((ge, i) => {
 			return (
 				<li
 					key={ge.gameName + i}
@@ -55,12 +54,12 @@ function Catalog({ catalog }: InternalCatalogProps) {
 
 		return [
 			<li
-				key={db_id}
+				key={db.db_id}
 				className="py-2 px-1.5 font-bold sticky top-0 z-40 bg-indigo-50 text-indigo-600 grid gap-x-2 items-baseline border-b border-t border-b-indigo-500 border-t-indigo-500 first:border-t-transparent"
 				style={{ gridTemplateColumns: '1fr max-content' }}
 			>
 				<div className="whitespace-nowrap text-ellipsis overflow-hidden">
-					{DbIdToDisplay[db_id]}
+					{db.displayName}
 				</div>
 				<div className="font-normal text-sm text-gray-500">
 					{games.length} game{games.length === 1 ? '' : 's'}
