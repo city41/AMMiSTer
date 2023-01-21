@@ -14,6 +14,7 @@ const mockSettings: Settings = {
 	'welcome-dismissed': true,
 	downloadRoms: true,
 	rootDir: '',
+	recentPlans: [],
 };
 
 export const Basic = () => {

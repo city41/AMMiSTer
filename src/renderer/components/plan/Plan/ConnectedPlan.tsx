@@ -60,7 +60,11 @@ function ConnectedPlan() {
 		window.ipcAPI.menu_loadNewPlan(handleNewPlan);
 
 		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
-			dispatch(loadOpenedPlan(plan));
+			if (!plan) {
+				alert('This plan could not be found');
+			} else {
+				dispatch(loadOpenedPlan(plan));
+			}
 		});
 
 		window.ipcAPI.menu_savePlanAs(async () => {
