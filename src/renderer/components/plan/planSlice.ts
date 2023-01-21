@@ -147,7 +147,7 @@ const planSlice = createSlice({
 		clearDirty(state: InternalPlanState) {
 			state.isDirty = false;
 		},
-		setPlan(state: InternalPlanState, action: PayloadAction<Plan>) {
+		setPlan(state: InternalPlanState, action: PayloadAction<Plan | null>) {
 			state.plan = action.payload;
 			state.isDirty = false;
 		},
@@ -484,7 +484,7 @@ const loadNewPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 };
 
 const loadOpenedPlan =
-	(plan: Plan): PlanSliceThunk =>
+	(plan: Plan | null): PlanSliceThunk =>
 	(dispatch, getState) => {
 		const { plan: currentPlan, isDirty } = getState().plan.present;
 

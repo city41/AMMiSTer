@@ -74,6 +74,9 @@ function ConnectedPlan() {
 		window.ipcAPI.menu_savePlan(async () => {
 			dispatch(savePlan());
 		});
+		window.ipcAPI.noPlan(() => {
+			dispatch(loadOpenedPlan(null));
+		});
 	}, []);
 
 	function handleItemMove(args: {

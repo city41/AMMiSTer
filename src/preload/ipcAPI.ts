@@ -53,6 +53,10 @@ const ipcAPI = {
 		return ipcRenderer.invoke('catalog:cancelUpdateCatalog');
 	},
 
+	noPlan(callback: () => void) {
+		ipcRenderer.on('plan:noPlan', callback);
+	},
+
 	newPlan(): Promise<Plan> {
 		return ipcRenderer.invoke('plan:newPlan');
 	},

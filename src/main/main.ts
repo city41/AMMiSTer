@@ -49,6 +49,11 @@ async function loadPlan(planPath: string) {
 	}
 }
 
+// tell the UI no plan is loaded so it can show the blank slate
+async function uiNoPlan() {
+	mainWindow!.webContents.send('plan:noPlan');
+}
+
 async function buildMainMenu(): Promise<void> {
 	const recentPlans = await settings.getRecentPlans();
 
@@ -247,6 +252,8 @@ async function createWindow() {
 				commandLinePlan.endsWith('amip')
 			) {
 				loadPlan(commandLinePlan);
+			} else {
+				uiNoPlan();
 			}
 		}
 	});
