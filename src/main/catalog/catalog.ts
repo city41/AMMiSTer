@@ -31,6 +31,9 @@ import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
 import * as settings from '../settings';
 
+class CancelUpdateError extends Error {}
+class DownloadRomError extends Error {}
+
 const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/db/db.ts');
 
@@ -242,7 +245,7 @@ async function updateFile(update: Update): Promise<void> {
  */
 async function downloadUpdatesForDb(
 	db: DBJSON,
-	cb: (err: null | string, update: Update) => boolean
+	cb: (err: null | string, update: Update) => void
 ): Promise<Update[]> {
 	const fileEntries = convertDbToFileEntries(db).filter(
 		(f) =>
@@ -255,31 +258,23 @@ async function downloadUpdatesForDb(
 
 	const batches = batch(fileEntries);
 
-	let proceeding = true;
-
 	for (const batch of batches) {
 		const batchPromises = batch.map(async (fileEntry) => {
 			const update = await determineUpdate(fileEntry);
 
 			if (update) {
-				const cbProceeding = cb(null, update);
+				cb(null, update);
 
-				if (!cbProceeding && proceeding) {
-					debug('downloadUpdatesForDb, user canceled');
-				}
-				proceeding = proceeding && cbProceeding;
-				if (proceeding) {
-					debug(
-						`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
-					);
-					try {
-						await updateFile(update);
-						updates.push(update);
-					} catch (e) {
-						const message = e instanceof Error ? e.message : String(e);
-						cb(message, update);
-						throw e;
-					}
+				debug(
+					`downloadUpdatesForDb, update for ${fileEntry.fileName}: ${update.updateReason}`
+				);
+				try {
+					await updateFile(update);
+					updates.push(update);
+				} catch (e) {
+					const message = e instanceof Error ? e.message : String(e);
+					cb(message, update);
+					throw e;
 				}
 			}
 		});
@@ -671,7 +666,7 @@ async function downloadRom(
 
 async function downloadRoms(
 	romEntries: MissingRomEntry[],
-	cb: (err: string | null, rom: Update | null) => boolean
+	cb: (rom: Update | null) => void
 ): Promise<Update[]> {
 	const allRomUpdates: Update[] = [];
 
@@ -681,8 +676,6 @@ async function downloadRoms(
 	});
 
 	const batches = batch(sortedRomEntries);
-
-	let proceeding = true;
 
 	for (const batch of batches) {
 		const downloadPromises = batch.map((r) => {
@@ -705,15 +698,11 @@ async function downloadRoms(
 			) as unknown as Update[];
 			for (const update of updates) {
 				allRomUpdates.push(update);
-				proceeding = proceeding && cb(null, update);
+				cb(update);
 			}
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
-			proceeding = proceeding && cb(message, null);
-		}
-
-		if (!proceeding) {
-			break;
+			throw new DownloadRomError(message);
 		}
 	}
 
@@ -755,7 +744,7 @@ async function updateCatalog(
 ): Promise<{ updates: Update[]; catalog: Catalog }> {
 	const start = Date.now();
 
-	let proceeding = true;
+	let canceled = false;
 
 	const downloadRomsSetting = await settings.getSetting('downloadRoms');
 	const updateDbs = await settings.getSetting<UpdateDbConfig[]>('updateDbs');
@@ -763,8 +752,12 @@ async function updateCatalog(
 
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
-		proceeding = providedCallback(args);
-		return proceeding;
+		const userProceeding = providedCallback(args);
+		if (!userProceeding && !canceled) {
+			canceled = true;
+			throw new CancelUpdateError();
+		}
+		return userProceeding;
 	};
 
 	const FAIL_RETURN: { updates: Update[]; catalog: Catalog } = {
@@ -794,10 +787,6 @@ async function updateCatalog(
 		let updateDbErrorOccurred = false;
 
 		for (const updateDb of enabledUpdateDbs) {
-			if (!proceeding) {
-				break;
-			}
-
 			callback({
 				fresh: !currentCatalog,
 				message: `Checking for anything new in ${updateDb.displayName}`,
@@ -827,8 +816,6 @@ async function updateCatalog(
 						}`,
 					});
 				}
-
-				return proceeding;
 			});
 
 			if (updateDbErrorOccurred) {
@@ -848,15 +835,13 @@ async function updateCatalog(
 		}
 
 		let newlyBuiltCatalog: Catalog | null = null;
-		if (proceeding) {
-			callback({
-				fresh: !currentCatalog,
-				message: 'Building catalog...',
-			});
-			newlyBuiltCatalog = await buildGameCatalog(metadataDb);
-		}
+		callback({
+			fresh: !currentCatalog,
+			message: 'Building catalog...',
+		});
+		newlyBuiltCatalog = await buildGameCatalog(metadataDb);
 
-		if (proceeding && catalog) {
+		if (catalog) {
 			const { updatedAt: _ignored, ...justCatalog } = catalog;
 			const { updatedAt: __ignored, ...justNewlyBuiltCatalog } =
 				newlyBuiltCatalog!;
@@ -869,7 +854,7 @@ async function updateCatalog(
 		}
 
 		let missingRoms: MissingRomEntry[] = [];
-		if (proceeding && downloadRomsSetting) {
+		if (downloadRomsSetting) {
 			missingRoms = await determineMissingRoms(catalog);
 			debug(`missingRoms\n\n${JSON.stringify(missingRoms, null, 2)}`);
 		}
@@ -881,82 +866,67 @@ async function updateCatalog(
 			});
 		}
 		let romUpdates: Update[] = [];
-		let downloadRomErrorOccured = false;
-		if (proceeding && missingRoms.length > 0) {
-			romUpdates = await downloadRoms(missingRoms, (err, update) => {
-				if (err) {
-					downloadRomErrorOccured = true;
-					callback({
-						message: err,
-						error: { type: 'network-error', message: err },
-					});
-					return false;
-				} else {
-					callback({
-						fresh: !currentCatalog,
-						message: `Downloaded ROM ${update!.fileEntry.fileName}`,
-					});
-				}
-
-				return proceeding;
+		if (missingRoms.length > 0) {
+			romUpdates = await downloadRoms(missingRoms, (update) => {
+				callback({
+					fresh: !currentCatalog,
+					message: `Downloaded ROM ${update!.fileEntry.fileName}`,
+				});
 			});
-		}
-
-		if (downloadRomErrorOccured) {
-			return FAIL_RETURN;
 		}
 
 		let finalCatalog: Catalog | null = null;
-		if (proceeding) {
-			if (romUpdates.length > 0) {
-				catalogUpdated = true;
-				callback({
-					fresh: !currentCatalog,
-					message: 'Adding new ROMs to the catalog',
-				});
-
-				finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
-			} else {
-				finalCatalog = catalog;
-				finalCatalog.updatedAt = Date.now();
-			}
-		}
-
-		if (proceeding) {
-			const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
-			await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
-
-			const message = catalogUpdated
-				? 'Update finished'
-				: 'No updates available';
-
-			const duration = Date.now() - start;
-
+		if (romUpdates.length > 0) {
+			catalogUpdated = true;
 			callback({
-				message,
-				complete: true,
-				catalog: finalCatalog!,
-				updates: updates.concat(romUpdates),
-				duration,
+				fresh: !currentCatalog,
+				message: 'Adding new ROMs to the catalog',
 			});
 
-			return { updates, catalog: finalCatalog! };
+			finalCatalog = await addMisingRomsToCatalog(romUpdates, catalog);
 		} else {
+			finalCatalog = catalog;
+			finalCatalog.updatedAt = Date.now();
+		}
+
+		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
+		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
+
+		const message = catalogUpdated ? 'Update finished' : 'No updates available';
+
+		const duration = Date.now() - start;
+
+		callback({
+			message,
+			complete: true,
+			catalog: finalCatalog!,
+			updates: updates.concat(romUpdates),
+			duration,
+		});
+
+		return { updates, catalog: finalCatalog! };
+	} catch (e) {
+		if (e instanceof DownloadRomError) {
+			debug('updateCatalog: DownloadRomError', e);
+			callback({
+				message: e.message,
+				error: { type: 'network-error', message: e.message },
+			});
+		} else if (e instanceof CancelUpdateError) {
+			debug('updateCatalog: user canceled');
 			callback({
 				message: 'Build catalog canceled',
 				complete: true,
 				canceled: true,
 			});
-
-			return FAIL_RETURN;
+		} else {
+			const message = e instanceof Error ? e.message : String(e);
+			debug('updateCatalog: unknown error', e);
+			callback({
+				message: '',
+				error: { type: 'unknown', message },
+			});
 		}
-	} catch (e) {
-		const message = e instanceof Error ? e.message : String(e);
-		debug('updateCatalog: unknown error', e);
-		callback({
-			message: '',
-			error: { type: 'unknown', message },
-		});
 
 		return FAIL_RETURN;
 	} finally {

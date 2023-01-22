@@ -8,16 +8,20 @@ type ExportModalProps = {
 	isOpen: boolean;
 	message?: string;
 	error?: ExportError;
+	canceled?: boolean;
 	complete?: boolean;
 	onClose: () => void;
+	onCancelClick: () => void;
 };
 
 function ExportModal({
 	isOpen,
 	message,
 	error,
+	canceled,
 	complete,
 	onClose,
+	onCancelClick,
 	exportType,
 }: ExportModalProps) {
 	const title =
@@ -62,6 +66,12 @@ function ExportModal({
 				<p className="text-sm text-gray-500">{errorMessage}</p>
 			</div>
 		);
+	} else if (canceled) {
+		body = (
+			<p className="text-sm text-gray-500">
+				Export to {exportType} was canceled
+			</p>
+		);
 	} else if (message) {
 		body = <p className="text-sm text-gray-500">{message}</p>;
 	}
@@ -71,8 +81,10 @@ function ExportModal({
 			className="h-52"
 			isOpen={isOpen}
 			title={title}
-			okButtonEnabled={!!complete || !!error}
+			okButtonEnabled={!!complete || !!error || !!canceled}
 			onOkClick={onClose}
+			onCancelClick={onCancelClick}
+			cancelButtonEnabled={!canceled && !error && !complete}
 			icon={icon}
 			errorOccured={!!error}
 		>

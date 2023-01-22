@@ -13,9 +13,10 @@ export type ExportStatus = {
 	message: string;
 	complete?: boolean;
 	error?: ExportError;
+	canceled?: boolean;
 };
 
-export type ExportCallback = (args: ExportStatus) => void;
+export type ExportCallback = (args: ExportStatus) => boolean;
 
 type CopyFileOperation = {
 	action: 'copy';
