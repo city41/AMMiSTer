@@ -84,6 +84,37 @@ async function getMetadataDb(): Promise<MetadataDB> {
 }
 
 /**
+ * Writes warning.txt into the gameCache dir. This lets the user know that
+ * altering files in the gameCache might break AMMiSTer
+ */
+async function writeGameCacheWarning(gameCacheDirPath: string): Promise<void> {
+	const warningTxt = `AMMiSTER gameCacheWarning
+=========================
+
+Changing files in this directory or its subdirectories could cause
+AMMister to not work properly. 
+
+If you do make changes in here:
+
+- delete the catalog.json file, relaunch AMMiSTer, then in AMMiSTer check for updates.
+This will cause AMMiSTer to rebuild its catalog based on what is in this directory.
+Heads up, an update may replace any files you have deleted.
+
+- any plan files you have (.amip files) may rely on files you have deleted or changed.
+If so, exporting with that plan may cause errors.
+`;
+
+	const warningTxtPath = path.resolve(gameCacheDirPath, 'warning.txt');
+	try {
+		await fsp.writeFile(warningTxtPath, warningTxt);
+	} catch (e) {
+		// warning.txt failing is purposely swallowed as an error here
+		// should not prevent the update from finishing
+		debug('witeGameCacheWarning failed', e);
+	}
+}
+
+/**
  * Pulls down the db file from the given url. Most db files are zipped,
  * so will also unzip it if so
  */
@@ -745,6 +776,7 @@ async function updateCatalog(
 	try {
 		const gameCacheDir = await getGameCacheDir();
 		await mkdirp(gameCacheDir);
+		await writeGameCacheWarning(gameCacheDir);
 
 		await archive404Cache.init();
 
