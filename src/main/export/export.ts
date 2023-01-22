@@ -28,6 +28,12 @@ import { getCurrentCatalog } from '../catalog';
 
 let exportLogger: winston.Logger;
 
+/**
+ * Winston logs are a stream of JSON objects. Many JSON viewers don't
+ * handle this very well. Turning that stream into a JSON array helps.
+ * This allows loading an ammister export log into say the JSON Formatter
+ * Chrome extension, which makes looking over it much easier.
+ */
 async function turnLogIntoArray(logFilePath: string): Promise<void> {
 	const contents = (await fsp.readFile(logFilePath)).toString();
 	const entries = contents.split('\n').filter((e) => !!e);
