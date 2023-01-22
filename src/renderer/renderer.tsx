@@ -1,6 +1,6 @@
-import './renderer.css';
 import 'react-sortable-tree/style.css';
 import 'react-toggle/style.css';
+import './renderer.css';
 
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';

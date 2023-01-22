@@ -99,3 +99,15 @@ body {
 .rst__highlightTopLeftCorner {
 	display: none !important;
 }
+
+.react-toggle-track {
+	@apply bg-gray-700 !important;
+}
+
+.react-toggle--checked .react-toggle-track {
+	@apply bg-indigo-500 !important;
+}
+
+.react-toggle-thumb {
+	@apply border-indigo-700 !important;
+}
