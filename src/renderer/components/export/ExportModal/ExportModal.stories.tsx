@@ -16,6 +16,7 @@ export const ToDirectory = () => {
 			exportType="directory"
 			message="And he likes to shoot his gun"
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -27,6 +28,7 @@ export const ToMister = () => {
 			exportType="mister"
 			message="And he likes to shoot his gun"
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -39,6 +41,7 @@ export const ConnectFailError = () => {
 			message=""
 			error={{ type: 'connect-fail' }}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -51,6 +54,7 @@ export const UnknownError = () => {
 			message=""
 			error={{ type: 'unknown', message: `Can't call foo of undefined` }}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -66,6 +70,7 @@ export const FileCopyError = () => {
 				fileOp: { action: 'copy', srcPath: '', destPath: 'games/mame/foo.zip' },
 			}}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -81,6 +86,7 @@ export const FileDeleteError = () => {
 				fileOp: { action: 'delete', destPath: 'games/mame/foo.zip' },
 			}}
 			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };
@@ -96,6 +102,20 @@ export const NetworkError = () => {
 				message: 'error http://foo/foo.zip certificate is not valid',
 			}}
 			onClose={() => {}}
+			onCancelClick={() => {}}
+		/>
+	);
+};
+
+export const Canceled = () => {
+	return (
+		<ExportModal
+			isOpen
+			exportType="mister"
+			message=""
+			canceled
+			onClose={() => {}}
+			onCancelClick={() => {}}
 		/>
 	);
 };

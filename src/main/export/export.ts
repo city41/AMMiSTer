@@ -26,6 +26,8 @@ import { LocalFileClient } from './LocalFileClient';
 import { ExportOptimization } from '../settings/types';
 import { getCurrentCatalog } from '../catalog';
 
+class CancelExportError extends Error {}
+
 let exportLogger: winston.Logger;
 
 /**
@@ -603,9 +605,17 @@ async function doExport(
 
 	exportLogger.info({ plan });
 
+	let canceled = false;
+
 	const callback: ExportCallback = (args) => {
 		exportLogger.info({ callback: args });
-		providedCallback(args);
+		const userProceeding = providedCallback(args);
+
+		if (!userProceeding && !canceled) {
+			canceled = true;
+			throw new CancelExportError('User canceled the export');
+		}
+		return userProceeding;
 	};
 
 	try {
@@ -703,18 +713,26 @@ async function doExport(
 			complete: true,
 		});
 	} catch (e) {
-		const message = e instanceof Error ? e.message : String(e);
-		exportLogger.error('Uncaught exception');
-		exportLogger.error(e);
-		callback({
-			exportType,
-			message: '',
-			error: { type: 'unknown', message },
-		});
+		if (e instanceof CancelExportError) {
+			callback({
+				exportType,
+				message: 'Export canceled',
+				complete: true,
+				canceled: true,
+			});
+		} else {
+			const message = e instanceof Error ? e.message : String(e);
+			exportLogger.error('Uncaught exception');
+			exportLogger.error(e);
+			callback({
+				exportType,
+				message: '',
+				error: { type: 'unknown', message },
+			});
+		}
 	} finally {
-		await client.disconnect();
 		exportLogger.close();
-		await turnLogIntoArray(logFilePath);
+		await Promise.all([client.disconnect(), turnLogIntoArray(logFilePath)]);
 	}
 }
 

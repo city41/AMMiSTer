@@ -410,6 +410,11 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 	return false;
 });
 
+let exportProceeding = true;
+ipcMain.handle('export:cancelExport', () => {
+	exportProceeding = false;
+});
+
 ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 	const mostRecentExportDir = await settings.getSetting<string | undefined>(
 		'mostRecentExportDir'
@@ -425,6 +430,8 @@ ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 	});
 
 	if (result && !result.canceled && result.filePaths?.[0]) {
+		exportProceeding = true;
+
 		const menuItem = Menu.getApplicationMenu()?.getMenuItemById(
 			'export-export-to-directory'
 		);
@@ -436,6 +443,7 @@ ipcMain.on('export:exportToDirectory', async (event, plan: Plan) => {
 		exportPlan
 			.exportToDirectory(plan, result.filePaths[0], (status) => {
 				event.reply('export:exportToDirectory-status', status);
+				return exportProceeding;
 			})
 			.finally(() => {
 				if (menuItem) {
@@ -457,9 +465,12 @@ ipcMain.on(
 			menuItem.enabled = false;
 		}
 
+		exportProceeding = true;
+
 		exportPlan
 			.exportToMister(plan, config, (status) => {
 				event.reply('export:exportToMister-status', status);
+				return exportProceeding;
 			})
 			.finally(() => {
 				if (menuItem) {

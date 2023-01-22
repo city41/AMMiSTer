@@ -359,7 +359,9 @@ describe('export', function () {
 				],
 			});
 
-			const callback = jest.fn();
+			// return true to indicate we don't want to cancel
+			const callback = jest.fn().mockReturnValue(true);
+
 			const mockClient = Mock.of<FileClient>({
 				connect: jest.fn().mockResolvedValue(''),
 				disconnect: jest.fn().mockResolvedValue(''),

@@ -109,6 +109,10 @@ const ipcAPI = {
 		ipcRenderer.send('export:exportToMister', plan, config);
 	},
 
+	cancelExport() {
+		return ipcRenderer.invoke('export:cancelExport');
+	},
+
 	menu_undo(callback: () => void) {
 		ipcRenderer.on('menu:undo', callback);
 	},
