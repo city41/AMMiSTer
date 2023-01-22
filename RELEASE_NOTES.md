@@ -4,6 +4,12 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.22.0
+
+- [All] Bulk add: toggle to skip games already in plan
+- [All] Settings: export optimization choice
+- [All] Fixes around downloading ROMs from archive.org
+
 ## Version 0.21.0
 
 - [All] Settings: choose which DBs to get updates from
