@@ -30,9 +30,7 @@ function UpdateModal({
 
 	let body = null;
 
-	if (canceled) {
-		body = <p className="text-sm text-gray-500">Build catalog canceled</p>;
-	} else if (error) {
+	if (error) {
 		let errorTitle = '';
 		let errorMessage = '';
 		switch (error.type) {
@@ -64,6 +62,10 @@ function UpdateModal({
 				<h3 className="font-bold text-red-800">{errorTitle}</h3>
 				<p className="text-sm text-gray-500">{errorMessage}</p>
 			</div>
+		);
+	} else if (canceled) {
+		body = (
+			<p className="text-sm text-gray-500">Build catalog/update canceled</p>
 		);
 	} else {
 		if (Array.isArray(updates)) {
@@ -131,10 +133,10 @@ function UpdateModal({
 			className="h-full"
 			isOpen={isOpen}
 			title={title}
-			okButtonEnabled={updateComplete || canceled}
+			okButtonEnabled={updateComplete || canceled || !!error}
 			onOkClick={onClose}
 			onCancelClick={onCancelClick}
-			cancelButtonEnabled={!canceled && !Array.isArray(updates)}
+			cancelButtonEnabled={!canceled && !error && !Array.isArray(updates)}
 			icon={GiftIcon}
 			errorOccured={!!error}
 		>

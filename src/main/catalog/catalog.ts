@@ -622,12 +622,16 @@ async function downloadRom(
 		const message = e instanceof Error ? e.message : String(e);
 
 		// TODO: stronger 404 signal
-		if (message.includes('status code 404')) {
+		// some roms also 403 (forbidden), and in this context is essentially a 404
+		if (
+			message.includes('status code 404') ||
+			message.includes('status code 403')
+		) {
 			debug('downloadRom, adding 404 to cache for', remoteUrl);
 			archive404Cache.set(remoteUrl, true);
 		} else {
 			debug('downloadRom, error', remoteUrl, message);
-			throw e;
+			throw `${remoteUrl}: ${message}`;
 		}
 	}
 
@@ -845,15 +849,16 @@ async function updateCatalog(
 			});
 		}
 		let romUpdates: Update[] = [];
+		let downloadRomErrorOccured = false;
 		if (proceeding && missingRoms.length > 0) {
 			romUpdates = await downloadRoms(missingRoms, (err, update) => {
 				if (err) {
+					downloadRomErrorOccured = true;
 					callback({
-						message: '',
-						error: { type: 'network-error' },
+						message: err,
+						error: { type: 'network-error', message: err },
 					});
-
-					proceeding = false;
+					return false;
 				} else {
 					callback({
 						fresh: !currentCatalog,
@@ -863,6 +868,10 @@ async function updateCatalog(
 
 				return proceeding;
 			});
+		}
+
+		if (downloadRomErrorOccured) {
+			return FAIL_RETURN;
 		}
 
 		let finalCatalog: Catalog | null = null;
@@ -884,8 +893,6 @@ async function updateCatalog(
 		if (proceeding) {
 			const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 			await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
-
-			await archive404Cache.save();
 
 			const message = catalogUpdated
 				? 'Update finished'
@@ -920,6 +927,8 @@ async function updateCatalog(
 		});
 
 		return FAIL_RETURN;
+	} finally {
+		await archive404Cache.save();
 	}
 }
 
