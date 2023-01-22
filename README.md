@@ -12,6 +12,8 @@ An app for managing arcade games on the MiSTer. Download all of the arcade cores
 
 ![screenshot-exportToDirectory](https://github.com/city41/AMMiSTer/blob/main/screenshot-exportToDirectory.png?raw=true)
 
+![screenshot-settings](https://github.com/city41/AMMiSTer/blob/main/screenshot-settings.png?raw=true)
+
 # To install
 
 Grab the [latest release](https://github.com/city41/AMMiSTer/releases) and check out [the getting started guide](https://github.com/city41/AMMiSTer/wiki/Getting-Started) and [FAQ](https://github.com/city41/AMMiSTer/wiki/FAQ)
@@ -26,8 +28,8 @@ Features:
 - [x] Export your decided game structure into a local directory on your computer or directly onto a MiSTer
 - [x] Favoriting games
 - [x] More metadata for games
+- [x] Control where AMMiSTer checks for updates (ie what update dbs it uses)
 - [ ] Alternative arcade games
-- [ ] Control where AMMiSTer checks for updates (ie what update dbs it uses)
 - [ ] Install cores not yet in a distribution. Good for trying out beta cores. When they get into a distribution, automatically upgrade to the official release.
 - [ ] Notes on games. Helps you remember why a certain game is not in your plan
 - [ ] Start a game from AMMiSTer on a target MiSTer
