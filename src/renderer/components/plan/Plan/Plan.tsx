@@ -53,16 +53,40 @@ function getDescendantGames(dir: PlanGameDirectory): CatalogEntryType[] {
 	}, []);
 }
 
+function sortDirectoriesByTitle(
+	a: TreeItem<PlanTreeItem>,
+	b: TreeItem<PlanTreeItem>
+) {
+	return (a.title as string).localeCompare(b.title as string);
+}
+
+function sortEntriesByTitle(
+	a: PlanGameDirectoryEntry | CatalogEntryType,
+	b: PlanGameDirectoryEntry | CatalogEntryType
+): number {
+	if ('directoryName' in a) {
+		if ('directoryName' in b) {
+			return a.directoryName.localeCompare(b.directoryName);
+		} else {
+			return -1;
+		}
+	}
+
+	if ('directoryName' in b) {
+		return 1;
+	}
+
+	return a.gameName.localeCompare(b.gameName);
+}
+
 function createTreeData(
 	planDir: PlanGameDirectory,
 	parentPath: string[]
 ): TreeItem<PlanTreeItem>[] {
-	return planDir.flatMap((g) => {
+	const treeItems = planDir.flatMap((g) => {
 		if (isPlanGameDirectoryEntry(g)) {
 			const subData = createTreeData(g.games, [...parentPath, g.directoryName]);
-			const descendantGames = getDescendantGames(g.games).sort((a, b) => {
-				return a.gameName.localeCompare(b.gameName);
-			});
+			const descendantGames = getDescendantGames(g.games);
 			return [
 				{
 					id: parentPath.join('/') + '/' + g.directoryName,
@@ -73,13 +97,16 @@ function createTreeData(
 					parentPath,
 					immediateGameCount: g.games.filter((g) => 'gameName' in g).length,
 					totalGameCount: descendantGames.length,
-					entries: g.games,
+					// in dev mode, g.games is mutation protected
+					entries: [...g.games].sort(sortEntriesByTitle),
 				},
 			];
 		} else {
 			return [];
 		}
 	});
+
+	return treeItems.sort(sortDirectoriesByTitle);
 }
 
 function findFocusedNode(
