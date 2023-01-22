@@ -188,7 +188,6 @@ const planSlice = createSlice({
 
 				if (!alreadyInParent) {
 					parent.games.push(catalogEntry);
-					parent.games = parent.games.slice().sort();
 					state.isDirty = true;
 				}
 			}

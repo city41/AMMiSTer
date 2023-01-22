@@ -6,6 +6,8 @@ import { PlanTreeItem } from './types';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
 import { TrashIcon } from '../../../icons';
 import { DirectoryEntry } from './DirectoryEntry';
+import { PlanGameDirectoryEntry } from '../../../../main/plan/types';
+import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 
 type FocusedDirectoryProps = {
 	className?: string;
