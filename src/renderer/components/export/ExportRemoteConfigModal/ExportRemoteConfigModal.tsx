@@ -20,18 +20,26 @@ function isConfigComplete(
 	return values.length === 5 && values.every((v) => v.trim().length > 0);
 }
 
+const DEFAULT_CONFIG: FileClientConnectConfig = {
+	host: '',
+	port: '22',
+	mount: 'sdcard',
+	username: 'root',
+	password: '1',
+};
+
 function ExportRemoteConfigModal({
 	isOpen,
 	onRequestClose,
 	onExport,
 }: ExportRemoteConfigModalProps) {
-	const [sshConfig, setSSHConfig] = useState<FileClientConnectConfig>({
-		host: '',
-		port: '22',
-		mount: 'sdcard',
-		username: 'root',
-		password: '1',
-	});
+	const [sshConfig, setSSHConfig] =
+		useState<FileClientConnectConfig>(DEFAULT_CONFIG);
+
+	function handleClose() {
+		setSSHConfig(DEFAULT_CONFIG);
+		onRequestClose();
+	}
 
 	return (
 		<BaseFeedbackModal
@@ -42,7 +50,9 @@ function ExportRemoteConfigModal({
 			icon={MisterKunIcon}
 			onOkClick={() => onExport(sshConfig as FileClientConnectConfig)}
 			closeButton
-			onRequestClose={onRequestClose}
+			cancelButtonEnabled
+			onCancelClick={handleClose}
+			onRequestClose={handleClose}
 		>
 			<div className="flex flex-col items-stretch">
 				<dl className="bg-white">
