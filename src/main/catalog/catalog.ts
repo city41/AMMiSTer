@@ -26,7 +26,7 @@ import {
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
 import * as settings from '../settings';
@@ -506,7 +506,8 @@ async function parseMraToCatalogEntry(
  */
 async function getCatalogForDir(
 	dbDirPath: string,
-	metadataDb: MetadataDB
+	metadataDb: MetadataDB,
+	cb: (entry: CatalogEntry) => void
 ): Promise<Partial<Catalog>> {
 	const dbId = path.basename(dbDirPath);
 	const mraFiles = await (
@@ -530,7 +531,14 @@ async function getCatalogForDir(
 	});
 
 	const entryPromises = mraFiles.map(async (mraPath) => {
-		return parseMraToCatalogEntry(dbId, mraPath, rbfFiles, metadataDb);
+		const entry = await parseMraToCatalogEntry(
+			dbId,
+			mraPath,
+			rbfFiles,
+			metadataDb
+		);
+		cb(entry);
+		return entry;
 	});
 
 	const entries = await Promise.all(entryPromises);
@@ -544,7 +552,10 @@ async function getCatalogForDir(
  * Examines all the files found in gameCache and builds an AMMister
  * Catalog for it
  */
-async function buildGameCatalog(metadataDb: MetadataDB): Promise<Catalog> {
+async function buildGameCatalog(
+	metadataDb: MetadataDB,
+	cb: (entry: CatalogEntry) => void
+): Promise<Catalog> {
 	const gameCacheDir = await getGameCacheDir();
 
 	const gameCacheDirFiles = await fsp.readdir(gameCacheDir);
@@ -552,11 +563,16 @@ async function buildGameCatalog(metadataDb: MetadataDB): Promise<Catalog> {
 		return fs.statSync(path.resolve(gameCacheDir, gcFile)).isDirectory();
 	});
 
-	const dirCatalogPromises = dbIdDirs.map((dbIdDir) => {
-		return getCatalogForDir(path.resolve(gameCacheDir, dbIdDir), metadataDb);
-	});
+	const dirCatalogs: Partial<Catalog>[] = [];
 
-	const dirCatalogs = await Promise.all(dirCatalogPromises);
+	for (const dbIdDir of dbIdDirs) {
+		const dirCatalog = await getCatalogForDir(
+			path.resolve(gameCacheDir, dbIdDir),
+			metadataDb,
+			cb
+		);
+		dirCatalogs.push(dirCatalog);
+	}
 
 	const catalog = dirCatalogs.reduce<Partial<Catalog>>((accum, entry) => {
 		return {
@@ -666,7 +682,7 @@ async function downloadRom(
 
 async function downloadRoms(
 	romEntries: MissingRomEntry[],
-	cb: (rom: Update | null) => void
+	cb: (rom: Update) => void
 ): Promise<Update[]> {
 	const allRomUpdates: Update[] = [];
 
@@ -839,7 +855,12 @@ async function updateCatalog(
 			fresh: !currentCatalog,
 			message: 'Building catalog...',
 		});
-		newlyBuiltCatalog = await buildGameCatalog(metadataDb);
+		newlyBuiltCatalog = await buildGameCatalog(metadataDb, (entry) => {
+			callback({
+				fresh: !currentCatalog,
+				message: `Added ${entry.gameName} to catalog`,
+			});
+		});
 
 		if (catalog) {
 			const { updatedAt: _ignored, ...justCatalog } = catalog;
@@ -870,7 +891,7 @@ async function updateCatalog(
 			romUpdates = await downloadRoms(missingRoms, (update) => {
 				callback({
 					fresh: !currentCatalog,
-					message: `Downloaded ROM ${update!.fileEntry.fileName}`,
+					message: `Downloaded ROM ${update.fileEntry.fileName}`,
 				});
 			});
 		}
