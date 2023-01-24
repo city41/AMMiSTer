@@ -38,7 +38,7 @@ export const IsInPlan = () => {
 	);
 };
 
-export const MissingAFile = () => {
+export const MissingTheRBFFile = () => {
 	const entry = {
 		...completeEntry,
 		files: {
@@ -47,6 +47,25 @@ export const MissingAFile = () => {
 	};
 
 	delete entry.files.rbf;
+
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
+			</div>
+		</DndProvider>
+	);
+};
+
+export const UnexpectedlyMissingAFile = () => {
+	const entry = {
+		...completeEntry,
+		files: {
+			...completeEntry.files,
+		},
+	};
+
+	entry.files.mra.status = 'unexpected-missing';
 
 	return (
 		<DndProvider backend={HTML5Backend}>

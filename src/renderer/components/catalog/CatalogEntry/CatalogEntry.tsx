@@ -52,10 +52,14 @@ function CatalogEntry({
 	const FavIcon = isFavorite ? FavoriteIcon : NotFavoriteIcon;
 	const missingFile =
 		!entry.files.mra ||
+		entry.files.mra.status === 'unexpected-missing' ||
 		!entry.files.rbf ||
+		entry.files.rbf.status === 'unexpected-missing' ||
 		(downloadingRoms &&
 			entry.files.roms.length > 0 &&
-			entry.files.roms.every((r) => !r.md5));
+			entry.files.roms.every((r) => r.status === 'missing')) ||
+		(downloadingRoms &&
+			entry.files.roms.some((r) => r.status === 'unexpected-missing'));
 
 	return (
 		<div className={className}>

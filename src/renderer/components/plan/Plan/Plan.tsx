@@ -99,6 +99,7 @@ function createTreeData(
 					totalGameCount: descendantGames.length,
 					// in dev mode, g.games is mutation protected
 					entries: [...g.games].sort(sortEntriesByTitle),
+					hasInvalidDescendant: !!g.hasAnInvalidDescendant,
 				},
 			];
 		} else {
