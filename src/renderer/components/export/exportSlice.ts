@@ -41,17 +41,23 @@ const exportToDirectory =
 		const plan = getState().plan.present.plan;
 
 		if (plan) {
-			dispatch(exportSlice.actions.resetExportStatus());
-
-			window.ipcAPI.exportToDirectory(plan, (status) => {
-				dispatch(
-					exportSlice.actions.setExportStatus({
-						...status,
-						exportType: 'directory',
-					})
+			if (plan.hasAnInvalidDescendant) {
+				alert(
+					'This plan is missing files, try checking for updates, then loading the plan again'
 				);
-				return true;
-			});
+			} else {
+				dispatch(exportSlice.actions.resetExportStatus());
+
+				window.ipcAPI.exportToDirectory(plan, (status) => {
+					dispatch(
+						exportSlice.actions.setExportStatus({
+							...status,
+							exportType: 'directory',
+						})
+					);
+					return true;
+				});
+			}
 		} else {
 			alert('Please load or create a plan first');
 		}

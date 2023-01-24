@@ -96,6 +96,7 @@ function DirectoryTitle({
 				ref={dropRef}
 				className={clsx({
 					'transform scale-105': isDraggingOver,
+					'text-red-600': node.hasInvalidDescendant,
 				})}
 			>
 				{node.title}

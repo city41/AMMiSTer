@@ -11,7 +11,13 @@ function ConnectedExportRemoteConfigModal() {
 		window.ipcAPI.menu_exportToMister(() => {
 			const plan = store.getState().plan.present.plan;
 			if (plan) {
-				setModalOpen(true);
+				if (plan.hasAnInvalidDescendant) {
+					alert(
+						'This plan is missing files, try checking for updates, then loading the plan again'
+					);
+				} else {
+					setModalOpen(true);
+				}
 			} else {
 				alert('Please load or create a plan first');
 			}

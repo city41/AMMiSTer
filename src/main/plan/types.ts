@@ -6,12 +6,10 @@ export type PlanGameDirectoryEntry = {
 	directoryName: string;
 	isExpanded: boolean;
 	games: PlanGameDirectory;
+	hasAnInvalidDescendant?: boolean;
 };
 
-export type Plan = {
-	directoryName: string;
-	isExpanded: boolean;
+export type Plan = PlanGameDirectoryEntry & {
 	createdAt: number;
 	updatedAt: number;
-	games: PlanGameDirectory;
 };

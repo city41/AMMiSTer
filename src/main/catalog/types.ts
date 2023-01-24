@@ -85,10 +85,20 @@ export type Update = {
  */
 
 /**
+ * ok = file is presnt
+ * missing = not able to download this file (most common with ROMs not on archive.org)
+ * unexpected-missing = was fine, but went missing, this gets set when a plan audit
+ * discovers a game should be ok but the file is actually missing
+ */
+type CatalogFileEntryStatus = 'ok' | 'missing' | 'unexpected-missing';
+
+/**
  * A file entry as found in the catalog. The current implementation
  * makes saving remoteUrl tough, so for now at least just omitting it.
  */
-export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'>;
+export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'> & {
+	status: CatalogFileEntryStatus;
+};
 
 /**
  * The metadata for games as stored in Toryalai1's db

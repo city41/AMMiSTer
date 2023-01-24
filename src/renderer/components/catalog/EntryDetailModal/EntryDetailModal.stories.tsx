@@ -3,6 +3,7 @@ import { Meta } from '@storybook/react';
 import { EntryDetailModal } from './EntryDetailModal';
 import type { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 import { mockCatalogEntry } from '../mockCatalogEntry';
+import cloneDeep from 'lodash/cloneDeep';
 
 const meta: Meta = {
 	title: 'EntryDetailModal',
@@ -23,8 +24,6 @@ export const MissingCategories = () => {
 		categories: [],
 	};
 
-	entry.files.roms[0].md5 = undefined;
-
 	return <EntryDetailModal isOpen entry={entry} />;
 };
 
@@ -33,8 +32,6 @@ export const MultipleCategories = () => {
 		...completeEntry,
 		categories: ['aaa', 'bbb', 'ccc'],
 	};
-
-	entry.files.roms[0].md5 = undefined;
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };
@@ -45,34 +42,27 @@ export const MultipleSeries = () => {
 		series: ['Street Fighter', 'Marvel'],
 	};
 
-	entry.files.roms[0].md5 = undefined;
-
 	return <EntryDetailModal isOpen entry={entry} />;
 };
 
 export const MissingRom = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
+	const entry = cloneDeep(completeEntry);
 	entry.files.roms[0].md5 = undefined;
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };
 
 export const MissingRomAndCore = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
+	const entry = cloneDeep(completeEntry);
 	entry.files.roms[0].md5 = undefined;
 	delete entry.files.rbf;
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MraUnexpectedlyMissing = () => {
+	const entry = cloneDeep(completeEntry);
+	entry.files.mra.status = 'unexpected-missing';
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };

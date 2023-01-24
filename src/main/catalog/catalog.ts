@@ -422,6 +422,7 @@ async function parseMraToCatalogEntry(
 					relFilePath: path.join('games', 'mame', r),
 					type: 'rom',
 					md5: rData ? getFileMd5Hash(rData) : undefined,
+					status: rData ? 'ok' : 'missing',
 				});
 			}
 		}
@@ -477,6 +478,7 @@ async function parseMraToCatalogEntry(
 					fileName: path.basename(mraFilePath),
 					relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
 					md5: getFileMd5Hash(mraData),
+					status: 'ok',
 				},
 				roms: romCatalogFileEntries,
 			},
@@ -489,6 +491,7 @@ async function parseMraToCatalogEntry(
 				fileName: path.basename(rbfFilePath),
 				relFilePath: rbfFilePath.substring(rbfFilePath.indexOf('_Arcade')),
 				md5: getFileMd5Hash(rbfData),
+				status: 'ok',
 			};
 		}
 

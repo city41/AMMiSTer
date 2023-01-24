@@ -3,6 +3,8 @@ import fsp from 'node:fs/promises';
 import Debug from 'debug';
 import { isCatalogEntry } from '../catalog';
 import { Plan, PlanGameDirectoryEntry } from './types';
+import { CatalogEntry } from '../catalog/types';
+import { getGameCacheDir } from '../util/fs';
 
 const debug = Debug('main/plan/plan.ts');
 
@@ -90,17 +92,108 @@ async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	return filePath;
 }
 
+async function exists(filePath: string): Promise<boolean> {
+	try {
+		return (await fsp.stat(filePath)).isFile();
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * TODO: also check the hash
+ */
+async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
+	let invalid = false;
+	const gameCacheDir = await getGameCacheDir();
+
+	const mraPath = path.resolve(
+		gameCacheDir,
+		entry.db_id,
+		entry.files.mra.relFilePath
+	);
+	const mraExists = await exists(mraPath);
+
+	if (!mraExists) {
+		debug('auditCatalogEntry, mra does not exist', mraPath);
+		entry.files.mra.status = 'unexpected-missing';
+		invalid = true;
+	}
+
+	if (entry.files.rbf) {
+		const rbfPath = path.resolve(
+			gameCacheDir,
+			entry.db_id,
+			entry.files.rbf.relFilePath
+		);
+		const rbfExists = await exists(rbfPath);
+
+		if (!rbfExists) {
+			if (entry.files.rbf.status === 'ok') {
+				entry.files.rbf.status = 'unexpected-missing';
+				invalid = true;
+			}
+		} else {
+			entry.files.rbf.status = 'ok';
+		}
+	}
+
+	entry.files.roms.forEach(async (rom) => {
+		const romPath = path.resolve(gameCacheDir, entry.db_id, rom.relFilePath);
+		const romExists = await exists(romPath);
+
+		if (!romExists) {
+			if (rom.status === 'ok') {
+				rom.status = 'unexpected-missing';
+				invalid = true;
+			}
+		} else {
+			rom.status = 'ok';
+		}
+	});
+
+	return invalid;
+}
+
+/**
+ * For all files in the plan, confirms they are found in the gameCache. If not,
+ * markes the CatalogEntry's status as 'unexpected-missing' and the path from
+ * root to that entry has hasAnInvalidDescendant=true
+ */
+async function audit(
+	planDirEntry: PlanGameDirectoryEntry
+): Promise<PlanGameDirectoryEntry> {
+	let hasAnInvalidDescendant = false;
+
+	for (const entry of planDirEntry.games) {
+		if ('gameName' in entry) {
+			const invalid = await auditCatalogEntry(entry);
+
+			hasAnInvalidDescendant = hasAnInvalidDescendant || invalid;
+		} else {
+			await audit(entry);
+			hasAnInvalidDescendant =
+				hasAnInvalidDescendant || !!entry.hasAnInvalidDescendant;
+		}
+	}
+
+	planDirEntry.hasAnInvalidDescendant = hasAnInvalidDescendant;
+	return planDirEntry;
+}
+
 async function openPlan(path: string): Promise<Plan | null> {
 	debug(`openPlan(${path})`);
 
 	try {
-		const contents = await (await fsp.readFile(path)).toString();
+		const contents = (await fsp.readFile(path)).toString();
 		const plan = JSON.parse(contents);
 		if (!isPlan(plan)) {
 			debug('openPlan: isPlan returned false');
 			return null;
 		} else {
-			return plan;
+			const auditedPlan = (await audit(plan)) as Plan;
+			debug('auditedPlan', JSON.stringify(auditedPlan, null, 2));
+			return auditedPlan;
 		}
 	} catch (e) {
 		debug(`openPlan: unexpected error ${e}`);
