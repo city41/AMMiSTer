@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import clsx from 'clsx';
 import { useDrop } from 'react-dnd';
 import { TreeItem } from 'react-sortable-tree';
@@ -6,11 +6,10 @@ import { PlanTreeItem } from './types';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
 import { TrashIcon } from '../../../icons';
 import { DirectoryEntry } from './DirectoryEntry';
-import { PlanGameDirectoryEntry } from '../../../../main/plan/types';
-import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
 
 type FocusedDirectoryProps = {
 	className?: string;
+	style?: CSSProperties;
 	focusedNode: TreeItem<PlanTreeItem>;
 	planName: string;
 	onItemAdd: (args: {
@@ -24,6 +23,7 @@ type FocusedDirectoryProps = {
 
 function FocusedDirectory({
 	className,
+	style,
 	focusedNode,
 	planName,
 	onItemAdd,
@@ -58,6 +58,7 @@ function FocusedDirectory({
 				className,
 				'-my-4 border-l border-l-gray-200 pr-0 overflow-y-auto flex flex-col'
 			)}
+			style={style}
 		>
 			<h2 className="flex flex-col gap-y-1 items-start py-2 pl-4 font-bold sticky top-0 z-40 bg-indigo-50 text-indigo-600 border-b border-t border-b-indigo-500 border-t-indigo-500 first:border-t-transparent">
 				<div className="font-medium text-lg flex flex-row items-baseline gap-x-2">
