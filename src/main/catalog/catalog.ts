@@ -25,7 +25,7 @@ import {
 	UpdateReason,
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
-import { convertFileNameDate, getGameCacheDir } from '../util/fs';
+import { convertFileNameDate, exists, getGameCacheDir } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
@@ -920,15 +920,17 @@ async function updateCatalog(
 
 		const duration = Date.now() - start;
 
+		const finalAuditedCatalog = await audit(finalCatalog);
+
 		callback({
 			message,
 			complete: true,
-			catalog: finalCatalog!,
+			catalog: finalAuditedCatalog,
 			updates: updates.concat(romUpdates),
 			duration,
 		});
 
-		return { updates, catalog: finalCatalog! };
+		return { updates, catalog: finalAuditedCatalog };
 	} catch (e) {
 		if (e instanceof DownloadRomError) {
 			debug('updateCatalog: DownloadRomError', e);
@@ -958,6 +960,72 @@ async function updateCatalog(
 	}
 }
 
+/**
+ * TODO: also check the hash
+ */
+async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
+	let invalid = false;
+	const gameCacheDir = await getGameCacheDir();
+
+	const mraPath = path.resolve(
+		gameCacheDir,
+		entry.db_id,
+		entry.files.mra.relFilePath
+	);
+	const mraExists = await exists(mraPath);
+
+	if (!mraExists) {
+		debug('auditCatalogEntry, mra does not exist', mraPath);
+		entry.files.mra.status = 'unexpected-missing';
+		invalid = true;
+	}
+
+	if (entry.files.rbf) {
+		const rbfPath = path.resolve(
+			gameCacheDir,
+			entry.db_id,
+			entry.files.rbf.relFilePath
+		);
+		const rbfExists = await exists(rbfPath);
+
+		if (!rbfExists) {
+			if (entry.files.rbf.status === 'ok') {
+				entry.files.rbf.status = 'unexpected-missing';
+				invalid = true;
+			}
+		} else {
+			entry.files.rbf.status = 'ok';
+		}
+	}
+
+	entry.files.roms.forEach(async (rom) => {
+		const romPath = path.resolve(gameCacheDir, entry.db_id, rom.relFilePath);
+		const romExists = await exists(romPath);
+
+		if (!romExists) {
+			if (rom.status === 'ok') {
+				rom.status = 'unexpected-missing';
+				invalid = true;
+			}
+		} else {
+			rom.status = 'ok';
+		}
+	});
+
+	return invalid;
+}
+
+async function audit(catalog: Catalog): Promise<Catalog> {
+	const { updatedAt, ...restOfCatalog } = catalog;
+	const entries = Object.values(restOfCatalog).flat(1);
+
+	const auditPromises = entries.map((e) => auditCatalogEntry(e));
+
+	await Promise.all(auditPromises);
+
+	return catalog;
+}
+
 async function getCurrentCatalog(): Promise<Catalog | null> {
 	const gameCacheDir = await getGameCacheDir();
 	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
@@ -965,7 +1033,8 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		return require(catalogPath) as Catalog;
+		const catalog = require(catalogPath) as Catalog;
+		return await audit(catalog);
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
 		debug(`getCurrentCatalog error: ${message}`);
@@ -998,4 +1067,5 @@ export {
 	updateCatalog,
 	getCurrentCatalog,
 	isCatalogEntry,
+	auditCatalogEntry,
 };
