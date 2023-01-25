@@ -52,6 +52,13 @@ export const MissingRom = () => {
 	return <EntryDetailModal isOpen entry={entry} />;
 };
 
+export const CorruptRom = () => {
+	const entry = cloneDeep(completeEntry);
+	entry.files.roms[0].status = 'corrupt';
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
 export const MissingRomAndCore = () => {
 	const entry = cloneDeep(completeEntry);
 	entry.files.roms[0].md5 = undefined;
@@ -60,9 +67,24 @@ export const MissingRomAndCore = () => {
 	return <EntryDetailModal isOpen entry={entry} />;
 };
 
+export const CorruptRomAndCore = () => {
+	const entry = cloneDeep(completeEntry);
+	entry.files.roms[0].status = 'corrupt';
+	entry.files.rbf!.status = 'corrupt';
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
 export const MraUnexpectedlyMissing = () => {
 	const entry = cloneDeep(completeEntry);
 	entry.files.mra.status = 'unexpected-missing';
+
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const MraCorrupt = () => {
+	const entry = cloneDeep(completeEntry);
+	entry.files.mra.status = 'corrupt';
 
 	return <EntryDetailModal isOpen entry={entry} />;
 };

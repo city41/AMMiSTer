@@ -50,16 +50,20 @@ function CatalogEntry({
 	onToggleFavorite,
 }: PublicCatalogEntryProps & InternalCatalogEntryProps) {
 	const FavIcon = isFavorite ? FavoriteIcon : NotFavoriteIcon;
-	const missingFile =
+	const missingOrCorruptFile =
 		!entry.files.mra ||
 		entry.files.mra.status === 'unexpected-missing' ||
+		entry.files.mra.status === 'corrupt' ||
 		!entry.files.rbf ||
 		entry.files.rbf.status === 'unexpected-missing' ||
+		entry.files.rbf.status === 'corrupt' ||
 		(downloadingRoms &&
 			entry.files.roms.length > 0 &&
 			entry.files.roms.every((r) => r.status === 'missing')) ||
 		(downloadingRoms &&
-			entry.files.roms.some((r) => r.status === 'unexpected-missing'));
+			entry.files.roms.some(
+				(r) => r.status === 'unexpected-missing' || r.status === 'corrupt'
+			));
 
 	return (
 		<div className={className}>
@@ -79,7 +83,9 @@ function CatalogEntry({
 				</div>
 				{!hideIcons && (
 					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
-						{missingFile && <DangerIcon className="w-5 h-5 text-red-700" />}
+						{missingOrCorruptFile && (
+							<DangerIcon className="w-5 h-5 text-red-700" />
+						)}
 						<Monitor rotation={entry.rotation} />
 						{typeof isFavorite === 'boolean' && (
 							<FavIcon

@@ -960,9 +960,15 @@ async function updateCatalog(
 	}
 }
 
-/**
- * TODO: also check the hash
- */
+async function hasValidHash(entry: CatalogFileEntry): Promise<boolean> {
+	const gameCacheDir = await getGameCacheDir();
+	const filePath = path.resolve(gameCacheDir, entry.db_id, entry.relFilePath);
+	const data = await fsp.readFile(filePath);
+	const md5 = getFileMd5Hash(data);
+
+	return md5 === entry.md5;
+}
+
 async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 	let invalid = false;
 	const gameCacheDir = await getGameCacheDir();
@@ -978,6 +984,8 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 		debug('auditCatalogEntry, mra does not exist', mraPath);
 		entry.files.mra.status = 'unexpected-missing';
 		invalid = true;
+	} else if (!(await hasValidHash(entry.files.mra))) {
+		entry.files.mra.status = 'corrupt';
 	}
 
 	if (entry.files.rbf) {
@@ -994,7 +1002,9 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 				invalid = true;
 			}
 		} else {
-			entry.files.rbf.status = 'ok';
+			entry.files.rbf.status = (await hasValidHash(entry.files.rbf))
+				? 'ok'
+				: 'corrupt';
 		}
 	}
 
@@ -1008,6 +1018,8 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 				invalid = true;
 			}
 		} else {
+			// we don't check the hash of roms because we never get a reliable
+			// hash from anywhere. the db has no rom hashes.
 			rom.status = 'ok';
 		}
 	});
