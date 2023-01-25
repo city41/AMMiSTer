@@ -138,14 +138,14 @@ function EntryDetailModal({
 							MRA
 						</dt>
 						<dd
-							className={clsx(
-								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
-								{
-									italic: !entry.files.mra,
-								}
-							)}
+							className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
+								italic: entry.files.mra.status === 'unexpected-missing',
+								'text-gray-900': entry.files.mra.status === 'ok',
+								'text-gray-500': entry.files.mra.status !== 'ok',
+							})}
 						>
-							{entry.files.mra.fileName}
+							{entry.files.mra.fileName}{' '}
+							{entry.files.mra.status === 'ok' ? '' : '(missing)'}
 						</dd>
 					</div>
 					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -157,12 +157,12 @@ function EntryDetailModal({
 							Core (RBF)
 						</dt>
 						<dd
-							className={clsx(
-								'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
-								{
-									'italic text-gray-400': !entry.files.rbf,
-								}
-							)}
+							className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
+								'italic text-gray-500':
+									!entry.files.rbf || entry.files.rbf.status !== 'ok',
+								'text-gray-900':
+									entry.files.rbf && entry.files.rbf.status === 'ok',
+							})}
 						>
 							{entry.files.rbf?.relFilePath ?? 'missing'}
 						</dd>
@@ -181,12 +181,10 @@ function EntryDetailModal({
 									ROM
 								</dt>
 								<dd
-									className={clsx(
-										'mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0',
-										{
-											'italic text-gray-400': !r.md5,
-										}
-									)}
+									className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
+										'italic text-gray-500': !r.md5 || r.status !== 'ok',
+										'text-gray-900': r.status === 'ok',
+									})}
 								>
 									{r.relFilePath} {r.md5 ? '' : '(missing)'}
 								</dd>

@@ -1,3 +1,4 @@
+import fsp from 'node:fs/promises';
 import path from 'node:path';
 import * as settings from '../settings';
 
@@ -35,6 +36,14 @@ export function convertFileNameDate(
 
 	const d = new Date(withDashes);
 	return d;
+}
+
+export async function exists(filePath: string): Promise<boolean> {
+	try {
+		return (await fsp.stat(filePath)).isFile();
+	} catch {
+		return false;
+	}
 }
 
 export function misterPathJoiner(...segments: string[]): string {

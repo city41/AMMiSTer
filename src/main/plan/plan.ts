@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import Debug from 'debug';
-import { isCatalogEntry } from '../catalog';
+import { auditCatalogEntry, isCatalogEntry } from '../catalog';
 import { Plan, PlanGameDirectoryEntry } from './types';
 import { CatalogEntry } from '../catalog/types';
 import { getGameCacheDir } from '../util/fs';
@@ -90,69 +90,6 @@ async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	await fsp.writeFile(filePath, planJson);
 
 	return filePath;
-}
-
-async function exists(filePath: string): Promise<boolean> {
-	try {
-		return (await fsp.stat(filePath)).isFile();
-	} catch {
-		return false;
-	}
-}
-
-/**
- * TODO: also check the hash
- */
-async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
-	let invalid = false;
-	const gameCacheDir = await getGameCacheDir();
-
-	const mraPath = path.resolve(
-		gameCacheDir,
-		entry.db_id,
-		entry.files.mra.relFilePath
-	);
-	const mraExists = await exists(mraPath);
-
-	if (!mraExists) {
-		debug('auditCatalogEntry, mra does not exist', mraPath);
-		entry.files.mra.status = 'unexpected-missing';
-		invalid = true;
-	}
-
-	if (entry.files.rbf) {
-		const rbfPath = path.resolve(
-			gameCacheDir,
-			entry.db_id,
-			entry.files.rbf.relFilePath
-		);
-		const rbfExists = await exists(rbfPath);
-
-		if (!rbfExists) {
-			if (entry.files.rbf.status === 'ok') {
-				entry.files.rbf.status = 'unexpected-missing';
-				invalid = true;
-			}
-		} else {
-			entry.files.rbf.status = 'ok';
-		}
-	}
-
-	entry.files.roms.forEach(async (rom) => {
-		const romPath = path.resolve(gameCacheDir, entry.db_id, rom.relFilePath);
-		const romExists = await exists(romPath);
-
-		if (!romExists) {
-			if (rom.status === 'ok') {
-				rom.status = 'unexpected-missing';
-				invalid = true;
-			}
-		} else {
-			rom.status = 'ok';
-		}
-	});
-
-	return invalid;
 }
 
 /**
