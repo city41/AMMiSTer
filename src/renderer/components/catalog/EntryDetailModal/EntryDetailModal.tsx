@@ -14,6 +14,25 @@ function EntryDetailModal({
 	onRequestClose,
 	entry,
 }: EntryDetailModalProps) {
+	let mraStatus = '';
+	let rbfStatus = '';
+
+	if (entry.files.mra.status === 'corrupt') {
+		mraStatus = '(corrupt)';
+	} else if (entry.files.mra.status !== 'ok') {
+		mraStatus = '(missing)';
+	}
+
+	if (
+		!entry.files.rbf ||
+		entry.files.rbf.status === 'missing' ||
+		entry.files.rbf.status === 'unexpected-missing'
+	) {
+		rbfStatus = '(missing)';
+	} else if (entry.files.rbf.status === 'corrupt') {
+		rbfStatus = '(corrupt)';
+	}
+
 	return (
 		<Modal isOpen={isOpen} closeButton onRequestClose={onRequestClose}>
 			<div
@@ -132,26 +151,25 @@ function EntryDetailModal({
 					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt
 							className={clsx('text-sm font-medium text-gray-500', {
-								'text-red-700': entry.files.mra.status === 'unexpected-missing',
+								'text-red-700': entry.files.mra.status !== 'ok',
 							})}
 						>
 							MRA
 						</dt>
 						<dd
 							className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-								italic: entry.files.mra.status === 'unexpected-missing',
+								'italic text-gray-500': entry.files.mra.status !== 'ok',
 								'text-gray-900': entry.files.mra.status === 'ok',
-								'text-gray-500': entry.files.mra.status !== 'ok',
 							})}
 						>
-							{entry.files.mra.fileName}{' '}
-							{entry.files.mra.status === 'ok' ? '' : '(missing)'}
+							{entry.files.mra.fileName} {mraStatus}
 						</dd>
 					</div>
 					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 						<dt
 							className={clsx('text-sm font-medium text-gray-500', {
-								'text-red-700': !entry.files.rbf,
+								'text-red-700':
+									!entry.files.rbf || entry.files.rbf.status !== 'ok',
 							})}
 						>
 							Core (RBF)
@@ -164,10 +182,18 @@ function EntryDetailModal({
 									entry.files.rbf && entry.files.rbf.status === 'ok',
 							})}
 						>
-							{entry.files.rbf?.relFilePath ?? 'missing'}
+							{entry.files.rbf?.relFilePath} {rbfStatus}
 						</dd>
 					</div>
 					{entry.files.roms.map((r) => {
+						let statusText = '';
+
+						if (!r.md5) {
+							statusText = '(missing)';
+						} else if (r.status === 'corrupt') {
+							statusText = '(corrupt)';
+						}
+
 						return (
 							<div
 								key={r.fileName}
@@ -175,7 +201,7 @@ function EntryDetailModal({
 							>
 								<dt
 									className={clsx('text-sm font-medium text-gray-500', {
-										'text-red-700': !r.md5,
+										'text-red-700': !r.md5 || r.status !== 'ok',
 									})}
 								>
 									ROM
@@ -186,7 +212,7 @@ function EntryDetailModal({
 										'text-gray-900': r.status === 'ok',
 									})}
 								>
-									{r.relFilePath} {r.md5 ? '' : '(missing)'}
+									{r.relFilePath} {statusText}
 								</dd>
 							</div>
 						);

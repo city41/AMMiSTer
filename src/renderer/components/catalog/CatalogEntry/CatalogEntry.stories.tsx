@@ -4,6 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Meta } from '@storybook/react';
 import { CatalogEntry } from './CatalogEntry';
 import { mockCatalogEntry } from '../mockCatalogEntry';
+import cloneDeep from 'lodash/cloneDeep';
 
 const meta: Meta = {
 	title: 'CatalogEntry',
@@ -39,13 +40,7 @@ export const IsInPlan = () => {
 };
 
 export const MissingTheRBFFile = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
+	const entry = cloneDeep(completeEntry);
 	delete entry.files.rbf;
 
 	return (
@@ -57,15 +52,22 @@ export const MissingTheRBFFile = () => {
 	);
 };
 
-export const UnexpectedlyMissingAFile = () => {
-	const entry = {
-		...completeEntry,
-		files: {
-			...completeEntry.files,
-		},
-	};
-
+export const UnexpectedlyMissingMra = () => {
+	const entry = cloneDeep(completeEntry);
 	entry.files.mra.status = 'unexpected-missing';
+
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
+			</div>
+		</DndProvider>
+	);
+};
+
+export const UnexpectedlyCorruptMra = () => {
+	const entry = cloneDeep(completeEntry);
+	entry.files.mra.status = 'corrupt';
 
 	return (
 		<DndProvider backend={HTML5Backend}>
@@ -99,7 +101,7 @@ export const NotFavorited = () => {
 	const entry = {
 		...completeEntry,
 		favorite: false,
-	} as const;
+	};
 
 	return (
 		<DndProvider backend={HTML5Backend}>
