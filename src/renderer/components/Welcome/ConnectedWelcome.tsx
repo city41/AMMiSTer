@@ -1,16 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { getAllSettings, setSetting } from '../settings/settingsSlice';
 import { AppState, dispatch } from '../../store';
 import { Welcome, PublicWelcomeProps } from './Welcome';
 
 function ConnectedWelcome(props: PublicWelcomeProps) {
-	const [version, setVersion] = useState('');
-
 	useEffect(() => {
-		window.ipcAPI.getVersion().then((v) => {
-			setVersion(v);
-		});
 		dispatch(getAllSettings());
 	}, []);
 
@@ -23,9 +18,7 @@ function ConnectedWelcome(props: PublicWelcomeProps) {
 	}
 
 	if (settings && !settings['welcome-dismissed']) {
-		return (
-			<Welcome {...props} appVersion={version} onDismiss={handleDismiss} />
-		);
+		return <Welcome {...props} onDismiss={handleDismiss} />;
 	} else {
 		return null;
 	}

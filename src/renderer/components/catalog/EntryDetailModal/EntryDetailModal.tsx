@@ -188,7 +188,7 @@ function EntryDetailModal({
 					{entry.files.roms.map((r) => {
 						let statusText = '';
 
-						if (!r.md5) {
+						if (r.status === 'missing' || r.status === 'unexpected-missing') {
 							statusText = '(missing)';
 						} else if (r.status === 'corrupt') {
 							statusText = '(corrupt)';
@@ -201,14 +201,14 @@ function EntryDetailModal({
 							>
 								<dt
 									className={clsx('text-sm font-medium text-gray-500', {
-										'text-red-700': !r.md5 || r.status !== 'ok',
+										'text-red-700': r.status !== 'ok',
 									})}
 								>
 									ROM
 								</dt>
 								<dd
 									className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-										'italic text-gray-500': !r.md5 || r.status !== 'ok',
+										'italic text-gray-500': r.status !== 'ok',
 										'text-gray-900': r.status === 'ok',
 									})}
 								>

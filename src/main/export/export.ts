@@ -415,7 +415,7 @@ function getSrcFileOperationPathsFromCatalogEntry(
 		});
 	}
 	const romPaths = entry.files.roms.flatMap((re) => {
-		if (!re.md5) {
+		if (re.status !== 'ok') {
 			return [];
 		} else {
 			return [

@@ -2,7 +2,6 @@ import React from 'react';
 import clsx from 'clsx';
 import { PlanGameDirectoryEntry } from 'src/main/plan/types';
 import { FolderIcon } from '../../../icons';
-import { DirectoryTitle } from './DirectoryTitle';
 
 type DirectoryEntryProps = {
 	className?: string;

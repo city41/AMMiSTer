@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import clsx from 'clsx';
 import { BaseFeedbackModal } from '../../BaseFeedbackModal';
 import { MisterKunIcon } from '../../../icons';
 import { Input } from '../../Input';

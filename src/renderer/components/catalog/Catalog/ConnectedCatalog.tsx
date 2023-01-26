@@ -14,10 +14,6 @@ function ConnectedCatalog() {
 		return s.catalog.catalog;
 	});
 
-	const plan = useSelector((s: AppState) => {
-		return s.plan.present.plan;
-	});
-
 	const settings = useSelector((s: AppState) => {
 		return s.settings.settings;
 	});

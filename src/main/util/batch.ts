@@ -1,8 +1,10 @@
 function batch<T>(romEntries: T[], batchSize = 4): T[][] {
+	// important to not mutate the arguments
+	const romEntriesCopy = [...romEntries];
 	const batches: T[][] = [];
 
-	while (romEntries.length > 0) {
-		const batch = romEntries.splice(0, batchSize);
+	while (romEntriesCopy.length > 0) {
+		const batch = romEntriesCopy.splice(0, batchSize);
 		batches.push(batch);
 	}
 
