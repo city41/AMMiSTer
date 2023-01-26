@@ -2,7 +2,6 @@ import React from 'react';
 import clsx from 'clsx';
 
 type InternalWelcomeProps = {
-	appVersion: string;
 	onDismiss: () => void;
 };
 
@@ -17,11 +16,8 @@ const FAQ_URL = 'https://github.com/city41/AMMiSTer/wiki/FAQ';
 
 function Welcome({
 	className,
-	appVersion,
 	onDismiss,
 }: InternalWelcomeProps & PublicWelcomeProps) {
-	const isBeta = appVersion.startsWith('0.');
-
 	return (
 		<div
 			className={clsx(className, 'rounded p-4 bg-yellow-100 text-sm shadow-lg')}

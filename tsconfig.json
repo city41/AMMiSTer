@@ -11,7 +11,8 @@
 		"jsx": "react",
 		"target": "ES2020",
 		"outDir": "dist",
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"noUnusedLocals": true
 	},
 	"include": ["src/**/*"]
 }

@@ -11,12 +11,7 @@ import {
 	FileClient,
 } from '../types';
 import { Plan } from '../../plan/types';
-import { Catalog, CatalogEntry } from '../../catalog/types';
-import { Settings } from '../../settings/types';
-import * as settings from '../../settings';
-import * as catalog from '../../catalog';
-
-const getSettingMock = jest.fn().mockResolvedValue('mock-setting');
+import { CatalogEntry } from '../../catalog/types';
 
 jest.mock('node:fs', () => {
 	return {

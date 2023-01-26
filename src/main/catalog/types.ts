@@ -24,12 +24,12 @@ export type DBJSON = {
  * A struct representing a mister file, mostly used
  * in local situations away from a db.json
  */
-export type FileEntry = {
+export type HashedFileEntry = {
 	/**
 	 * the db.json file it came from
 	 */
 	db_id: string;
-	type: 'mra' | 'rbf' | 'rom';
+	type: 'mra' | 'rbf';
 	/**
 	 * Its relative filepath as found in the db.json,
 	 * Typically starts with "_Arcade/", this rel file path
@@ -45,10 +45,34 @@ export type FileEntry = {
 	remoteUrl: string;
 
 	/**
-	 * The md5 hash of the file. If not present, that means the file is missing
+	 * Optional since we don't store rom hashes
+	 * TODO: make discriminated unions
 	 */
-	md5?: string;
+	md5: string;
 };
+
+export type NonHashedFileEntry = {
+	/**
+	 * the db.json file it came from
+	 */
+	db_id: string;
+	type: 'rom';
+	/**
+	 * Its relative filepath as found in the db.json,
+	 * Typically starts with "_Arcade/", this rel file path
+	 * is also used when storing it locally at
+	 * <rootDir>/gameCache/<db_id>/<relFilePath>
+	 */
+	relFilePath: string;
+	fileName: string;
+	/**
+	 * Where it can be found on the internet. Used to download
+	 * the latest version of it. Basically just base_file_url/<relFilePath>
+	 */
+	remoteUrl: string;
+};
+
+export type FileEntry = HashedFileEntry | NonHashedFileEntry;
 
 /**
  * Since roms in mra files can be multiple files separated by a pipe,
@@ -101,7 +125,14 @@ type CatalogFileEntryStatus =
  * A file entry as found in the catalog. The current implementation
  * makes saving remoteUrl tough, so for now at least just omitting it.
  */
-export type CatalogFileEntry = Omit<FileEntry, 'remoteUrl'> & {
+export type HashedCatalogFileEntry = Omit<HashedFileEntry, 'remoteUrl'> & {
+	status: CatalogFileEntryStatus;
+};
+
+export type NonHashedCatalogFileEntry = Omit<
+	NonHashedFileEntry,
+	'remoteUrl'
+> & {
 	status: CatalogFileEntryStatus;
 };
 
@@ -141,9 +172,9 @@ export type CatalogEntry = GameMetadata & {
 	titleScreenshotUrl: string | null;
 	gameplayScreenshotUrl: string | null;
 	files: {
-		mra: CatalogFileEntry;
-		rbf?: CatalogFileEntry;
-		roms: CatalogFileEntry[];
+		mra: HashedCatalogFileEntry;
+		rbf?: HashedCatalogFileEntry;
+		roms: NonHashedCatalogFileEntry[];
 	};
 };
 

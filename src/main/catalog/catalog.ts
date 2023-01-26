@@ -3,7 +3,6 @@ import Debug from 'debug';
 import os from 'node:os';
 import path from 'node:path';
 import fsp from 'node:fs/promises';
-import fs from 'node:fs';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
 import { JsonCache } from '../util/JsonCache';
@@ -14,18 +13,19 @@ import { extractZipFileToPath } from '../util/zip';
 import {
 	Catalog,
 	CatalogEntry,
-	CatalogFileEntry,
 	DBJSON,
-	FileEntry,
+	HashedFileEntry,
 	GameMetadata,
 	MetadataDB,
 	MissingRomEntry,
 	Update,
 	UpdateCallback,
 	UpdateReason,
+	NonHashedCatalogFileEntry,
+	HashedCatalogFileEntry,
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
-import { convertFileNameDate, exists, getGameCacheDir } from '../util/fs';
+import { exists, getGameCacheDir } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
@@ -150,7 +150,7 @@ function cleanDbId(db_id: string): string {
  * Takes a db as pulled from the internet and converts it
  * into FileEntrys for easier processing
  */
-function convertDbToFileEntries(db: DBJSON): FileEntry[] {
+function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 	const entries = Object.entries(db.files);
 
 	return entries.map((e) => {
@@ -180,7 +180,9 @@ function getFileMd5Hash(data: Buffer | string): string {
  * Given a FileEntry just pulled from a db file, determines what kind of
  * update is needed to make sure AMMister's gameCache has the latest version
  */
-async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
+async function determineUpdate(
+	fileEntry: HashedFileEntry
+): Promise<Update | null> {
 	const gameCacheDir = await getGameCacheDir();
 	const fullPath = path.resolve(
 		gameCacheDir,
@@ -192,7 +194,7 @@ async function determineUpdate(fileEntry: FileEntry): Promise<Update | null> {
 
 	try {
 		const fileData = await fsp.readFile(fullPath);
-		const md5 = await getFileMd5Hash(fileData);
+		const md5 = getFileMd5Hash(fileData);
 
 		debug(
 			`determineUpdate for ${fileEntry.fileName}, local hash: ${md5} versus db hash: ${fileEntry.md5}`
@@ -244,16 +246,10 @@ async function updateFile(update: Update): Promise<void> {
  * them. Returns what was updated and why
  */
 async function downloadUpdatesForDb(
-	db: DBJSON,
+	db_id: string,
+	fileEntries: HashedFileEntry[],
 	cb: (err: null | string, update: Update) => void
 ): Promise<Update[]> {
-	const fileEntries = convertDbToFileEntries(db).filter(
-		(f) =>
-			f.relFilePath.startsWith('_Arcade') &&
-			// TODO: deal with alternatives
-			!f.relFilePath.includes('_alternatives')
-	);
-
 	const updates: Update[] = [];
 
 	const batches = batch(fileEntries);
@@ -282,13 +278,13 @@ async function downloadUpdatesForDb(
 		await Promise.all(batchPromises);
 	}
 
-	debug('Finished updating for', db.db_id, 'updates.length', updates.length);
+	debug('Finished updating for', db_id, 'updates.length', updates.length);
 
 	return updates;
 }
 
 function determineMAMESlug(
-	romEntries: CatalogFileEntry[],
+	romEntries: NonHashedCatalogFileEntry[],
 	fallbackSlug?: string | null
 ): string | null {
 	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
@@ -315,41 +311,6 @@ function determineMAMESlug(
 	return null;
 }
 
-/**
- * Given all of the local rbf files, finds the one that matches and is the most recent version
- * in the case of there being multiple
- */
-function getBestRbfPath(rbfPaths: string[], rbfName: string): string | null {
-	const matchingRbfPaths = rbfPaths.filter((f) =>
-		// join is important here to avoid platform specific issues, on Windows
-		// the path seperator is different
-		f.toLowerCase().includes(path.join('cores', rbfName.toLowerCase()))
-	);
-
-	if (matchingRbfPaths.length === 0) {
-		return null;
-	}
-
-	return matchingRbfPaths.reduce((champ, contender) => {
-		const champDate = convertFileNameDate(path.basename(champ));
-		const contenderDate = convertFileNameDate(path.basename(contender));
-
-		if (!champDate) {
-			return contender;
-		}
-
-		if (!contenderDate) {
-			return champ;
-		}
-
-		if (champDate.getTime() > contenderDate.getTime()) {
-			return champ;
-		} else {
-			return contender;
-		}
-	});
-}
-
 function xmlToArray(val: string | string[] | null | undefined): string[] {
 	if (!val) {
 		return [];
@@ -368,13 +329,21 @@ function xmlToArray(val: string | string[] | null | undefined): string[] {
  */
 async function parseMraToCatalogEntry(
 	db_id: string,
-	mraFilePath: string,
-	rbfFiles: string[],
+	mraFileEntry: HashedFileEntry,
+	fileEntries: HashedFileEntry[],
 	metadataDb: MetadataDB
 ): Promise<CatalogEntry> {
+	debug(
+		`parseMraToCatalogEntry(${db_id}, ${mraFileEntry.relFilePath}, fileEntries, metadataDb)`
+	);
 	try {
 		const gameCacheDir = await getGameCacheDir();
-		const mraData = (await fsp.readFile(mraFilePath)).toString();
+		const mraAbsFilePath = path.resolve(
+			gameCacheDir,
+			db_id,
+			mraFileEntry.relFilePath
+		);
+		const mraData = (await fsp.readFile(mraAbsFilePath)).toString();
 
 		const parsed = xmlParser.parse(mraData);
 		const {
@@ -389,9 +358,13 @@ async function parseMraToCatalogEntry(
 			category,
 		} = parsed.misterromdescription;
 
-		const rbfFilePath = getBestRbfPath(rbfFiles, rbf);
-
-		const rbfData = rbfFilePath ? await fsp.readFile(rbfFilePath!) : null;
+		const rbfFileEntry = fileEntries.find(
+			(fe) =>
+				fe.type === 'rbf' &&
+				fe.relFilePath
+					.toLowerCase()
+					.startsWith(path.join('_Arcade', 'cores', rbf).toLowerCase())
+		);
 
 		const romEntries = Array.isArray(rom) ? rom : [rom];
 		const romEntryWithZip = romEntries.find(
@@ -403,17 +376,13 @@ async function parseMraToCatalogEntry(
 			debug(`parseMraToCatalogEntry, ${name} has no rom zip specified`);
 		}
 
-		const romCatalogFileEntries: CatalogFileEntry[] = [];
+		const romCatalogFileEntries: NonHashedCatalogFileEntry[] = [];
+
 		if (romFile) {
 			for (const r of romFile.split('|')) {
-				let rData;
-				try {
-					rData = await fsp.readFile(
-						path.resolve(gameCacheDir, db_id, 'games', 'mame', r)
-					);
-				} catch (e) {
-					rData = null;
-				}
+				const romExists = await exists(
+					path.resolve(gameCacheDir, db_id, 'games', 'mame', r)
+				);
 
 				romCatalogFileEntries.push({
 					db_id,
@@ -421,8 +390,7 @@ async function parseMraToCatalogEntry(
 					// path.join is used to account for OS specific path separators
 					relFilePath: path.join('games', 'mame', r),
 					type: 'rom',
-					md5: rData ? getFileMd5Hash(rData) : undefined,
-					status: rData ? 'ok' : 'missing',
+					status: romExists ? 'ok' : 'missing',
 				});
 			}
 		}
@@ -475,22 +443,24 @@ async function parseMraToCatalogEntry(
 				mra: {
 					db_id,
 					type: 'mra',
-					fileName: path.basename(mraFilePath),
-					relFilePath: mraFilePath.substring(mraFilePath.indexOf('_Arcade')),
-					md5: getFileMd5Hash(mraData),
+					fileName: path.basename(mraAbsFilePath),
+					relFilePath: mraAbsFilePath.substring(
+						mraAbsFilePath.indexOf('_Arcade')
+					),
+					md5: mraFileEntry.md5,
 					status: 'ok',
 				},
 				roms: romCatalogFileEntries,
 			},
 		};
 
-		if (rbfData && rbfFilePath) {
+		if (rbfFileEntry) {
 			catalogEntry.files.rbf = {
 				db_id,
 				type: 'rbf',
-				fileName: path.basename(rbfFilePath),
-				relFilePath: rbfFilePath.substring(rbfFilePath.indexOf('_Arcade')),
-				md5: getFileMd5Hash(rbfData),
+				fileName: path.basename(rbfFileEntry.relFilePath),
+				relFilePath: rbfFileEntry.relFilePath,
+				md5: rbfFileEntry.md5,
 				status: 'ok',
 			};
 		}
@@ -498,86 +468,52 @@ async function parseMraToCatalogEntry(
 		return catalogEntry;
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
-		debug(`parseMraToCatalogEntry error for ${mraFilePath}: ${message}`);
+		debug(
+			`parseMraToCatalogEntry error for ${mraFileEntry.relFilePath}: ${message}`
+		);
 		throw e;
 	}
 }
 
-/**
- * For a directory where a db's files have been dumped into, creates
- * an AMMister catalog for it
- */
-async function getCatalogForDir(
-	dbDirPath: string,
+async function buildSubCatalog(
+	db_id: string,
+	fileEntries: HashedFileEntry[],
 	metadataDb: MetadataDB,
 	cb: (entry: CatalogEntry) => void
 ): Promise<Partial<Catalog>> {
-	const dbId = path.basename(dbDirPath);
-	const mraFiles = await (
-		await fsp.readdir(path.resolve(dbDirPath, '_Arcade'))
-	).flatMap((f) => {
-		if (f.endsWith('.mra')) {
-			return [path.resolve(dbDirPath, '_Arcade', f)];
-		} else {
-			return [];
-		}
-	});
+	const mraEntries = fileEntries.filter((fe) => fe.type === 'mra');
 
-	const rbfFiles = await (
-		await fsp.readdir(path.resolve(dbDirPath, '_Arcade', 'cores'))
-	).flatMap((f) => {
-		if (f.endsWith('.rbf')) {
-			return [path.resolve(dbDirPath, '_Arcade', 'cores', f)];
-		} else {
-			return [];
-		}
-	});
-
-	const entryPromises = mraFiles.map(async (mraPath) => {
-		const entry = await parseMraToCatalogEntry(
-			dbId,
-			mraPath,
-			rbfFiles,
+	const catalogEntryPromises = mraEntries.map(async (mraEntry) => {
+		const catalogEntry = await parseMraToCatalogEntry(
+			db_id,
+			mraEntry,
+			fileEntries,
 			metadataDb
 		);
-		cb(entry);
-		return entry;
+		cb(catalogEntry);
+		return catalogEntry;
 	});
 
-	const entries = await Promise.all(entryPromises);
+	const catalogEntries = await Promise.all(catalogEntryPromises);
 
 	return {
-		[dbId]: entries,
+		[db_id]: catalogEntries,
 	};
 }
 
-/**
- * Examines all the files found in gameCache and builds an AMMister
- * Catalog for it
- */
 async function buildGameCatalog(
 	metadataDb: MetadataDB,
+	dbFileEntryMap: Record<string, HashedFileEntry[]>,
 	cb: (entry: CatalogEntry) => void
 ): Promise<Catalog> {
-	const gameCacheDir = await getGameCacheDir();
+	const dbEntries = Object.entries(dbFileEntryMap);
 
-	const gameCacheDirFiles = await fsp.readdir(gameCacheDir);
-	const dbIdDirs = gameCacheDirFiles.filter((gcFile) => {
-		return fs.statSync(path.resolve(gameCacheDir, gcFile)).isDirectory();
-	});
+	const subCatalogPromises = dbEntries.map(([db_id, files]) =>
+		buildSubCatalog(db_id, files, metadataDb, cb)
+	);
+	const subCatalogs = await Promise.all(subCatalogPromises);
 
-	const dirCatalogs: Partial<Catalog>[] = [];
-
-	for (const dbIdDir of dbIdDirs) {
-		const dirCatalog = await getCatalogForDir(
-			path.resolve(gameCacheDir, dbIdDir),
-			metadataDb,
-			cb
-		);
-		dirCatalogs.push(dirCatalog);
-	}
-
-	const catalog = dirCatalogs.reduce<Partial<Catalog>>((accum, entry) => {
+	const catalog = subCatalogs.reduce<Partial<Catalog>>((accum, entry) => {
 		return {
 			...accum,
 			...entry,
@@ -596,12 +532,14 @@ async function determineMissingRoms(
 	const catalogEntries = Object.values(restofCatalog).flat(1);
 
 	const entriesMissingTheirRom = catalogEntries.filter((ce) =>
-		ce.files.roms?.some((r) => !r.md5)
+		ce.files.roms?.some(
+			(r) => r.status === 'missing' || r.status === 'unexpected-missing'
+		)
 	);
 
 	return entriesMissingTheirRom.flatMap<MissingRomEntry>((ce) => {
 		return ce.files.roms
-			.filter((r) => !r.md5)
+			.filter((r) => r.status !== 'ok')
 			.map((r) => {
 				return {
 					db_id: ce.db_id,
@@ -633,10 +571,9 @@ async function downloadRom(
 		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 
 		let updateReason: UpdateReason;
-		let romData;
 
 		try {
-			romData = await fsp.readFile(localPath);
+			await fsp.readFile(localPath);
 			updateReason = 'fulfilled';
 		} catch (e) {
 			const cached404 = archive404Cache.get(remoteUrl);
@@ -648,7 +585,6 @@ async function downloadRom(
 
 			debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
 			await downloadFile(remoteUrl, localPath, 'application/zip');
-			romData = await fsp.readFile(localPath);
 			updateReason = 'missing';
 		}
 
@@ -659,7 +595,6 @@ async function downloadRom(
 				relFilePath,
 				fileName,
 				remoteUrl,
-				md5: getFileMd5Hash(romData),
 			},
 			updateReason,
 		};
@@ -745,7 +680,7 @@ function addMisingRomsToCatalog(
 		gameEntries.forEach((gameEntry) => {
 			gameEntry.files.roms.forEach((r) => {
 				if (r.fileName === romUpdate.fileEntry.fileName) {
-					r.md5 = romUpdate.fileEntry.md5;
+					r.status = 'ok';
 				}
 			});
 		});
@@ -805,6 +740,8 @@ async function updateCatalog(
 
 		let updateDbErrorOccurred = false;
 
+		const dbFileEntryMap: Record<string, HashedFileEntry[]> = {};
+
 		for (const updateDb of enabledUpdateDbs) {
 			callback({
 				fresh: !currentCatalog,
@@ -812,30 +749,42 @@ async function updateCatalog(
 			});
 
 			const dbResult = await getDbJson(updateDb.url);
+			const dbFileEntries = convertDbToFileEntries(dbResult).filter(
+				(f) =>
+					f.relFilePath.startsWith('_Arcade') &&
+					// TODO: deal with alternatives
+					!f.relFilePath.includes('_alternatives')
+			);
 
-			const dbUpdates = await downloadUpdatesForDb(dbResult, (err, update) => {
-				if (err) {
-					updateDbErrorOccurred = true;
-					callback({
-						message: '',
-						error: { type: 'file-error', fileEntry: update.fileEntry },
-					});
-				} else {
-					const verb: Record<UpdateReason, string> = {
-						missing: 'Dowloading',
-						updated: 'Updating',
-						corrupt: 'Fixing',
-						fulfilled: '',
-					};
+			dbFileEntryMap[updateDb.db_id] = dbFileEntries;
 
-					callback({
-						fresh: !currentCatalog,
-						message: `${verb[update.updateReason]} ${
-							update.fileEntry.fileName
-						}`,
-					});
+			const dbUpdates = await downloadUpdatesForDb(
+				updateDb.db_id,
+				dbFileEntries,
+				(err, update) => {
+					if (err) {
+						updateDbErrorOccurred = true;
+						callback({
+							message: '',
+							error: { type: 'file-error', fileEntry: update.fileEntry },
+						});
+					} else {
+						const verb: Record<UpdateReason, string> = {
+							missing: 'Dowloading',
+							updated: 'Updating',
+							corrupt: 'Fixing',
+							fulfilled: '',
+						};
+
+						callback({
+							fresh: !currentCatalog,
+							message: `${verb[update.updateReason]} ${
+								update.fileEntry.fileName
+							}`,
+						});
+					}
 				}
-			});
+			);
 
 			if (updateDbErrorOccurred) {
 				return FAIL_RETURN;
@@ -858,12 +807,16 @@ async function updateCatalog(
 			fresh: !currentCatalog,
 			message: 'Building catalog...',
 		});
-		newlyBuiltCatalog = await buildGameCatalog(metadataDb, (entry) => {
-			callback({
-				fresh: !currentCatalog,
-				message: `Added ${entry.gameName} to catalog`,
-			});
-		});
+		newlyBuiltCatalog = await buildGameCatalog(
+			metadataDb,
+			dbFileEntryMap,
+			(entry) => {
+				callback({
+					fresh: !currentCatalog,
+					message: `Added ${entry.gameName} to catalog`,
+				});
+			}
+		);
 
 		if (catalog) {
 			const { updatedAt: _ignored, ...justCatalog } = catalog;
@@ -960,7 +913,7 @@ async function updateCatalog(
 	}
 }
 
-async function hasValidHash(entry: CatalogFileEntry): Promise<boolean> {
+async function hasValidHash(entry: HashedCatalogFileEntry): Promise<boolean> {
 	const gameCacheDir = await getGameCacheDir();
 	const filePath = path.resolve(gameCacheDir, entry.db_id, entry.relFilePath);
 	const data = await fsp.readFile(filePath);

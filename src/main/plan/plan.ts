@@ -3,8 +3,6 @@ import fsp from 'node:fs/promises';
 import Debug from 'debug';
 import { auditCatalogEntry, isCatalogEntry } from '../catalog';
 import { Plan, PlanGameDirectoryEntry } from './types';
-import { CatalogEntry } from '../catalog/types';
-import { getGameCacheDir } from '../util/fs';
 
 const debug = Debug('main/plan/plan.ts');
 

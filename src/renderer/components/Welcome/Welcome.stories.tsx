@@ -10,9 +10,5 @@ const meta: Meta = {
 export default meta;
 
 export const Basic = () => {
-	return <Welcome appVersion="mock" onDismiss={() => {}} />;
-};
-
-export const AlphaWarning = () => {
-	return <Welcome appVersion="0.0.0" onDismiss={() => {}} />;
+	return <Welcome onDismiss={() => {}} />;
 };

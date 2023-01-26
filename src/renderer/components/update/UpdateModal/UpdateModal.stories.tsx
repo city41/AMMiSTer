@@ -28,7 +28,6 @@ const update2: Update = {
 		type: 'rom',
 		db_id: 'jtcores',
 		fileName: 'sfa2.zip',
-		md5: 'dummy hash',
 		relFilePath: 'games/mame/sfa2.zip',
 		remoteUrl: 'https://example.com',
 	},
@@ -149,6 +148,7 @@ export const FileError = () => {
 					relFilePath: '_Arcade/cores/foo.rbf',
 					type: 'rbf',
 					remoteUrl: '',
+					md5: 'mock-hash',
 				},
 			}}
 			onClose={() => {}}
