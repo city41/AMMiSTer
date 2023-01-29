@@ -90,7 +90,6 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 
 	return (
 		<div ref={dragRef}>
-			{' '}
 			<CatalogEntry
 				{...props}
 				onClick={handleClick}

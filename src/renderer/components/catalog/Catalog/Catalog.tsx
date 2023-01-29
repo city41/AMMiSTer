@@ -35,6 +35,11 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 		}
 
 		const gameEntries = restOfCatalog[db.db_id];
+		if (!gameEntries) {
+			// this can happen when a db has been re-enabled but a catalog update has not happened yet
+			return [];
+		}
+
 		const filtered = filter.trim() ? gameEntries.filter(filterFn) : gameEntries;
 
 		const games = filtered.map((ge, i) => {

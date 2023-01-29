@@ -6,6 +6,8 @@ import { PlanTreeItem } from './types';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
 import { TrashIcon } from '../../../icons';
 import { DirectoryEntry } from './DirectoryEntry';
+import { isCatalogEntry } from '../../../../main/catalog/util';
+import { MissingEntry } from './MissingEntry';
 
 type FocusedDirectoryProps = {
 	className?: string;
@@ -18,6 +20,7 @@ type FocusedDirectoryProps = {
 		mraFileName: string;
 	}) => void;
 	onBulkAdd: (planPath: string) => void;
+	onBulkRemoveMissing: (args: { parentPath: string[] }) => void;
 	onItemDelete: (args: { parentPath: string[]; name: string }) => void;
 };
 
@@ -28,9 +31,14 @@ function FocusedDirectory({
 	planName,
 	onItemAdd,
 	onBulkAdd,
+	onBulkRemoveMissing,
 	onItemDelete,
 }: FocusedDirectoryProps) {
 	const focusedId = focusedNode.id;
+
+	// TODO: can the plan name be lopped off cleaner?
+	// or can we just use focusedNode.parentPath?
+	const planPath = focusedId.replace(new RegExp(`^/?${planName}/?`), '');
 
 	const [{ isDraggingOver, draggedTitle }, dropRef] = useDrop(() => {
 		return {
@@ -72,13 +80,26 @@ function FocusedDirectory({
 				</div>
 				<a
 					className="text-blue-600 text-sm underline cursor-pointer"
-					onClick={() =>
-						// TODO: can the plan name be lopped off cleaner?
-						onBulkAdd(focusedId.replace(new RegExp(`^/?${planName}/?`), ''))
-					}
+					onClick={() => onBulkAdd(planPath)}
 				>
 					bulk add games
 				</a>
+				{focusedNode.immediateMissingGameCount > 0 && (
+					<a
+						className="text-red-600 text-sm underline cursor-pointer"
+						onClick={() => {
+							onBulkRemoveMissing({
+								parentPath: focusedNode.parentPath.concat(
+									focusedNode.title as string
+								),
+							});
+						}}
+					>
+						Remove {focusedNode.immediateMissingGameCount === 1 ? 'the' : 'all'}{' '}
+						{focusedNode.immediateMissingGameCount} missing game
+						{focusedNode.immediateMissingGameCount === 1 ? '' : 's'}
+					</a>
+				)}
 			</h2>
 			<div className="relative h-full" ref={dropRef}>
 				<ul className="flex flex-col">
@@ -88,9 +109,12 @@ function FocusedDirectory({
 						if ('directoryName' in g) {
 							entryName = g.directoryName;
 							el = <DirectoryEntry className="py-2" directory={g} />;
-						} else {
+						} else if (isCatalogEntry(g)) {
 							entryName = g.gameName;
 							el = <CatalogEntry entry={g} hideInPlan />;
+						} else {
+							entryName = g.relFilePath;
+							el = <MissingEntry entry={g} />;
 						}
 
 						return (

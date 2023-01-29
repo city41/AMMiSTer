@@ -10,6 +10,7 @@ import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
+	PlanMissingEntry,
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
 import { BatchGroupBy } from './BatchGroupBy';
@@ -63,6 +64,7 @@ type InternalPlanState = {
 	plan: Plan | null | undefined;
 	isDirty: boolean;
 	criteriaMatch: CatalogEntry[] | null;
+	missingDetailEntry: PlanMissingEntry | null;
 };
 
 type PlanState = StateWithHistory<InternalPlanState>;
@@ -71,18 +73,20 @@ const initialState: InternalPlanState = {
 	plan: undefined,
 	isDirty: false,
 	criteriaMatch: null,
+	missingDetailEntry: null,
 };
 
 function getAllGamesInPlan(planDir: PlanGameDirectory): CatalogEntry[] {
 	const games: CatalogEntry[] = [];
 
 	for (const entry of planDir) {
-		if ('gameName' in entry) {
-			games.push(entry);
-		} else {
+		if ('games' in entry) {
 			const subGames = getAllGamesInPlan(entry.games);
 			games.push(...subGames);
+		} else if ('gameName' in entry) {
+			games.push(entry);
 		}
+		// the other type, PlanMissingEntry, is ignored on purpose
 	}
 
 	return games;
@@ -108,9 +112,9 @@ function getNode(plan: Plan, path: string[]): PlanGameDirectoryEntry {
 			);
 		}
 
-		if ('gameName' in dirEntry) {
+		if ('gameName' in dirEntry || 'relFilePath' in dirEntry) {
 			throw new Error(
-				`planSlice, getNode: get a game instead of a directory while traversing: ${path.join(
+				`planSlice, getNode: get a game (or missing game) instead of a directory while traversing: ${path.join(
 					'/'
 				)}`
 			);
@@ -153,6 +157,20 @@ function createDirectoriesIfNeeded(plan: Plan, planPath: string[]): void {
 			dir = (subDir as PlanGameDirectoryEntry).games;
 		}
 	}
+}
+
+function getEntryName(
+	entry: PlanGameDirectoryEntry | CatalogEntry | PlanMissingEntry
+): string {
+	if ('games' in entry) {
+		return entry.directoryName;
+	}
+
+	if ('gameName' in entry) {
+		return entry.gameName;
+	}
+
+	return entry.relFilePath;
 }
 
 const planSlice = createSlice({
@@ -217,14 +235,16 @@ const planSlice = createSlice({
 				const prevIndex = prevParent.games.findIndex((g) => {
 					if ('directoryName' in g) {
 						return g.directoryName === name;
-					} else {
+					} else if ('gameName' in g) {
 						return g.gameName === name;
+					} else {
+						// TODO: should probably disallow moving missing games
+						return g.relFilePath === name;
 					}
 				});
 
 				const entry = prevParent.games[prevIndex];
-				const movingNodeName =
-					'gameName' in entry ? entry.gameName : entry.directoryName;
+				const movingNodeName = getEntryName(entry);
 
 				if ('gameName' in entry) {
 					const alreadyInParent = newParent.games.some(
@@ -236,30 +256,27 @@ const planSlice = createSlice({
 					if (!alreadyInParent) {
 						const [movingNode] = prevParent.games.splice(prevIndex, 1);
 						const destIndex = newParent.games.findIndex((g) => {
-							const name = 'gameName' in g ? g.gameName : g.directoryName;
+							const name = getEntryName(g);
 							return movingNodeName.localeCompare(name) <= 0;
 						});
 						newParent.games.splice(destIndex, 0, movingNode);
 						state.isDirty = true;
 					}
-				} else {
+				} else if ('games' in entry) {
 					const dirInNewParentWithSameName = newParent.games.find(
 						(g) =>
 							'directoryName' in g &&
 							g.directoryName.toLowerCase() ===
-								entry.directoryName.toLowerCase()
+								getEntryName(entry).toLowerCase()
 					) as PlanGameDirectoryEntry;
 
 					if (dirInNewParentWithSameName) {
 						entry.games.forEach((movingNode) => {
-							const movingNodeName =
-								'gameName' in movingNode
-									? movingNode.gameName
-									: movingNode.directoryName;
+							const movingNodeName = getEntryName(movingNode);
 
 							const destIndex = dirInNewParentWithSameName.games.findIndex(
 								(g) => {
-									const name = 'gameName' in g ? g.gameName : g.directoryName;
+									const name = getEntryName(g);
 									return movingNodeName.localeCompare(name) <= 0;
 								}
 							);
@@ -267,7 +284,7 @@ const planSlice = createSlice({
 						});
 					} else {
 						const destIndex = newParent.games.findIndex((g) => {
-							const name = 'gameName' in g ? g.gameName : g.directoryName;
+							const name = getEntryName(g);
 							return movingNodeName.localeCompare(name) <= 0;
 						});
 						newParent.games.splice(destIndex, 0, entry);
@@ -289,14 +306,26 @@ const planSlice = createSlice({
 				const initialCount = parent.games.length;
 
 				parent.games = parent.games.filter((g) => {
-					if ('directoryName' in g) {
-						return g.directoryName !== name;
-					} else {
-						return g.gameName !== name;
-					}
+					return getEntryName(g) !== name;
 				});
 
 				state.isDirty = initialCount > parent.games.length;
+			}
+		},
+		deleteAllMissingGamesInDirectory(
+			state: InternalPlanState,
+			action: PayloadAction<{ parentPath: string[] }>
+		) {
+			if (state.plan) {
+				const { parentPath } = action.payload;
+				const parent = getNode(state.plan, parentPath);
+
+				const gameCount = parent.games.length;
+				parent.games = parent.games.filter((g) => {
+					return !('missing' in g) || !g.missing;
+				});
+
+				state.isDirty = gameCount !== parent.games.length;
 			}
 		},
 		addDirectory(
@@ -320,7 +349,7 @@ const planSlice = createSlice({
 
 				while (
 					parent.games.some((g) => {
-						const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+						const entryName = getEntryName(g);
 						return `${newDirectoryName}${newDirSuffix || ''}` === entryName;
 					})
 				) {
@@ -336,7 +365,7 @@ const planSlice = createSlice({
 				};
 
 				const destIndex = parent.games.findIndex((g) => {
-					const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+					const entryName = getEntryName(g);
 					return newDirectoryName.localeCompare(entryName) <= 0;
 				});
 				parent.games.splice(destIndex, 0, newDirectoryNode);
@@ -423,7 +452,7 @@ const planSlice = createSlice({
 					const newGameName = catalogEntry.gameName;
 
 					const destIndex = favDir.games.findIndex((g) => {
-						const entryName = 'gameName' in g ? g.gameName : g.directoryName;
+						const entryName = getEntryName(g);
 						return newGameName.localeCompare(entryName) <= 0;
 					});
 					favDir.games.splice(destIndex, 0, catalogEntry);
@@ -441,6 +470,15 @@ const planSlice = createSlice({
 		},
 		resetCriteriaMatch(state: InternalPlanState) {
 			state.criteriaMatch = null;
+		},
+		setMissingDetailEntry(
+			state: InternalPlanState,
+			action: PayloadAction<PlanMissingEntry>
+		) {
+			state.missingDetailEntry = action.payload;
+		},
+		clearMissingDetailEntry(state: InternalPlanState) {
+			state.missingDetailEntry = null;
 		},
 	},
 });
@@ -767,12 +805,15 @@ const {
 	setPlan,
 	moveItem,
 	deleteItem,
+	deleteAllMissingGamesInDirectory,
 	addDirectory,
 	planRename,
 	directoryRename,
 	toggleDirectoryExpansion,
 	toggleFavorite,
 	resetCriteriaMatch,
+	setMissingDetailEntry,
+	clearMissingDetailEntry,
 } = planSlice.actions;
 
 const undoableReducer = undoable(reducer, {
@@ -800,6 +841,7 @@ export {
 	savePlanAs,
 	addItem,
 	deleteItem,
+	deleteAllMissingGamesInDirectory,
 	moveItem,
 	addDirectory,
 	planRename,
@@ -809,6 +851,8 @@ export {
 	bulkAdd,
 	buildCriteriaMatch,
 	resetCriteriaMatch,
+	setMissingDetailEntry,
+	clearMissingDetailEntry,
 	undo,
 	redo,
 	getAllGamesInPlan,

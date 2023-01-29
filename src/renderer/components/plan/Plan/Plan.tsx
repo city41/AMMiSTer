@@ -6,6 +6,7 @@ import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
+	PlanMissingEntry,
 } from '../../../../main/plan/types';
 import { DirectoryAddIcon, TrashIcon } from '../../../icons';
 import { PlanTreeItem } from './types';
@@ -35,16 +36,19 @@ type InternalPlanProps = {
 	onDirectoryAdd: (args: { parentPath: string[] }) => void;
 	onToggleDirectoryExpansion: (path: string[]) => void;
 	onBulkAdd: (planPath: string) => void;
+	onBulkRemoveMissing: (args: { parentPath: string[] }) => void;
 };
 
 function isPlanGameDirectoryEntry(
-	entry: CatalogEntryType | PlanGameDirectoryEntry
+	entry: CatalogEntryType | PlanGameDirectoryEntry | PlanMissingEntry
 ): entry is PlanGameDirectoryEntry {
 	return 'games' in entry;
 }
 
-function getDescendantGames(dir: PlanGameDirectory): CatalogEntryType[] {
-	return dir.reduce<CatalogEntryType[]>((accum, e) => {
+function getDescendantGames(
+	dir: PlanGameDirectory
+): Array<CatalogEntryType | PlanMissingEntry> {
+	return dir.reduce<Array<CatalogEntryType | PlanMissingEntry>>((accum, e) => {
 		if (isPlanGameDirectoryEntry(e)) {
 			return accum.concat(getDescendantGames(e.games));
 		} else {
@@ -61,8 +65,8 @@ function sortDirectoriesByTitle(
 }
 
 function sortEntriesByTitle(
-	a: PlanGameDirectoryEntry | CatalogEntryType,
-	b: PlanGameDirectoryEntry | CatalogEntryType
+	a: PlanGameDirectoryEntry | CatalogEntryType | PlanMissingEntry,
+	b: PlanGameDirectoryEntry | CatalogEntryType | PlanMissingEntry
 ): number {
 	if ('directoryName' in a) {
 		if ('directoryName' in b) {
@@ -76,7 +80,10 @@ function sortEntriesByTitle(
 		return 1;
 	}
 
-	return a.gameName.localeCompare(b.gameName);
+	const aGameName = 'gameName' in a ? a.gameName : a.relFilePath;
+	const bGameName = 'gameName' in b ? b.gameName : b.relFilePath;
+
+	return aGameName.localeCompare(bGameName);
 }
 
 function createTreeData(
@@ -87,6 +94,7 @@ function createTreeData(
 		if (isPlanGameDirectoryEntry(g)) {
 			const subData = createTreeData(g.games, [...parentPath, g.directoryName]);
 			const descendantGames = getDescendantGames(g.games);
+
 			return [
 				{
 					id: parentPath.join('/') + '/' + g.directoryName,
@@ -95,12 +103,22 @@ function createTreeData(
 					children: subData,
 					isDirectory: true,
 					parentPath,
-					immediateGameCount: g.games.filter((g) => 'gameName' in g).length,
+					immediateGameCount: g.games.filter((g) => !('games' in g)).length,
+					immediateValidGameCount: g.games.filter((g) => 'gameName' in g)
+						.length,
+					immediateMissingGameCount: g.games.filter(
+						(g) => !('gameName' in g) && !('games' in g)
+					).length,
 					totalGameCount: descendantGames.length,
+					totalValidGameCount: descendantGames.filter((g) => 'gameName' in g)
+						.length,
+					totalMissingGameCount: descendantGames.filter(
+						(g) => !('gameName' in g)
+					).length,
 					// in dev mode, g.games is mutation protected
 					entries: [...g.games].sort(sortEntriesByTitle),
-					hasInvalidDescendant: !!g.hasAnInvalidDescendant,
-				},
+					hasAnInvalidDescendant: !!g.hasAnInvalidDescendant,
+				} as TreeItem<PlanTreeItem>,
 			];
 		} else {
 			return [];
@@ -141,6 +159,7 @@ function Plan({
 	onDirectoryRename,
 	onToggleDirectoryExpansion,
 	onBulkAdd,
+	onBulkRemoveMissing,
 }: InternalPlanProps) {
 	const [focusedId, setFocusedId] = useState('');
 
@@ -263,6 +282,7 @@ function Plan({
 					<FocusedDirectory
 						focusedNode={focusedNode}
 						onBulkAdd={onBulkAdd}
+						onBulkRemoveMissing={onBulkRemoveMissing}
 						onItemAdd={onItemAdd}
 						onItemDelete={onItemDelete}
 						planName={plan!.directoryName}
