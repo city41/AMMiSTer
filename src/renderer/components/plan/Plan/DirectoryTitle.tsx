@@ -96,7 +96,7 @@ function DirectoryTitle({
 				ref={dropRef}
 				className={clsx({
 					'transform scale-105': isDraggingOver,
-					'text-red-600': node.hasInvalidDescendant,
+					'text-red-600': node.hasAnInvalidDescendant,
 				})}
 			>
 				{node.title}
@@ -112,8 +112,15 @@ function DirectoryTitle({
 			<FolderIcon className="w-6 h-6" />
 			{titleEl}
 			{isDirty && <div>*</div>}
-			<div className="text-sm font-normal text-gray-500">
-				{node.immediateGameCount} / {node.totalGameCount}
+			<div className="flex flex-row items-baseline gap-x-2">
+				<div className="text-sm font-normal text-gray-500">
+					{node.immediateGameCount} / {node.totalGameCount}
+				</div>
+				{node.totalMissingGameCount > 0 && (
+					<div className="text-xs text-red-700 italic font-thin">
+						{node.totalMissingGameCount} missing
+					</div>
+				)}
 			</div>
 		</div>
 	);

@@ -8,6 +8,7 @@ import {
 	savePlan,
 	addItem,
 	deleteItem,
+	deleteAllMissingGamesInDirectory,
 	moveItem,
 	addDirectory,
 	planRename,
@@ -61,7 +62,9 @@ function ConnectedPlan() {
 
 		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
 			if (!plan) {
-				alert('This plan could not be found');
+				alert(
+					'This plan could not be found, or the file is not an AMMiSter plan'
+				);
 			} else {
 				dispatch(loadOpenedPlan(plan));
 			}
@@ -124,6 +127,10 @@ function ConnectedPlan() {
 		setBulkAddInvocationCount((c) => c + 1);
 	}
 
+	function handleBulkRemoveMissing(args: { parentPath: string[] }) {
+		dispatch(deleteAllMissingGamesInDirectory(args));
+	}
+
 	// if plan is undefined, then main is still loading it,
 	// since this will only take a couple seconds at most, the
 	// "loading state" is just blank
@@ -147,6 +154,7 @@ function ConnectedPlan() {
 				onDirectoryRename={handleDirectoryRename}
 				onToggleDirectoryExpansion={handleToggleDirectoryExpansion}
 				onBulkAdd={handleBulkAdd}
+				onBulkRemoveMissing={handleBulkRemoveMissing}
 			/>
 			{!plan && <PlanEmptyState onClick={handleNewPlan} />}
 			<BulkAddModal

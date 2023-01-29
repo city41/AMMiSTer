@@ -341,6 +341,7 @@ describe('export', function () {
 				games: [
 					Mock.of<CatalogEntry>({
 						db_id: 'mock_db',
+						gameName: 'Mock game',
 						files: {
 							mra: {
 								db_id: 'mock_db',

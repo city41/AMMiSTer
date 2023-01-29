@@ -31,6 +31,8 @@ import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
 import * as settings from '../settings';
 
+let _currentCatalog: Catalog | null = null;
+
 class CancelUpdateError extends Error {}
 class DownloadRomError extends Error {}
 
@@ -883,6 +885,7 @@ async function updateCatalog(
 			duration,
 		});
 
+		_currentCatalog = finalAuditedCatalog;
 		return { updates, catalog: finalAuditedCatalog };
 	} catch (e) {
 		if (e instanceof DownloadRomError) {
@@ -939,6 +942,7 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 		invalid = true;
 	} else if (!(await hasValidHash(entry.files.mra))) {
 		entry.files.mra.status = 'corrupt';
+		invalid = true;
 	}
 
 	if (entry.files.rbf) {
@@ -954,10 +958,11 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 				entry.files.rbf.status = 'unexpected-missing';
 				invalid = true;
 			}
+		} else if (!(await hasValidHash(entry.files.rbf))) {
+			entry.files.rbf.status = 'corrupt';
+			invalid = true;
 		} else {
-			entry.files.rbf.status = (await hasValidHash(entry.files.rbf))
-				? 'ok'
-				: 'corrupt';
+			entry.files.rbf.status = 'ok';
 		}
 	}
 
@@ -992,6 +997,10 @@ async function audit(catalog: Catalog): Promise<Catalog> {
 }
 
 async function getCurrentCatalog(): Promise<Catalog | null> {
+	if (_currentCatalog) {
+		return _currentCatalog;
+	}
+
 	const gameCacheDir = await getGameCacheDir();
 	const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 	debug(`getCurrentCatalog, catalogPath: ${catalogPath}`);
@@ -999,6 +1008,7 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
 		const catalog = require(catalogPath) as Catalog;
+		_currentCatalog = catalog;
 		return await audit(catalog);
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
@@ -1007,30 +1017,11 @@ async function getCurrentCatalog(): Promise<Catalog | null> {
 	}
 }
 
-function isCatalogEntry(obj: unknown): obj is CatalogEntry {
-	if (!obj) {
-		return false;
-	}
-
-	const ce = obj as CatalogEntry;
-
-	if (typeof ce.db_id !== 'string') {
-		return false;
-	}
-
-	if (typeof ce.gameName !== 'string') {
-		return false;
-	}
-
-	return true;
-}
-
 export {
 	getDbJson,
 	downloadUpdatesForDb,
 	buildGameCatalog,
 	updateCatalog,
 	getCurrentCatalog,
-	isCatalogEntry,
 	auditCatalogEntry,
 };

@@ -43,7 +43,7 @@ const exportToDirectory =
 		if (plan) {
 			if (plan.hasAnInvalidDescendant) {
 				alert(
-					'This plan is missing files, try checking for updates, then loading the plan again'
+					'This plan has missing or corrupt files, try checking for updates, then loading the plan again'
 				);
 			} else {
 				dispatch(exportSlice.actions.resetExportStatus());

@@ -5,7 +5,12 @@ import winston from 'winston';
 import uniqBy from 'lodash/uniqBy';
 
 import * as settings from '../settings';
-import { Plan, PlanGameDirectory, PlanGameDirectoryEntry } from '../plan/types';
+import {
+	Plan,
+	PlanGameDirectory,
+	PlanGameDirectoryEntry,
+	PlanMissingEntry,
+} from '../plan/types';
 import {
 	SrcFileOperationPath,
 	DestFileOperationPath,
@@ -25,6 +30,7 @@ import { Catalog, CatalogEntry } from '../catalog/types';
 import { LocalFileClient } from './LocalFileClient';
 import { ExportOptimization } from '../settings/types';
 import { getCurrentCatalog } from '../catalog';
+import { isCatalogEntry } from '../catalog/util';
 
 class CancelExportError extends Error {}
 
@@ -103,7 +109,7 @@ async function clearOldLogs(initiator: string) {
 }
 
 function isPlanGameDirectoryEntry(
-	obj: CatalogEntry | PlanGameDirectoryEntry
+	obj: CatalogEntry | PlanGameDirectoryEntry | PlanMissingEntry
 ): obj is PlanGameDirectoryEntry {
 	return 'directoryName' in obj;
 }
@@ -449,7 +455,7 @@ function getSrcPathsFromPlan(
 				destPathJoiner
 			);
 			paths.push(...subPaths);
-		} else {
+		} else if (isCatalogEntry(entry)) {
 			const entryPaths = getSrcFileOperationPathsFromCatalogEntry(
 				entry,
 				currentDirPath,
@@ -626,8 +632,7 @@ async function doExport(
 
 		await client.connect();
 
-		// this path is on the mister itself, using path.join would be wrong
-		const mountPath = client.getMountPath(); // misterPathJoiner('/media/', mountDir);
+		const mountPath = client.getMountPath();
 		const destPathJoiner = client.getDestinationPathJoiner();
 		exportLogger.info({ mountPath });
 

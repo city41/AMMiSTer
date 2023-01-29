@@ -4,6 +4,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Catalog } from './components/catalog/Catalog';
 import { EntryDetailModal } from './components/catalog/EntryDetailModal';
+import { MissingEntryModal } from './components/plan/MissingEntryModal';
 import { ExportModal } from './components/export/ExportModal';
 import { ExportRemoteConfigModal } from './components/export/ExportRemoteConfigModal';
 import { SettingsModal } from './components/settings/SettingsModal';
@@ -39,6 +40,7 @@ function App() {
 					<ExportModal />
 					<ExportRemoteConfigModal />
 					<EntryDetailModal />
+					<MissingEntryModal />
 					<SettingsModal />
 				</Provider>
 			</DndProvider>

@@ -1,10 +1,35 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import Debug from 'debug';
-import { auditCatalogEntry, isCatalogEntry } from '../catalog';
-import { Plan, PlanGameDirectoryEntry } from './types';
+import { getCurrentCatalog } from '../catalog';
+import {
+	Plan,
+	PlanGameDirectory,
+	PlanGameDirectoryEntry,
+	PlanMissingEntry,
+	SerializedGameEntry,
+	SerializedPlan,
+	SerializedPlanGameDirectory,
+	SerializedPlanGameDirectoryEntry,
+} from './types';
+import { Catalog, CatalogEntry } from '../catalog/types';
+import { isCatalogEntry } from '../catalog/util';
+import { UpdateDbConfig } from '../settings/types';
+import { getSetting } from '../settings';
 
 const debug = Debug('main/plan/plan.ts');
+
+function isMissingEntry(obj: unknown): obj is PlanMissingEntry {
+	if (!obj) {
+		return false;
+	}
+
+	if (typeof obj !== 'object') {
+		return false;
+	}
+
+	return 'missing' in obj && obj.missing === true;
+}
 
 function isPlanGameDirectoryEntry(obj: unknown): obj is PlanGameDirectoryEntry {
 	if (!obj) {
@@ -58,7 +83,8 @@ function isPlan(obj: unknown): obj is Plan {
 	if (
 		plan.games.length > 0 &&
 		!isCatalogEntry(plan.games[0]) &&
-		!isPlanGameDirectoryEntry(plan.games[0])
+		!isPlanGameDirectoryEntry(plan.games[0]) &&
+		!isMissingEntry(plan.games[0])
 	) {
 		debug('isPlan: first entry is not expected');
 		return false;
@@ -78,16 +104,119 @@ function newPlan(): Plan {
 	};
 }
 
+function serializeDirectory(
+	games: PlanGameDirectory
+): SerializedPlanGameDirectory {
+	return games.map((g) => {
+		if ('gameName' in g) {
+			return {
+				db_id: g.files.mra.db_id,
+				relFilePath: g.files.mra.relFilePath,
+			};
+		} else if ('games' in g) {
+			return {
+				...g,
+				games: serializeDirectory(g.games),
+			};
+		} else {
+			// missing entry
+			return g;
+		}
+	});
+}
+
+function serialize(plan: Plan): SerializedPlan {
+	return {
+		...plan,
+		games: serializeDirectory(plan.games),
+	};
+}
+
+function deserializeDirectory(
+	games: SerializedPlanGameDirectory | PlanGameDirectory,
+	catalog: Catalog,
+	updateDbs: UpdateDbConfig[]
+): PlanGameDirectory {
+	// @ts-expect-error TS can't figure out they overlap here
+	return games.reduce<PlanGameDirectory>(
+		(
+			accum: PlanGameDirectory,
+			g:
+				| SerializedGameEntry
+				| CatalogEntry
+				| SerializedPlanGameDirectoryEntry
+				| PlanGameDirectoryEntry
+		) => {
+			if ('games' in g) {
+				return accum.concat({
+					...g,
+					games: deserializeDirectory(g.games, catalog, updateDbs),
+				});
+			} else {
+				const relFilePath =
+					'gameName' in g ? g.files.mra.relFilePath : g.relFilePath;
+
+				const updateDbConfig = updateDbs.find((u) => u.db_id === g.db_id);
+
+				if (!updateDbConfig?.enabled) {
+					return accum.concat({
+						db_id: g.db_id,
+						relFilePath: relFilePath,
+						missing: true,
+					});
+				}
+
+				const entries = catalog[g.db_id];
+				const entry = entries?.find((e) => {
+					return e.files.mra.relFilePath === relFilePath;
+				});
+
+				if (entry) {
+					return accum.concat(entry);
+				} else {
+					return accum.concat({
+						db_id: g.db_id,
+						relFilePath: relFilePath,
+						missing: true,
+					});
+				}
+			}
+		},
+		[]
+	);
+}
+
+function deserialize(
+	plan: SerializedPlan | Plan,
+	catalog: Catalog,
+	updateDbs: UpdateDbConfig[]
+): Plan {
+	return {
+		...plan,
+		games: deserializeDirectory(plan.games, catalog, updateDbs),
+	};
+}
+
 async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	if (path.extname(filePath) !== '.amip') {
 		filePath += '.amip';
 	}
 
 	plan.updatedAt = Date.now();
-	const planJson = JSON.stringify(plan, null, 2);
-	await fsp.writeFile(filePath, planJson);
+	const serializedPlan = serialize(plan);
+
+	const serializedPlanAsJson = JSON.stringify(serializedPlan, null, 2);
+	await fsp.writeFile(filePath, serializedPlanAsJson);
 
 	return filePath;
+}
+
+function isInvalidEntry(entry: CatalogEntry): boolean {
+	return (
+		entry.files.mra.status !== 'ok' ||
+		entry.files.rbf?.status !== 'ok' ||
+		entry.files.roms.some((r) => r.status !== 'ok')
+	);
 }
 
 /**
@@ -102,10 +231,10 @@ async function audit(
 
 	for (const entry of planDirEntry.games) {
 		if ('gameName' in entry) {
-			const invalid = await auditCatalogEntry(entry);
+			const invalid = await isInvalidEntry(entry);
 
 			hasAnInvalidDescendant = hasAnInvalidDescendant || invalid;
-		} else {
+		} else if ('games' in entry) {
 			await audit(entry);
 			hasAnInvalidDescendant =
 				hasAnInvalidDescendant || !!entry.hasAnInvalidDescendant;
@@ -121,7 +250,23 @@ async function openPlan(path: string): Promise<Plan | null> {
 
 	try {
 		const contents = (await fsp.readFile(path)).toString();
-		const plan = JSON.parse(contents);
+		const serializedPlan = JSON.parse(contents);
+
+		if (!isPlan(serializedPlan)) {
+			debug('openPlan: isPlan returned false for serializedPlan');
+			return null;
+		}
+
+		const currentCatalog =
+			(await getCurrentCatalog()) ??
+			({
+				updatedAt: Date.now(),
+			} as Catalog);
+
+		const updateDbConfigs = await getSetting<UpdateDbConfig[]>('updateDbs');
+
+		const plan = deserialize(serializedPlan, currentCatalog, updateDbConfigs);
+
 		if (!isPlan(plan)) {
 			debug('openPlan: isPlan returned false');
 			return null;
@@ -131,7 +276,7 @@ async function openPlan(path: string): Promise<Plan | null> {
 			return auditedPlan;
 		}
 	} catch (e) {
-		debug(`openPlan: unexpected error ${e}`);
+		debug('openPlan: unexpected error', e);
 		return null;
 	}
 }
