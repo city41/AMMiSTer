@@ -10,7 +10,7 @@ import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
-	PlanMissingEntry,
+	PlanGameEntry,
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
 import { BatchGroupBy } from './BatchGroupBy';
@@ -64,7 +64,7 @@ type InternalPlanState = {
 	plan: Plan | null | undefined;
 	isDirty: boolean;
 	criteriaMatch: CatalogEntry[] | null;
-	missingDetailEntry: PlanMissingEntry | null;
+	missingDetailEntry: PlanGameEntry | null;
 };
 
 type PlanState = StateWithHistory<InternalPlanState>;
@@ -76,17 +76,17 @@ const initialState: InternalPlanState = {
 	missingDetailEntry: null,
 };
 
-function getAllGamesInPlan(planDir: PlanGameDirectory): CatalogEntry[] {
-	const games: CatalogEntry[] = [];
+function getAllGamesInPlan(planDir: PlanGameDirectory): PlanGameEntry[] {
+	const games: PlanGameEntry[] = [];
 
 	for (const entry of planDir) {
 		if ('games' in entry) {
 			const subGames = getAllGamesInPlan(entry.games);
 			games.push(...subGames);
-		} else if ('gameName' in entry) {
+		} else {
+			// TODO; what about missing games?
 			games.push(entry);
 		}
-		// the other type, PlanMissingEntry, is ignored on purpose
 	}
 
 	return games;
@@ -159,15 +159,9 @@ function createDirectoriesIfNeeded(plan: Plan, planPath: string[]): void {
 	}
 }
 
-function getEntryName(
-	entry: PlanGameDirectoryEntry | CatalogEntry | PlanMissingEntry
-): string {
+function getEntryName(entry: PlanGameDirectoryEntry | PlanGameEntry): string {
 	if ('games' in entry) {
 		return entry.directoryName;
-	}
-
-	if ('gameName' in entry) {
-		return entry.gameName;
 	}
 
 	return entry.relFilePath;
@@ -200,12 +194,15 @@ const planSlice = createSlice({
 
 				const alreadyInParent = parent.games.some(
 					(g) =>
-						'gameName' in g &&
-						g.files.mra.fileName === catalogEntry.files.mra.fileName
+						'relFilePath' in g &&
+						g.relFilePath === catalogEntry.files.mra.relFilePath
 				);
 
 				if (!alreadyInParent) {
-					parent.games.push(catalogEntry);
+					parent.games.push({
+						db_id: catalogEntry.db_id,
+						relFilePath: catalogEntry.files.mra.relFilePath,
+					});
 					state.isDirty = true;
 				}
 			}
@@ -235,10 +232,9 @@ const planSlice = createSlice({
 				const prevIndex = prevParent.games.findIndex((g) => {
 					if ('directoryName' in g) {
 						return g.directoryName === name;
-					} else if ('gameName' in g) {
-						return g.gameName === name;
 					} else {
 						// TODO: should probably disallow moving missing games
+						// which will have missing: true
 						return g.relFilePath === name;
 					}
 				});
@@ -246,11 +242,9 @@ const planSlice = createSlice({
 				const entry = prevParent.games[prevIndex];
 				const movingNodeName = getEntryName(entry);
 
-				if ('gameName' in entry) {
+				if ('relFilePath' in entry) {
 					const alreadyInParent = newParent.games.some(
-						(g) =>
-							'gameName' in g &&
-							g.files.mra.fileName === entry.files.mra.fileName
+						(g) => getEntryName(g) === entry.relFilePath
 					);
 
 					if (!alreadyInParent) {
@@ -441,21 +435,18 @@ const planSlice = createSlice({
 
 				const currentIndex = favDir.games.findIndex((g) => {
 					return (
-						'gameName' in g &&
-						g.files.mra.fileName === catalogEntry.files.mra.fileName
+						'relFilePath' in g &&
+						g.relFilePath === catalogEntry.files.mra.relFilePath
 					);
 				});
 
 				if (currentIndex > -1) {
 					favDir.games.splice(currentIndex, 1);
 				} else {
-					const newGameName = catalogEntry.gameName;
-
-					const destIndex = favDir.games.findIndex((g) => {
-						const entryName = getEntryName(g);
-						return newGameName.localeCompare(entryName) <= 0;
+					favDir.games.push({
+						db_id: catalogEntry.db_id,
+						relFilePath: catalogEntry.files.mra.relFilePath,
 					});
-					favDir.games.splice(destIndex, 0, catalogEntry);
 					favDir.isExpanded = true;
 				}
 
@@ -473,7 +464,7 @@ const planSlice = createSlice({
 		},
 		setMissingDetailEntry(
 			state: InternalPlanState,
-			action: PayloadAction<PlanMissingEntry>
+			action: PayloadAction<PlanGameEntry>
 		) {
 			state.missingDetailEntry = action.payload;
 		},
@@ -571,15 +562,30 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 			(ce) => ce.manufacturer.includes('Sega') && ce.rotation === 0
 		);
 
-		const capcomFighters = horizontalCapcomEntries.filter((ce) =>
-			ce.categories.some((c) => c.includes('Fight'))
-		);
-		const capcomShooters = horizontalCapcomEntries.filter((ce) =>
-			ce.categories.some((c) => c.includes('Shoot'))
-		);
-		const segaShooters = horizontalSegaEntries.filter((ce) =>
-			ce.categories.some((c) => c.includes('Shoot'))
-		);
+		const capcomFighters = horizontalCapcomEntries
+			.filter((ce) => ce.categories.some((c) => c.includes('Fight')))
+			.map((ce) => {
+				return {
+					db_id: ce.db_id,
+					relFilePath: ce.files.mra.relFilePath,
+				};
+			});
+		const capcomShooters = horizontalCapcomEntries
+			.filter((ce) => ce.categories.some((c) => c.includes('Shoot')))
+			.map((ce) => {
+				return {
+					db_id: ce.db_id,
+					relFilePath: ce.files.mra.relFilePath,
+				};
+			});
+		const segaShooters = horizontalSegaEntries
+			.filter((ce) => ce.categories.some((c) => c.includes('Shoot')))
+			.map((ce) => {
+				return {
+					db_id: ce.db_id,
+					relFilePath: ce.files.mra.relFilePath,
+				};
+			});
 
 		plan.directoryName = 'Demo Plan';
 		plan.games = [
@@ -765,7 +771,7 @@ function bulkAdd({
 			entriesToAdd.forEach((entry) => {
 				if (
 					allGamesInPlan.every(
-						(g) => g.files.mra.fileName !== entry.files.mra.fileName
+						(g) => g.relFilePath !== entry.files.mra.relFilePath
 					)
 				) {
 					dispatch(

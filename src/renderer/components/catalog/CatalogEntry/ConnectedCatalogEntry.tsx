@@ -11,13 +11,13 @@ import {
 	PlanGameDirectoryEntry,
 } from '../../../../main/plan/types';
 
-function isInPlanDir(dir: PlanGameDirectory, mra: string): boolean {
+function isInPlanDir(dir: PlanGameDirectory, mraFilePath: string): boolean {
 	for (const e of dir) {
-		if ('gameName' in e && e.files.mra.fileName === mra) {
+		if ('relFiePath' in e && e.relFiePath === mraFilePath) {
 			return true;
 		}
 		if ('directoryName' in e) {
-			const inSubDir = isInPlanDir(e.games, mra);
+			const inSubDir = isInPlanDir(e.games, mraFilePath);
 			if (inSubDir) {
 				return true;
 			}
@@ -29,7 +29,7 @@ function isInPlanDir(dir: PlanGameDirectory, mra: string): boolean {
 
 function isPlanFavorite(
 	plan: Plan | null | undefined,
-	mra: string
+	mraFilePath: string
 ): boolean | undefined {
 	if (!plan) {
 		return undefined;
@@ -46,7 +46,7 @@ function isPlanFavorite(
 	}
 
 	return (favoriteDir as PlanGameDirectoryEntry).games.some((e) => {
-		if ('gameName' in e && e.files.mra.fileName === mra) {
+		if ('relFilePath' in e && e.relFilePath === mraFilePath) {
 			return true;
 		}
 	});
@@ -80,9 +80,10 @@ function ConnectedCatalogEntry(props: PublicCatalogEntryProps) {
 		dispatch(setDetailEntry(props.entry));
 	}
 
-	const mra = props.entry?.files.mra.fileName;
-	const isInPlan = !!mra && !!plan && isInPlanDir(plan.games, mra);
-	const isFavorite = !!mra && isPlanFavorite(plan, mra);
+	const mraFilePath = props.entry?.files.mra.relFilePath;
+	const isInPlan =
+		!!mraFilePath && !!plan && isInPlanDir(plan.games, mraFilePath);
+	const isFavorite = !!mraFilePath && isPlanFavorite(plan, mraFilePath);
 
 	function handleToggleFavorite() {
 		dispatch(toggleFavorite(props.entry));

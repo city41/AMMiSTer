@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
 import SortableTree, { TreeItem } from 'react-sortable-tree';
-import { CatalogEntry as CatalogEntryType } from '../../../../main/catalog/types';
+import { UpdateDbConfig } from '../../../../main/settings/types';
 import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
-	PlanMissingEntry,
+	PlanGameEntry,
 } from '../../../../main/plan/types';
+import { Catalog } from '../../../../main/catalog/types';
+import { getCatalogEntryForMraPath } from '../../../../main/catalog/util';
 import { DirectoryAddIcon, TrashIcon } from '../../../icons';
 import { PlanTreeItem } from './types';
 import { FocusedDirectory } from './FocusedDirectory';
@@ -15,6 +17,8 @@ import { DirectoryTitle } from './DirectoryTitle';
 
 type InternalPlanProps = {
 	plan: Plan | null;
+	catalog: Catalog | null;
+	updateDbConfigs: UpdateDbConfig[];
 	isDirty: boolean;
 	onItemMove: (args: {
 		prevParentPath: string[];
@@ -40,21 +44,61 @@ type InternalPlanProps = {
 };
 
 function isPlanGameDirectoryEntry(
-	entry: CatalogEntryType | PlanGameDirectoryEntry | PlanMissingEntry
+	entry: PlanGameDirectoryEntry | PlanGameEntry
 ): entry is PlanGameDirectoryEntry {
 	return 'games' in entry;
 }
 
 function getDescendantGames(
-	dir: PlanGameDirectory
-): Array<CatalogEntryType | PlanMissingEntry> {
-	return dir.reduce<Array<CatalogEntryType | PlanMissingEntry>>((accum, e) => {
+	dir: PlanGameDirectory,
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[]
+): PlanGameEntry[] {
+	return dir.reduce<PlanGameEntry[]>((accum, e) => {
 		if (isPlanGameDirectoryEntry(e)) {
-			return accum.concat(getDescendantGames(e.games));
+			return accum.concat(
+				getDescendantGames(e.games, catalog, updateDbConfigs)
+			);
 		} else {
-			return accum.concat(e);
+			const entry = getCatalogEntryForMraPath(
+				e.db_id,
+				e.relFilePath,
+				catalog,
+				updateDbConfigs
+			);
+
+			return accum.concat({
+				...e,
+				missing: !entry,
+			});
 		}
 	}, []);
+}
+
+function getImmediateGames(
+	dir: PlanGameDirectory,
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[]
+): PlanGameEntry[] {
+	return dir.flatMap<PlanGameEntry>((e) => {
+		if (isPlanGameDirectoryEntry(e)) {
+			return [];
+		} else {
+			const entry = getCatalogEntryForMraPath(
+				e.db_id,
+				e.relFilePath,
+				catalog,
+				updateDbConfigs
+			);
+
+			return [
+				{
+					...e,
+					missing: !entry,
+				},
+			];
+		}
+	});
 }
 
 function sortDirectoriesByTitle(
@@ -65,35 +109,76 @@ function sortDirectoriesByTitle(
 }
 
 function sortEntriesByTitle(
-	a: PlanGameDirectoryEntry | CatalogEntryType | PlanMissingEntry,
-	b: PlanGameDirectoryEntry | CatalogEntryType | PlanMissingEntry
-): number {
-	if ('directoryName' in a) {
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[]
+) {
+	return (
+		a: PlanGameDirectoryEntry | PlanGameEntry,
+		b: PlanGameDirectoryEntry | PlanGameEntry
+	): number => {
+		if ('directoryName' in a) {
+			if ('directoryName' in b) {
+				return a.directoryName.localeCompare(b.directoryName);
+			} else {
+				return -1;
+			}
+		}
+
 		if ('directoryName' in b) {
-			return a.directoryName.localeCompare(b.directoryName);
-		} else {
+			return 1;
+		}
+
+		const aEntry = getCatalogEntryForMraPath(
+			a.db_id,
+			a.relFilePath,
+			catalog,
+			updateDbConfigs
+		);
+		const bEntry = getCatalogEntryForMraPath(
+			b.db_id,
+			b.relFilePath,
+			catalog,
+			updateDbConfigs
+		);
+
+		if (!aEntry && bEntry) {
+			return 1;
+		}
+
+		if (aEntry && !bEntry) {
 			return -1;
 		}
-	}
 
-	if ('directoryName' in b) {
-		return 1;
-	}
-
-	const aGameName = 'gameName' in a ? a.gameName : a.relFilePath;
-	const bGameName = 'gameName' in b ? b.gameName : b.relFilePath;
-
-	return aGameName.localeCompare(bGameName);
+		if (!aEntry && !bEntry) {
+			return a.relFilePath.localeCompare(b.relFilePath);
+		} else {
+			return aEntry!.gameName.localeCompare(bEntry!.gameName);
+		}
+	};
 }
 
 function createTreeData(
 	planDir: PlanGameDirectory,
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[],
 	parentPath: string[]
 ): TreeItem<PlanTreeItem>[] {
 	const treeItems = planDir.flatMap((g) => {
 		if (isPlanGameDirectoryEntry(g)) {
-			const subData = createTreeData(g.games, [...parentPath, g.directoryName]);
-			const descendantGames = getDescendantGames(g.games);
+			const subData = createTreeData(g.games, catalog, updateDbConfigs, [
+				...parentPath,
+				g.directoryName,
+			]);
+			const descendantGames = getDescendantGames(
+				g.games,
+				catalog,
+				updateDbConfigs
+			);
+			const immediateGames = getImmediateGames(
+				g.games,
+				catalog,
+				updateDbConfigs
+			);
 
 			return [
 				{
@@ -103,20 +188,24 @@ function createTreeData(
 					children: subData,
 					isDirectory: true,
 					parentPath,
-					immediateGameCount: g.games.filter((g) => !('games' in g)).length,
-					immediateValidGameCount: g.games.filter((g) => 'gameName' in g)
-						.length,
+					immediateGameCount: immediateGames.length,
+					immediateValidGameCount: immediateGames.filter(
+						(g) => !('missing' in g) || !g.missing
+					).length,
 					immediateMissingGameCount: g.games.filter(
-						(g) => !('gameName' in g) && !('games' in g)
+						(g) => 'missing' in g && g.missing
 					).length,
 					totalGameCount: descendantGames.length,
-					totalValidGameCount: descendantGames.filter((g) => 'gameName' in g)
-						.length,
+					totalValidGameCount: descendantGames.filter(
+						(g) => !('missing' in g) || !g.missing
+					).length,
 					totalMissingGameCount: descendantGames.filter(
-						(g) => !('gameName' in g)
+						(g) => 'missing' in g && g.missing
 					).length,
 					// in dev mode, g.games is mutation protected
-					entries: [...g.games].sort(sortEntriesByTitle),
+					entries: [...g.games].sort(
+						sortEntriesByTitle(catalog, updateDbConfigs)
+					),
 					hasAnInvalidDescendant: !!g.hasAnInvalidDescendant,
 				} as TreeItem<PlanTreeItem>,
 			];
@@ -150,6 +239,8 @@ function findFocusedNode(
 
 function Plan({
 	plan,
+	catalog,
+	updateDbConfigs,
 	isDirty,
 	onItemAdd,
 	onItemDelete,
@@ -169,8 +260,11 @@ function Plan({
 	// the fix was to never create a new tree. If we don't have a plan, render a tree with no nodes that is hidden.
 	//
 	// You can go from plan -> no plan using undo: Create a new plan, undo it, create a new plan
-	const planDataSeed = plan ? [plan] : [];
-	const treeData = createTreeData(planDataSeed, []);
+	const planDataSeed = plan && catalog ? [plan] : [];
+	const treeData =
+		plan && catalog
+			? createTreeData(planDataSeed, catalog, updateDbConfigs, [])
+			: [];
 
 	if (plan) {
 		treeData[0].isDirty = isDirty;
@@ -278,9 +372,11 @@ function Plan({
 						}}
 					/>
 				</div>
-				{!!focusedNode && (
+				{!!focusedNode && !!catalog && (
 					<FocusedDirectory
 						focusedNode={focusedNode}
+						catalog={catalog}
+						updateDbConfigs={updateDbConfigs}
 						onBulkAdd={onBulkAdd}
 						onBulkRemoveMissing={onBulkRemoveMissing}
 						onItemAdd={onItemAdd}

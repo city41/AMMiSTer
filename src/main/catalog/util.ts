@@ -1,4 +1,5 @@
-import { CatalogEntry } from './types';
+import { UpdateDbConfig } from '../settings/types';
+import { Catalog, CatalogEntry } from './types';
 
 export function isCatalogEntry(obj: unknown): obj is CatalogEntry {
 	if (!obj) {
@@ -16,4 +17,19 @@ export function isCatalogEntry(obj: unknown): obj is CatalogEntry {
 	}
 
 	return true;
+}
+
+export function getCatalogEntryForMraPath(
+	db_id: string,
+	mraPath: string,
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[]
+): CatalogEntry | undefined {
+	const updateDbConfig = updateDbConfigs.find((udb) => udb.db_id === db_id);
+
+	if (updateDbConfig?.enabled) {
+		const db = catalog[db_id] ?? [];
+
+		return db.find((ce) => ce.files.mra.relFilePath === mraPath);
+	}
 }

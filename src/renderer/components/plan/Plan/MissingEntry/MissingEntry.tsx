@@ -1,9 +1,9 @@
 import React from 'react';
-import { PlanMissingEntry } from '../../../../../main/plan/types';
+import { PlanGameEntry } from '../../../../../main/plan/types';
 import { QuestionMarkCircleIcon } from '../../../../icons';
 
 type PublicMissingEntryProps = {
-	entry: PlanMissingEntry;
+	entry: PlanGameEntry;
 };
 
 type InternalMissingEntryProps = {

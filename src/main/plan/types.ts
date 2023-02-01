@@ -3,26 +3,21 @@ import { CatalogEntry, HashedCatalogFileEntry } from '../catalog/types';
 // Common Plan types
 // both serialized and hydrated use this type
 
-export type PlanMissingEntry = Pick<
-	HashedCatalogFileEntry,
-	'db_id' | 'relFilePath'
-> & { missing: true };
-
 // Plan types
 // this is a fully hydrated plan being used by the app
 
-export type PlanGameDirectory = Array<
-	CatalogEntry | PlanGameDirectoryEntry | PlanMissingEntry
+export type LegacyPlanGameDirectory = Array<
+	CatalogEntry | LegacyPlanGameDirectoryEntry
 >;
 
-export type PlanGameDirectoryEntry = {
+export type LegacyPlanGameDirectoryEntry = {
 	directoryName: string;
 	isExpanded: boolean;
-	games: PlanGameDirectory;
+	games: LegacyPlanGameDirectory;
 	hasAnInvalidDescendant?: boolean;
 };
 
-export type Plan = PlanGameDirectoryEntry & {
+export type LegacyPlan = LegacyPlanGameDirectoryEntry & {
 	createdAt: number;
 	updatedAt: number;
 };
@@ -35,21 +30,21 @@ export type Plan = PlanGameDirectoryEntry & {
 // the catalog changes due to updates, the plan should just use the latest
 // versions of games from the catalog
 
-export type SerializedGameEntry = Pick<
+export type PlanGameEntry = Pick<
 	HashedCatalogFileEntry,
 	'db_id' | 'relFilePath'
->;
+> & { missing?: boolean };
 
-export type SerializedPlanGameDirectory = Array<
-	SerializedGameEntry | SerializedPlanGameDirectoryEntry | PlanMissingEntry
->;
-export type SerializedPlanGameDirectoryEntry = {
+export type PlanGameDirectoryEntry = {
 	directoryName: string;
 	isExpanded: boolean;
-	games: SerializedPlanGameDirectory;
+	games: PlanGameDirectory;
 	hasAnInvalidDescendant?: boolean;
 };
-export type SerializedPlan = SerializedPlanGameDirectoryEntry & {
+
+export type PlanGameDirectory = Array<PlanGameEntry | PlanGameDirectoryEntry>;
+
+export type Plan = PlanGameDirectoryEntry & {
 	createdAt: number;
 	updatedAt: number;
 };

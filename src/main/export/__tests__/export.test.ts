@@ -10,8 +10,9 @@ import {
 	DestFileOperationPath,
 	FileClient,
 } from '../types';
-import { Plan } from '../../plan/types';
-import { CatalogEntry } from '../../catalog/types';
+import { Plan, PlanGameEntry } from '../../plan/types';
+import { CatalogEntry } from 'src/main/catalog/types';
+import { Settings, UpdateDbConfig } from 'src/main/settings/types';
 
 jest.mock('node:fs', () => {
 	return {
@@ -52,13 +53,41 @@ jest.mock('winston', () => {
 
 jest.mock('../../settings', () => {
 	return {
-		getSetting: jest.fn().mockResolvedValue('mock-setting'),
+		getSetting: jest.fn().mockImplementation((settingKey: keyof Settings) => {
+			if (settingKey === 'updateDbs') {
+				return [
+					{
+						db_id: 'mock_db',
+						enabled: true,
+					},
+				] as UpdateDbConfig[];
+			} else {
+				return 'mock-setting';
+			}
+		}),
 	};
 });
 
 jest.mock('../../catalog', () => {
 	return {
-		getCurrentCatalog: jest.fn().mockResolvedValue({}),
+		getCurrentCatalog: jest.fn().mockResolvedValue({
+			updatedAt: Date.now(),
+			mock_db: [
+				Mock.of<CatalogEntry>({
+					db_id: 'mock_db',
+					gameName: 'Mock game',
+					files: {
+						mra: {
+							db_id: 'mock_db',
+							type: 'mra',
+							relFilePath: '_Arcade/foo.mra',
+							fileName: 'foo.mra',
+						} as const,
+						roms: [],
+					},
+				}),
+			],
+		}),
 	};
 });
 
@@ -339,18 +368,9 @@ describe('export', function () {
 			const plan = Mock.of<Plan>({
 				directoryName: 'mock plan',
 				games: [
-					Mock.of<CatalogEntry>({
+					Mock.of<PlanGameEntry>({
 						db_id: 'mock_db',
-						gameName: 'Mock game',
-						files: {
-							mra: {
-								db_id: 'mock_db',
-								type: 'mra',
-								relFilePath: '_Arcade/foo.mra',
-								fileName: 'foo.mra',
-							} as const,
-							roms: [],
-						},
+						relFilePath: '_Arcade/foo.mra',
 					}),
 				],
 			});

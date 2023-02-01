@@ -5,6 +5,7 @@ import {
 	Catalog,
 	CatalogEntry as CatalogEntryType,
 } from '../../../../main/catalog/types';
+import { PlanGameEntry } from '../../../../main/plan/types';
 import { Modal, ModalProps } from '../../Modal';
 import { Criteria as CriteriaCmp } from './Criteria';
 import { Button } from '../../Button';
@@ -17,7 +18,7 @@ type PublicBulkAddModalProps = ModalProps & { className?: string };
 
 type InternalBulkAddModalProps = {
 	catalog: Catalog;
-	allGamesInPlan: CatalogEntryType[];
+	allGamesInPlan: PlanGameEntry[];
 	destination: string;
 	criteriaMatch: CatalogEntryType[] | null;
 	onCriteriaChange: (criteria: BulkAddCriteria[]) => void;
@@ -60,7 +61,7 @@ function BulkAddModal({
 			(cm) =>
 				!addOnlyNew ||
 				allGamesInPlan.every(
-					(gip) => gip.files.mra.fileName !== cm.files.mra.fileName
+					(gip) => gip.relFilePath !== cm.files.mra.relFilePath
 				)
 		).length;
 	}, [addOnlyNew, allGamesInPlan, criteriaMatch]);
@@ -170,8 +171,7 @@ function BulkAddModal({
 													'opacity-30':
 														addOnlyNew &&
 														allGamesInPlan.some(
-															(g) =>
-																g.files.mra.fileName === cm.files.mra.fileName
+															(g) => g.relFilePath === cm.files.mra.relFilePath
 														),
 												}
 											)}
