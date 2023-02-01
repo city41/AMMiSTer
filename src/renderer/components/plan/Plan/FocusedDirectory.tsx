@@ -6,13 +6,17 @@ import { PlanTreeItem } from './types';
 import { CatalogEntry } from '../../catalog/CatalogEntry';
 import { TrashIcon } from '../../../icons';
 import { DirectoryEntry } from './DirectoryEntry';
-import { isCatalogEntry } from '../../../../main/catalog/util';
+import { UpdateDbConfig } from '../../../../main/settings/types';
+import { Catalog as CatalogType } from '../../../../main/catalog/types';
+import { getCatalogEntryForMraPath } from '../../../../main/catalog/util';
 import { MissingEntry } from './MissingEntry';
 
 type FocusedDirectoryProps = {
 	className?: string;
 	style?: CSSProperties;
 	focusedNode: TreeItem<PlanTreeItem>;
+	catalog: CatalogType;
+	updateDbConfigs: UpdateDbConfig[];
 	planName: string;
 	onItemAdd: (args: {
 		parentPath: string[];
@@ -28,6 +32,8 @@ function FocusedDirectory({
 	className,
 	style,
 	focusedNode,
+	catalog,
+	updateDbConfigs,
 	planName,
 	onItemAdd,
 	onBulkAdd,
@@ -109,12 +115,21 @@ function FocusedDirectory({
 						if ('directoryName' in g) {
 							entryName = g.directoryName;
 							el = <DirectoryEntry className="py-2" directory={g} />;
-						} else if (isCatalogEntry(g)) {
-							entryName = g.gameName;
-							el = <CatalogEntry entry={g} hideInPlan />;
 						} else {
-							entryName = g.relFilePath;
-							el = <MissingEntry entry={g} />;
+							const catalogEntry = getCatalogEntryForMraPath(
+								g.db_id,
+								g.relFilePath,
+								catalog,
+								updateDbConfigs
+							);
+
+							if (catalogEntry) {
+								entryName = catalogEntry.gameName;
+								el = <CatalogEntry entry={catalogEntry} hideInPlan />;
+							} else {
+								entryName = g.relFilePath;
+								el = <MissingEntry entry={{ ...g, missing: true }} />;
+							}
 						}
 
 						return (

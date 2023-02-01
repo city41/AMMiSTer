@@ -9,7 +9,7 @@ import {
 	Plan,
 	PlanGameDirectory,
 	PlanGameDirectoryEntry,
-	PlanMissingEntry,
+	PlanGameEntry,
 } from '../plan/types';
 import {
 	SrcFileOperationPath,
@@ -28,9 +28,10 @@ import { FTPFileClient } from './FTPFileClient';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
 import { Catalog, CatalogEntry } from '../catalog/types';
 import { LocalFileClient } from './LocalFileClient';
-import { ExportOptimization } from '../settings/types';
+import { ExportOptimization, UpdateDbConfig } from '../settings/types';
 import { getCurrentCatalog } from '../catalog';
-import { isCatalogEntry } from '../catalog/util';
+import { isPlanGameEntry } from '../plan';
+import { getCatalogEntryForMraPath } from '../catalog/util';
 
 class CancelExportError extends Error {}
 
@@ -109,7 +110,7 @@ async function clearOldLogs(initiator: string) {
 }
 
 function isPlanGameDirectoryEntry(
-	obj: CatalogEntry | PlanGameDirectoryEntry | PlanMissingEntry
+	obj: PlanGameEntry | PlanGameDirectoryEntry
 ): obj is PlanGameDirectoryEntry {
 	return 'directoryName' in obj;
 }
@@ -442,6 +443,8 @@ function getSrcFileOperationPathsFromCatalogEntry(
 function getSrcPathsFromPlan(
 	planDir: PlanGameDirectory,
 	currentDirPath: string,
+	catalog: Catalog,
+	updateDbConfigs: UpdateDbConfig[],
 	destPathJoiner: PathJoiner
 ): SrcFileOperationPath[] {
 	const paths: SrcFileOperationPath[] = [];
@@ -452,12 +455,27 @@ function getSrcPathsFromPlan(
 				entry.games,
 				// mra directories need to start with _
 				path.join(currentDirPath, `_${entry.directoryName}`),
+				catalog,
+				updateDbConfigs,
 				destPathJoiner
 			);
 			paths.push(...subPaths);
-		} else if (isCatalogEntry(entry)) {
+		} else if (isPlanGameEntry(entry)) {
+			const catalogEntry = getCatalogEntryForMraPath(
+				entry.db_id,
+				entry.relFilePath,
+				catalog,
+				updateDbConfigs
+			);
+
+			if (!catalogEntry) {
+				throw new Error(
+					`getSrcPathsFromPlan: failed to find CatalogEntry for: ${entry.relFilePath}`
+				);
+			}
+
 			const entryPaths = getSrcFileOperationPathsFromCatalogEntry(
-				entry,
+				catalogEntry,
 				currentDirPath,
 				destPathJoiner
 			);
@@ -500,9 +518,15 @@ async function getAllSrcPaths(
 	catalog: Catalog,
 	destPathJoiner: PathJoiner
 ): Promise<SrcFileOperationPath[]> {
+	const updateDbConfigs = await settings.getSetting<UpdateDbConfig[]>(
+		'updateDbs'
+	);
+
 	const srcPathsFromPlan = getSrcPathsFromPlan(
 		plan.games,
 		'_Arcade',
+		catalog,
+		updateDbConfigs,
 		destPathJoiner
 	);
 

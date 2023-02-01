@@ -25,7 +25,10 @@ import { BulkAddModal } from '../BulkAddModal';
 
 function ConnectedPlan() {
 	const plan = useSelector((state: AppState) => state.plan.present.plan);
+	const catalog = useSelector((state: AppState) => state.catalog.catalog);
 	const isDirty = useSelector((state: AppState) => state.plan.present.isDirty);
+	const updateDbConfigs =
+		useSelector((state: AppState) => state.settings.settings?.updateDbs) ?? [];
 	const [bulkAddDestination, setBulkAddDestination] = useState<string | null>(
 		null
 	);
@@ -138,6 +141,12 @@ function ConnectedPlan() {
 		return null;
 	}
 
+	// if there is no catalog, then main should be loading it.
+	// If there isn't a catalog at all, then a plan should not be loading
+	if (!catalog) {
+		return null;
+	}
+
 	// either plan is an object or null at this point, if null,
 	// then <Plan /> will show the blank slate
 
@@ -145,6 +154,8 @@ function ConnectedPlan() {
 		<>
 			<Plan
 				plan={plan}
+				catalog={catalog}
+				updateDbConfigs={updateDbConfigs}
 				isDirty={isDirty}
 				onItemAdd={handleItemAdd}
 				onItemDelete={handleItemDelete}

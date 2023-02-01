@@ -1,12 +1,12 @@
 import React from 'react';
-import { PlanMissingEntry } from '../../../../main/plan/types';
+import { PlanGameEntry } from '../../../../main/plan/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
 import { Modal } from '../../Modal';
 
 type MissingEntryModalProps = {
 	isOpen: boolean;
 	onRequestClose?: () => void;
-	entry: PlanMissingEntry;
+	entry: PlanGameEntry;
 	updateDbConfigs: UpdateDbConfig[];
 };
 
