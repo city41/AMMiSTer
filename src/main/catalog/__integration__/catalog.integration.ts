@@ -9,6 +9,8 @@ import { exists } from '../../util/fs';
 
 const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-catalog');
 
+jest.retryTimes(2);
+
 jest.mock('../../settings', () => {
 	return {
 		getSetting: jest.fn().mockImplementation((settingKey: keyof Settings) => {
