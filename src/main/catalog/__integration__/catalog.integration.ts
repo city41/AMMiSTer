@@ -8,8 +8,6 @@ import { Catalog } from '../types';
 import { exists } from '../../util/fs';
 
 const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-catalog');
-// ten minutes
-const INTEGRATION_TIMEOUT = 10 * 60 * 1000;
 
 jest.mock('../../settings', () => {
 	return {
@@ -36,65 +34,47 @@ jest.mock('../../settings', () => {
 	};
 });
 
-describe('catalog integration', function () {
-	beforeEach(async function () {
-		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
-	});
+async function assertCatalog(catalog: Catalog) {
+	const { updatedAt, ...restOfCatalog } = catalog;
 
-	it(
-		'should update with one enabled db',
-		async function () {
-			const callback = jest.fn().mockReturnValue(true);
-			await updateCatalog(callback);
+	expect(typeof updatedAt).toBe('number');
 
-			expect(callback).toHaveBeenNthCalledWith(1, {
-				fresh: true,
-				message: 'Getting the latest MiSTer Arcade Database...',
-			});
-			expect(callback).toHaveBeenNthCalledWith(2, {
-				fresh: true,
-				message: 'Checking for anything new in The Ypsilon Unofficial',
-			});
-			expect(callback).toHaveBeenNthCalledWith(callback.mock.calls.length - 1, {
-				fresh: true,
-				message: 'Added Nemesis (ROM version) to catalog',
-			});
+	const atLeastOneDbInCatalog = defaultUpdateDbs.find(
+		(udb) => !!catalog[udb.db_id]
+	);
+	expect(!!atLeastOneDbInCatalog).toBe(true);
 
-			const lastCallArgs = callback.mock.lastCall?.[0];
-			expect(lastCallArgs.complete).toBe(true);
-			expect(lastCallArgs.updates).toHaveLength(2);
+	const entries = Object.values(restOfCatalog).flat(1);
 
-			const catalog = lastCallArgs.catalog as Catalog;
-			const entries = catalog['theypsilon_unofficial_distribution'];
-			expect(entries).toHaveLength(1);
+	for (const entry of entries) {
+		const mra = entry.files.mra;
+		expect(mra.status).toBe('ok');
 
-			const mra = entries[0].files.mra;
-			expect(mra.status).toBe('ok');
+		const mraPath = path.resolve(
+			TMP_DIR,
+			'gameCache',
+			mra.db_id,
+			mra.relFilePath
+		);
+		const mraExists = await exists(mraPath);
+		expect(mraExists).toBe(true);
 
-			const mraPath = path.resolve(
-				TMP_DIR,
-				'gameCache',
-				mra.db_id,
-				mra.relFilePath
-			);
-			const mraExists = await exists(mraPath);
-			expect(mraExists).toBe(true);
+		const rbf = entry.files.rbf;
+		expect(rbf?.status).toBe('ok');
 
-			const rbf = entries[0].files.rbf;
-			expect(rbf?.status).toBe('ok');
+		const rbfPath = path.resolve(
+			TMP_DIR,
+			'gameCache',
+			rbf!.db_id,
+			rbf!.relFilePath
+		);
+		const rbfExists = await exists(rbfPath);
+		expect(rbfExists).toBe(true);
 
-			const rbfPath = path.resolve(
-				TMP_DIR,
-				'gameCache',
-				rbf!.db_id,
-				rbf!.relFilePath
-			);
-			const rbfExists = await exists(rbfPath);
-			expect(rbfExists).toBe(true);
-
-			// should not have downloaded any roms
-			expect(entries[0].files.roms).toHaveLength(1);
-			const rom = entries[0].files.roms[0];
+		// should not have downloaded any roms, but their
+		// metadata should still be in the catalog
+		expect(entry.files.roms.length).toBeGreaterThan(0);
+		for (const rom of entry.files.roms) {
 			expect(rom?.status).toBe('missing');
 
 			const romPath = path.resolve(
@@ -106,7 +86,132 @@ describe('catalog integration', function () {
 
 			const romExists = await exists(romPath);
 			expect(romExists).toBe(false);
-		},
-		INTEGRATION_TIMEOUT
+		}
+	}
+}
+
+async function changeFirstMra(catalog: Catalog) {
+	const { updatedAt, ...restOfCatalog } = catalog;
+
+	expect(typeof updatedAt).toBe('number');
+
+	const atLeastOneDbInCatalog = defaultUpdateDbs.find(
+		(udb) => !!catalog[udb.db_id]
 	);
+	expect(!!atLeastOneDbInCatalog).toBe(true);
+
+	const entries = Object.values(restOfCatalog).flat(1);
+
+	expect(entries.length).toBeGreaterThan(0);
+
+	const mra = entries[0].files.mra;
+
+	const mraPath = path.resolve(
+		TMP_DIR,
+		'gameCache',
+		mra.db_id,
+		mra.relFilePath
+	);
+
+	await fsp.writeFile(
+		mraPath,
+		'Changing the mra so hash changes, forcing an update'
+	);
+}
+
+describe('catalog integration', function () {
+	beforeAll(async function () {
+		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
+	});
+
+	afterEach(async function () {
+		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
+	});
+
+	it('should do a fresh update', async function () {
+		const callback = jest.fn().mockReturnValue(true);
+		await updateCatalog(callback);
+
+		expect(callback).toHaveBeenNthCalledWith(1, {
+			fresh: true,
+			message: 'Getting the latest MiSTer Arcade Database...',
+		});
+		expect(callback).toHaveBeenNthCalledWith(2, {
+			fresh: true,
+			message: 'Checking for anything new in The Ypsilon Unofficial',
+		});
+		expect(callback).toHaveBeenNthCalledWith(callback.mock.calls.length - 1, {
+			fresh: true,
+			message: 'Added Nemesis (ROM version) to catalog',
+		});
+
+		const lastCallArgs = callback.mock.lastCall?.[0];
+		expect(lastCallArgs.complete).toBe(true);
+		expect(lastCallArgs.updates).toHaveLength(2);
+		expect(lastCallArgs.message).toBe('Update finished');
+
+		const catalog = lastCallArgs.catalog as Catalog;
+		await assertCatalog(catalog);
+	});
+
+	it('should not download anything if the second update has nothing new', async function () {
+		const callback = jest.fn().mockReturnValue(true);
+		await updateCatalog(callback);
+
+		callback.mockClear();
+
+		await updateCatalog(callback);
+
+		expect(callback).toHaveBeenNthCalledWith(1, {
+			fresh: false,
+			message: 'Getting the latest MiSTer Arcade Database...',
+		});
+		expect(callback).toHaveBeenNthCalledWith(2, {
+			fresh: false,
+			message: 'Checking for anything new in The Ypsilon Unofficial',
+		});
+
+		const lastCallArgs = callback.mock.lastCall?.[0];
+		expect(lastCallArgs.complete).toBe(true);
+		expect(lastCallArgs.updates).toHaveLength(0);
+		expect(lastCallArgs.message).toBe('No updates available');
+
+		const catalog = lastCallArgs.catalog as Catalog;
+		await assertCatalog(catalog);
+	});
+
+	it('should redownload a file if it was updated', async function () {
+		const callback = jest.fn().mockReturnValue(true);
+		await updateCatalog(callback);
+
+		const lastCallArgs = callback.mock.lastCall?.[0];
+		const catalog = lastCallArgs.catalog as Catalog;
+
+		await changeFirstMra(catalog);
+
+		callback.mockClear();
+
+		await updateCatalog(callback);
+
+		expect(callback).toHaveBeenNthCalledWith(1, {
+			fresh: false,
+			message: 'Getting the latest MiSTer Arcade Database...',
+		});
+		expect(callback).toHaveBeenNthCalledWith(2, {
+			fresh: false,
+			message: 'Checking for anything new in The Ypsilon Unofficial',
+		});
+		expect(callback).toHaveBeenNthCalledWith(3, {
+			fresh: false,
+			message: 'Updating Nemesis (ROM Version).mra',
+		});
+
+		const lastCallArgs2 = callback.mock.lastCall?.[0];
+		expect(lastCallArgs2.complete).toBe(true);
+		expect(lastCallArgs2.updates).toHaveLength(1);
+		expect(lastCallArgs2.message).toBe('Update finished');
+
+		const catalog2 = lastCallArgs2.catalog as Catalog;
+		await assertCatalog(catalog2);
+	});
 });
