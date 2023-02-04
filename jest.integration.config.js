@@ -1,6 +1,6 @@
 module.exports = {
 	roots: ['<rootDir>/src'],
-	testRegex: '(/__tests__/.*|(\\.|/)test)\\.tsx?$',
+	testRegex: '/__integration__/.*integration\\.ts$',
 	preset: 'ts-jest',
 	testEnvironment: 'node',
 	globals: {

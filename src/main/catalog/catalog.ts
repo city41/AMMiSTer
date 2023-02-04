@@ -178,6 +178,12 @@ function getFileMd5Hash(data: Buffer | string): string {
 	return crypto.createHash('md5').update(data).digest('hex');
 }
 
+function isErrorWithCode(e: unknown): e is { code: string } {
+	return (
+		e !== null && (typeof e === 'object' || e instanceof Error) && 'code' in e
+	);
+}
+
 /**
  * Given a FileEntry just pulled from a db file, determines what kind of
  * update is needed to make sure AMMister's gameCache has the latest version
@@ -212,7 +218,7 @@ async function determineUpdate(
 			updateReason: 'updated',
 		};
 	} catch (e) {
-		if (e instanceof Error && 'code' in e && e.code === 'ENOENT') {
+		if (isErrorWithCode(e) && e.code === 'ENOENT') {
 			return {
 				fileEntry,
 				updateReason: 'missing',
