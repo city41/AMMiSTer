@@ -877,7 +877,11 @@ async function updateCatalog(
 		const catalogPath = path.resolve(gameCacheDir, 'catalog.json');
 		await fsp.writeFile(catalogPath, JSON.stringify(finalCatalog, null, 2));
 
-		const message = catalogUpdated ? 'Update finished' : 'No updates available';
+		const allUpdates = updates.concat(romUpdates);
+		const message =
+			catalogUpdated || allUpdates.length > 0
+				? 'Update finished'
+				: 'No updates available';
 
 		const duration = Date.now() - start;
 
@@ -887,7 +891,7 @@ async function updateCatalog(
 			message,
 			complete: true,
 			catalog: finalAuditedCatalog,
-			updates: updates.concat(romUpdates),
+			updates: allUpdates,
 			duration,
 		});
 
