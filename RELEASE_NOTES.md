@@ -4,6 +4,18 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.23.0
+
+- [All] Verifying the files in the catalog are all ok
+- [All] Plans alerting to corrupt or missing files
+- [All] Minor tweaks/fixes to how large plans scroll
+- [All] Can cancel an export
+- [All] Minor tweaks to styling
+- [All] Writing warning.txt in the gameCache
+- [All] Plans sort games correctly now
+
+The verifying of the catalog and plans require a lot of changes. So possibly there's some bugs were added.
+
 ## Version 0.22.0
 
 - [All] Bulk add: toggle to skip games already in plan
