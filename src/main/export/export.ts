@@ -760,8 +760,8 @@ async function doExport(
 			});
 		}
 	} finally {
-		exportLogger.close();
 		await Promise.all([client.disconnect(), turnLogIntoArray(logFilePath)]);
+		exportLogger.close();
 	}
 }
 
