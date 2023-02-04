@@ -4,6 +4,7 @@ import { AppState, dispatch } from '../../../store';
 import { getCurrentCatalog, updateCatalog } from '../catalogSlice';
 import { Catalog } from './Catalog';
 import { CatalogEmptyState } from './CatalogEmptyState';
+import { CatalogLoading } from './CatalogLoading';
 
 function ConnectedCatalog() {
 	useEffect(() => {
@@ -23,10 +24,10 @@ function ConnectedCatalog() {
 	}
 
 	// main hasn't sent us the catalog yet, we dont yet know
-	// if there is one. Since this only takes a second or so,
-	// the "loading state" is just blank
+	// if there is one. Due to auditing the catalog taking a bit,
+	// we will pop a loading state
 	if (catalog === undefined) {
-		return null;
+		return <CatalogLoading />;
 	}
 
 	// still waiting for the settings from main. This should virtually never
