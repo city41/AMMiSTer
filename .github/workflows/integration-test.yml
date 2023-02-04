@@ -1,11 +1,11 @@
-name: Unit Test
+name: Integration Test
 
 on:
   - pull_request
 
 jobs:
-  unit-test:
-    name: Unit Test
+  integration-test:
+    name: Integration Test
     runs-on: ubuntu-latest
 
     steps:
@@ -20,5 +20,5 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Unit Test
-        run: yarn test:unit
+      - name: Integration Test
+        run: yarn test:integration

@@ -1,55 +1,9 @@
 import path from 'node:path';
 import { Mock } from 'ts-mockery';
-import {
-	buildFileOperations,
-	buildDestFileOperationPath,
-	doExport,
-} from '../export';
-import {
-	SrcFileOperationPath,
-	DestFileOperationPath,
-	FileClient,
-} from '../types';
-import { Plan, PlanGameEntry } from '../../plan/types';
+import { buildFileOperations, buildDestFileOperationPath } from '../export';
+import { SrcFileOperationPath, DestFileOperationPath } from '../types';
 import { CatalogEntry } from 'src/main/catalog/types';
 import { Settings, UpdateDbConfig } from 'src/main/settings/types';
-
-jest.mock('node:fs', () => {
-	return {
-		createReadStream: jest.fn().mockReturnValue(''),
-	};
-});
-jest.mock('node:fs/promises', () => {
-	return {
-		readdir: jest.fn().mockResolvedValue([]),
-		readFile: jest.fn().mockResolvedValue(''),
-		writeFile: jest.fn().mockResolvedValue(''),
-	};
-});
-jest.mock('winston', () => {
-	return {
-		format: {
-			errors: jest.fn(),
-			metadata: jest.fn(),
-			json: jest.fn(),
-			combine: jest.fn(),
-		},
-		createLogger: jest.fn().mockReturnValue({
-			debug: jest.fn(),
-			info: jest.fn(),
-			error: jest.fn(),
-			child: jest.fn().mockReturnValue({
-				debug: jest.fn(),
-				info: jest.fn(),
-				error: jest.fn(),
-			}),
-			close: jest.fn(),
-		}),
-		transports: {
-			File: jest.fn(),
-		},
-	};
-});
 
 jest.mock('../../settings', () => {
 	return {
@@ -363,55 +317,5 @@ describe('export', function () {
 		});
 	});
 
-	describe('doExport', function () {
-		it('should do a very basic export', async function () {
-			const plan = Mock.of<Plan>({
-				directoryName: 'mock plan',
-				games: [
-					Mock.of<PlanGameEntry>({
-						db_id: 'mock_db',
-						relFilePath: '_Arcade/foo.mra',
-					}),
-				],
-			});
-
-			// return true to indicate we don't want to cancel
-			const callback = jest.fn().mockReturnValue(true);
-
-			const mockClient = Mock.of<FileClient>({
-				connect: jest.fn().mockResolvedValue(''),
-				disconnect: jest.fn().mockResolvedValue(''),
-				getMountPath: jest.fn().mockReturnValue(''),
-				getDestinationPathJoiner: jest.fn().mockReturnValue(path.join),
-				mkDir: jest.fn().mockResolvedValue(''),
-				listDir: jest.fn().mockResolvedValue(''),
-				putFile: jest.fn().mockResolvedValue(''),
-			});
-
-			const clientFactory = () => mockClient;
-
-			await doExport(plan, callback, 'unit-tests', 'mister', clientFactory);
-
-			const callbackMessages = callback.mock.calls.map((c) => c[0].message);
-
-			expect(callbackMessages).toEqual([
-				'Connecting...',
-				'Determining what needs to be copied...',
-				'Copying: _Arcade/foo.mra',
-				'Cleaning up empty directories',
-				'Export complete in 0.00 seconds',
-			]);
-		});
-
-		it('should do a speed optimized export', async function () {
-			// settings.getSetting = jest
-			// 	.fn()
-			// 	.mockImplementation((key: keyof Settings) => {
-			// 		if (key === 'exportOptimization') {
-			// 			return 'speed';
-			// 		}
-			// 		return 'mock-setting';
-			// 	});
-		});
-	});
+	describe('doExport', function () {});
 });
