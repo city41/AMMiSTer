@@ -14,6 +14,9 @@ import { DirectoryAddIcon, TrashIcon } from '../../../icons';
 import { PlanTreeItem } from './types';
 import { FocusedDirectory } from './FocusedDirectory';
 import { DirectoryTitle } from './DirectoryTitle';
+import { ResolveMissingGames } from '../ResolveMissingGames';
+
+type PlanMode = 'tree' | 'resolve';
 
 type InternalPlanProps = {
 	plan: Plan | null;
@@ -252,6 +255,7 @@ function Plan({
 	onBulkAdd,
 	onBulkRemoveMissing,
 }: InternalPlanProps) {
+	const [mode, setMode] = useState<PlanMode>('tree');
 	const [focusedId, setFocusedId] = useState('');
 
 	// this craziness of the planDataSeed and hidden class is due to react-sortable-tree.
@@ -279,8 +283,29 @@ function Plan({
 			})}
 			style={{ height: 'calc(100vh - 2rem)' }}
 		>
-			<div className="w-full h-full rounded bg-white border border-gray-200 shadow p-4 pr-0 grid grid-cols-3">
-				<div className="plan-tree-container w-full overflow-x-auto overflow-y-auto col-span-2">
+			<div
+				className={clsx(
+					'w-full h-full rounded bg-white border border-gray-200 shadow p-4 pr-0 grid grid-cols-3',
+					{
+						hidden: mode !== 'tree',
+					}
+				)}
+			>
+				<div className="plan-tree-container w-full overflow-x-auto overflow-y-auto col-span-2 flex flex-col gap-y-2">
+					{treeData[0]?.totalMissingGameCount > 0 && (
+						<div className="bg-red-50 text-sm px-2 py-1">
+							{treeData[0].totalMissingGameCount} game
+							{treeData[0].totalMissingGameCount === 1 ? '' : 's'} are missing{' '}
+							<a
+								className="text-blue-600 text-sm underline cursor-pointer"
+								onClick={() => {
+									setMode('resolve');
+								}}
+							>
+								resolve
+							</a>
+						</div>
+					)}
 					<SortableTree<PlanTreeItem>
 						treeData={treeData}
 						onChange={() => {}}
@@ -385,6 +410,14 @@ function Plan({
 					/>
 				)}
 			</div>
+			{mode === 'resolve' && !!plan && !!catalog && (
+				<ResolveMissingGames
+					plan={plan}
+					catalog={catalog}
+					updateDbConfigs={updateDbConfigs}
+					onClose={() => setMode('tree')}
+				/>
+			)}
 		</div>
 	);
 }
