@@ -14,6 +14,7 @@ import {
 } from '../../../main/plan/types';
 import { AppState } from '../../store';
 import { BatchGroupBy } from './BatchGroupBy';
+import { MissingGameToResolve } from './ResolveMissingGames/ResolveMissingGameEntry';
 
 const batchGroupBy = new BatchGroupBy();
 
@@ -471,6 +472,37 @@ const planSlice = createSlice({
 		clearMissingDetailEntry(state: InternalPlanState) {
 			state.missingDetailEntry = null;
 		},
+		resolveMissingGames(
+			state: InternalPlanState,
+			action: PayloadAction<MissingGameToResolve[]>
+		) {
+			if (state.plan) {
+				const missingGamesToResolve = action.payload;
+
+				missingGamesToResolve.forEach((mg) => {
+					const parent = getNode(
+						state.plan!,
+						[state.plan!.directoryName].concat(mg.planPath.split('/'))
+					);
+
+					const initialCount = parent.games.length;
+
+					parent.games = parent.games.filter((g) => {
+						return 'games' in g || g.relFilePath !== mg.mraPath;
+					});
+
+					state.isDirty = state.isDirty || initialCount > parent.games.length;
+
+					if (mg.replacementEntry) {
+						parent.games.push({
+							db_id: mg.replacementEntry.db_id,
+							relFilePath: mg.replacementEntry.files.mra.relFilePath,
+						});
+						state.isDirty = true;
+					}
+				});
+			}
+		},
 	},
 });
 
@@ -820,6 +852,7 @@ const {
 	resetCriteriaMatch,
 	setMissingDetailEntry,
 	clearMissingDetailEntry,
+	resolveMissingGames,
 } = planSlice.actions;
 
 const undoableReducer = undoable(reducer, {
@@ -859,6 +892,7 @@ export {
 	resetCriteriaMatch,
 	setMissingDetailEntry,
 	clearMissingDetailEntry,
+	resolveMissingGames,
 	undo,
 	redo,
 	getAllGamesInPlan,
