@@ -5,6 +5,8 @@ import { Meta } from '@storybook/react';
 import { BulkAddModal } from './BulkAddModal';
 import { mockCatalogEntry } from '../../catalog/mockCatalogEntry';
 import { Catalog } from '../../../../main/catalog/types';
+import { Provider } from 'react-redux';
+import { store } from '../../../store';
 
 const meta: Meta = {
 	title: 'BulkAddModal',
@@ -52,16 +54,18 @@ export const InSubDirectory = () => {
 export const HasMatches = () => {
 	return (
 		<DndProvider backend={HTML5Backend}>
-			<BulkAddModal
-				isOpen
-				destination="Capcom/games/fighters"
-				criteriaMatch={[mockCatalogEntry, mockCatalogEntry]}
-				onCriteriaChange={() => {}}
-				onApply={() => {}}
-				onCancel={() => {}}
-				catalog={mockCatalog}
-				allGamesInPlan={[]}
-			/>
+			<Provider store={store}>
+				<BulkAddModal
+					isOpen
+					destination="Capcom/games/fighters"
+					criteriaMatch={[mockCatalogEntry, mockCatalogEntry]}
+					onCriteriaChange={() => {}}
+					onApply={() => {}}
+					onCancel={() => {}}
+					catalog={mockCatalog}
+					allGamesInPlan={[]}
+				/>
+			</Provider>
 		</DndProvider>
 	);
 };
