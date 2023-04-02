@@ -6,7 +6,7 @@ import {
 	MissingGameToResolve,
 	ResolveMissingGameEntry,
 } from './ResolveMissingGameEntry';
-import { DangerIcon } from 'src/renderer/icons';
+import { DangerIcon } from '../../../icons';
 
 type InternalResolveMissingGamesProps = {
 	missingGames: MissingGameToResolve[];
