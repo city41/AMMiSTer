@@ -4,6 +4,12 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.24.0
+
+- [All] A new feature, "resolve missing games", in an early/beta state.
+
+This feature makes it easier to deal with plans that end up with missing games after an update. It's still early and bit raw, it will get better.
+
 ## Version 0.23.0
 
 - [All] Verifying the files in the catalog are all ok
