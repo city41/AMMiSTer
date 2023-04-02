@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.24.1
+
+- [All] Handling archive.org errors a little bit better
+
 ## Version 0.24.0
 
 - [All] A new feature, "resolve missing games", in an early/beta state.
