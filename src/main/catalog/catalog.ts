@@ -37,7 +37,7 @@ class CancelUpdateError extends Error {}
 class DownloadRomError extends Error {}
 
 const DEFAULT_MAME_VERSION = '0245.revival';
-const debug = Debug('main/db/db.ts');
+const debug = Debug('main/catalog/catalog.ts');
 
 const xmlParser = new XMLParser({
 	ignoreAttributes: false,
@@ -613,7 +613,8 @@ async function downloadRom(
 		// some roms also 403 (forbidden), and in this context is essentially a 404
 		if (
 			message.includes('status code 404') ||
-			message.includes('status code 403')
+			message.includes('status code 403') ||
+			message.includes('status code 5')
 		) {
 			debug('downloadRom, adding 404 to cache for', remoteUrl);
 			archive404Cache.set(remoteUrl, true);
