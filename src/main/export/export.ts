@@ -115,17 +115,16 @@ function isPlanGameDirectoryEntry(
 	return 'directoryName' in obj;
 }
 
+const FAR_FUTURE_RBF_DATE = new Date(2100, 1, 1);
+
 function getDatedFilenamePathComponents(fileName: string): {
 	fileNameBase: string;
 	extension: string;
 	date: Date;
 } {
 	const split = path.parse(fileName).name.split('_');
-	const date = convertFileNameDate(split[split.length - 1]);
-
-	if (!date) {
-		throw new Error(`a dated filename formed an invalid Date: ${fileName}`);
-	}
+	const date =
+		convertFileNameDate(split[split.length - 1]) ?? FAR_FUTURE_RBF_DATE;
 
 	return {
 		fileNameBase: split[0],
