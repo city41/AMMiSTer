@@ -96,7 +96,8 @@
 		"redux-thunk": "^2.4.2",
 		"redux-undo": "^1.0.1",
 		"string-similarity": "^4.0.4",
-		"winston": "^3.8.2"
+		"winston": "^3.8.2",
+		"ws": "^8.13.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.20.7",
@@ -125,6 +126,7 @@
 		"@types/ssh2-sftp-client": "^9.0.0",
 		"@types/string-similarity": "^4.0.0",
 		"@types/winston": "^2.4.4",
+		"@types/ws": "^8.5.4",
 		"@typescript-eslint/eslint-plugin": "^5.40.0",
 		"@typescript-eslint/parser": "^5.40.0",
 		"babel-loader": "^8.3.0",

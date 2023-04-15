@@ -23,6 +23,8 @@ import { Settings, SettingsValue } from './settings/types';
 import { getUniqueBaseName } from './util/getUniqueBaseName';
 import { openPlanDialog, savePlanDialog } from './util/dialog';
 
+import { rpcMain } from './RPCMain';
+
 const debug = Debug('main/main.ts');
 
 let mainWindow: BrowserWindow | undefined;
