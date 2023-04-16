@@ -124,7 +124,7 @@ function FocusedDirectory({
 							);
 
 							if (catalogEntry) {
-								entryName = catalogEntry.gameName;
+								entryName = g.relFilePath;
 								el = <CatalogEntry entry={catalogEntry} hideInPlan />;
 							} else {
 								entryName = g.relFilePath;
