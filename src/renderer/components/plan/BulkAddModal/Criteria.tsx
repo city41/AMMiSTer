@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { CloseIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
 import memoize from 'lodash/memoize';
+import { NOT_SET_SENTINEL } from '../planSlice';
 
 type GameAspect =
 	| 'gameName'
@@ -15,7 +16,8 @@ type GameAspect =
 	| 'special_controls'
 	| 'rotation'
 	| 'yearReleased'
-	| 'num_buttons';
+	| 'num_buttons'
+	| 'resolution';
 
 type CriteriaProps = {
 	className?: string;
@@ -41,6 +43,7 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 		case 'move_inputs':
 		case 'special_controls':
 		case 'manufacturer':
+		case 'resolution':
 		case 'rotation': {
 			return (
 				<>
@@ -72,7 +75,7 @@ const getAllOptionValues = memoize(
 		const rawValues = entries.flatMap((e) => {
 			let v = e[gameAspect];
 
-			if (v === null || v === undefined) {
+			if (v === null || v === undefined || v.toString().trim() === '') {
 				return [];
 			}
 
@@ -126,6 +129,7 @@ function ValueInput({
 		case 'special_controls':
 		case 'yearReleased':
 		case 'num_buttons':
+		case 'resolution':
 		case 'manufacturer': {
 			return (
 				<select className={className} value={value} onChange={onChange}>
@@ -136,6 +140,7 @@ function ValueInput({
 							</option>
 						);
 					})}
+					<option value={NOT_SET_SENTINEL}>&lt;not set&gt;</option>
 				</select>
 			);
 		}
@@ -143,7 +148,23 @@ function ValueInput({
 			return (
 				<select className={className} value={value} onChange={onChange}>
 					<option value="horizontal">Horizontal</option>
-					<option value="vertical">Vertical</option>
+					<option value="horizontal-flippable">Horizontal (flippable)</option>
+					<option value="horizontal-180">Horizontal (180)</option>
+					<option value="horizontal-180-flippable">
+						Horizontal (180, flippable)
+					</option>
+					<option value="all-vertical">All Vertical</option>
+					<option value="all-vertical-flippable">
+						All Vertical (flippable)
+					</option>
+					<option value="cw-vertical">CW Vertical</option>
+					<option value="cw-vertical-flippable">CW Vertical (flippable)</option>
+					<option value="ccw-vertical">CCW Vertical</option>
+					<option value="ccw-vertical-flippable">
+						CCW Vertical (flippable)
+					</option>
+					<option value="flippable">Flippable</option>
+					<option value={NOT_SET_SENTINEL}>&lt;not set&gt;</option>
 				</select>
 			);
 		}
@@ -184,6 +205,7 @@ function Criteria({
 				<option value="yearReleased">Year</option>
 				<option value="region">Region</option>
 				<option value="rotation">Rotation</option>
+				<option value="resolution">Resolution</option>
 				<option value="series">Series</option>
 				<option value="platform">Platform</option>
 				<option value="move_inputs">Controls</option>

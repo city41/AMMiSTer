@@ -18,11 +18,30 @@ import { MissingGameToResolve } from './ResolveMissingGames/ResolveMissingGameEn
 
 const batchGroupBy = new BatchGroupBy();
 
-type RotationBulkAddCriteria = {
-	gameAspect: 'rotation';
+const NOT_SET_SENTINEL = '__NOT__SET__Criteria_Value__';
+
+type ResolutionBulkAddCriteria = {
+	gameAspect: 'resolution';
 	operator: 'is' | 'is-not';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
+};
+
+type RotationBulkAddCriteria = {
+	gameAspect: 'rotation';
+	operator: 'is' | 'is-not';
+	value:
+		| 'horizontal'
+		| 'horizontal-flippable'
+		| 'horizontal-180'
+		| 'horizontal-180-flippable'
+		| 'all-vertical'
+		| 'all-vertical-flippable'
+		| 'cw-vertical'
+		| 'cw-vertical-flippable'
+		| 'ccw-vertical'
+		| 'ccw-vertical-flippable'
+		| 'flippable';
 };
 
 type StringArrayBulkAddCriteria = {
@@ -53,6 +72,7 @@ type NumberBulkAddCriteria = {
 };
 
 type BulkAddCriteria =
+	| ResolutionBulkAddCriteria
 	| RotationBulkAddCriteria
 	| StringArrayBulkAddCriteria
 	| StringBulkAddCriteria
@@ -684,12 +704,17 @@ function matchesCriteria(
 ): boolean {
 	const entryValue = entry[criteria.gameAspect as keyof CatalogEntry];
 
-	if (entryValue === null || entryValue === undefined) {
-		return !criteria.value;
-	}
-
-	if (Array.isArray(entryValue) && entryValue.length === 0) {
-		return !criteria.value;
+	if (criteria.value === NOT_SET_SENTINEL) {
+		if (Array.isArray(entryValue)) {
+			return entryValue.length === 0;
+		} else {
+			// !entryValue will not work, as 0 is a valid rotation value
+			return (
+				entryValue === null ||
+				entryValue === undefined ||
+				entryValue.toString().trim() === ''
+			);
+		}
 	}
 
 	switch (criteria.gameAspect) {
@@ -707,16 +732,63 @@ function matchesCriteria(
 		}
 		case 'rotation': {
 			if (criteria.operator === 'is') {
-				if (criteria.value === 'horizontal') {
-					return entryValue === 0;
-				} else {
-					return entryValue === 90 || entryValue === 270;
+				switch (criteria.value) {
+					case 'horizontal':
+						return entryValue === 0;
+					case 'horizontal-flippable':
+						return entryValue === 0 && entry.flip;
+					case 'horizontal-180':
+						return entryValue === 180;
+					case 'horizontal-180-flippable':
+						return entryValue === 180 && entry.flip;
+					case 'all-vertical':
+						return entryValue === 90 || entryValue === 270;
+					case 'all-vertical-flippable':
+						return (entryValue === 90 || entryValue === 270) && entry.flip;
+					case 'ccw-vertical':
+						return entryValue === 270;
+					case 'ccw-vertical-flippable':
+						return entryValue === 270 && entry.flip;
+					case 'cw-vertical':
+						return entryValue === 90;
+					case 'cw-vertical-flippable':
+						return entryValue === 90 && entry.flip;
+					case 'flippable':
+						return entry.flip;
+					default:
+						return false;
 				}
 			} else {
-				if (criteria.value === 'horizontal') {
-					return entryValue === 90 || entryValue === 270;
-				} else {
-					return entryValue === 0;
+				// important to do entry.flip === false to explicitly find
+				// games that have indicated they are not flippable, versus
+				// flip just not being known (ie null or undefined)
+				switch (criteria.value) {
+					case 'horizontal':
+						return entryValue !== 0;
+					case 'horizontal-flippable':
+						return entryValue !== 0 && entry.flip === false;
+					case 'horizontal-180':
+						return entryValue !== 180;
+					case 'horizontal-180-flippable':
+						return entryValue !== 180 && entry.flip === false;
+					case 'all-vertical':
+						return entryValue !== 90 && entryValue !== 270;
+					case 'all-vertical-flippable':
+						return (
+							entryValue !== 90 && entryValue !== 270 && entry.flip === false
+						);
+					case 'ccw-vertical':
+						return entryValue !== 270;
+					case 'ccw-vertical-flippable':
+						return entryValue !== 270 && entry.flip === false;
+					case 'cw-vertical':
+						return entryValue !== 90;
+					case 'cw-vertical-flippable':
+						return entryValue !== 90 && entry.flip === false;
+					case 'flippable':
+						return entry.flip === false;
+					default:
+						return false;
 				}
 			}
 		}
@@ -743,6 +815,7 @@ function matchesCriteria(
 			}
 		}
 		case 'region':
+		case 'resolution':
 		case 'gameName': {
 			const valS = entryValue as string;
 			switch (criteria.operator) {
@@ -896,5 +969,6 @@ export {
 	undo,
 	redo,
 	getAllGamesInPlan,
+	NOT_SET_SENTINEL,
 };
 export type { PlanState, BulkAddCriteria };

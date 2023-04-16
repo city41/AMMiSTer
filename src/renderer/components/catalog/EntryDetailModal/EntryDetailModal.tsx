@@ -43,8 +43,9 @@ function EntryDetailModal({
 					{entry.gameName}
 				</h1>
 				<p className="mt-1 max-w-2xl text-sm text-gray-500">
-					{entry.manufacturer}, {entry.yearReleased}
-					{entry.region ? ',' : ''} {entry.region}
+					{[entry.manufacturer, entry.yearReleased, entry.region]
+						.filter((s) => !!s?.toString().trim())
+						.join(', ')}
 				</p>
 			</div>
 			<div className="flex flex-col items-stretch">
@@ -119,7 +120,7 @@ function EntryDetailModal({
 								{typeof entry.rotation === 'number' && (
 									<span>
 										{entry.rotation === 0 ? 'Horizontal' : 'Vertical'}
-										{entry.rotation !== 0
+										{entry.rotation !== 0 || entry.flip
 											? ` (${entry.rotation}deg${
 													entry.flip ? ', flippable' : ''
 											  })`
