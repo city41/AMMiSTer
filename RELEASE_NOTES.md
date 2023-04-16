@@ -4,6 +4,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.25.0
+
+- [All] Resolution added to bulk criteria.
+- [All] Rotation in bulk criteria much more detailed now (clockwise vs counter-clockwise, and flippable)
+
+Plus some very minor tweaks/polish
+
 ## Version 0.24.2
 
 - [All] Handles cores that lack a date in their name. Before it would error.
