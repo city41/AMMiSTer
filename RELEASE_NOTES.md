@@ -4,6 +4,27 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.25.2
+
+- [Windows] Bug fix: core (rbf files) are said to be missing when they are not.
+
+You would be hit by this if:
+
+- you use Windows
+- all the games in the catalog on the left side have a red exclamation
+- looking at a game, it says the core (rbf file) is missing.
+
+How to fix:
+
+- First install this version of AMMister
+- From AMMister's Catalog menu, select "open folder"
+- delete the catalog.json file in the folder
+- close AMMister and reopen it
+- From AMMister's Catalog menu, choose "Check for updates..."
+  - This will be a fast check, as it doesn't need to download much
+
+Still having problems? File an issue on GitHub
+
 ## Version 0.25.1
 
 - [All] Bug fix: clicking the trash can on a game would not delete it.

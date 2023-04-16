@@ -25,7 +25,7 @@ import {
 	HashedCatalogFileEntry,
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
-import { exists, getGameCacheDir } from '../util/fs';
+import { exists, getGameCacheDir, toLocalOSPath } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
@@ -156,7 +156,8 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 	const entries = Object.entries(db.files);
 
 	return entries.map((e) => {
-		const relFilePath = e[0];
+		const relFilePathFromDb = e[0];
+		const relFilePath = toLocalOSPath(relFilePathFromDb);
 		const { hash, size } = e[1];
 
 		return {
@@ -164,7 +165,7 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 			type: path.extname(relFilePath).substring(1) as 'mra' | 'rbf',
 			relFilePath,
 			fileName: path.basename(relFilePath),
-			remoteUrl: db.base_files_url + relFilePath,
+			remoteUrl: db.base_files_url + relFilePathFromDb,
 			md5: hash,
 			size,
 		};
@@ -997,9 +998,11 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 }
 
 async function audit(catalog: Catalog): Promise<Catalog> {
+	debug('audit called');
 	const { updatedAt, ...restOfCatalog } = catalog;
 	const entries = Object.values(restOfCatalog).flat(1);
 
+	debug('about to audit', entries.length, 'entries');
 	const auditPromises = entries.map((e) => auditCatalogEntry(e));
 
 	await Promise.all(auditPromises);

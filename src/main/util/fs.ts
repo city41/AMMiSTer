@@ -64,3 +64,11 @@ export function misterPathJoiner(...segments: string[]): string {
 		}
 	}
 }
+
+export function toLocalOSPath(p: string): string {
+	if (process.platform !== 'win32') {
+		return p;
+	} else {
+		return p.replace(/\//g, '\\');
+	}
+}
