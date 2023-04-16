@@ -55,12 +55,14 @@ function rpcMain(): WSMain | undefined {
 
 		const listeners: Record<string, (message: WorkerMessage) => void> = {};
 
-		cluster.on('message', (message: WorkerMessage) => {
+		cluster.on('message', (worker: any, message: WorkerMessage) => {
+			console.log('primary got a message', message);
 			const listener = listeners[message.type];
 			listener?.(message);
 		});
 
 		function workerSend(type: string, cb: (response: WorkerMessage) => void) {
+			console.log('workerSend', type);
 			listeners[type] = (message) => {
 				cb(message);
 				delete listeners[type];
@@ -71,21 +73,24 @@ function rpcMain(): WSMain | undefined {
 		const ws = new WSMain({
 			handleGetVersion(): Promise<string> {
 				return new Promise((resolve) => {
-					resolve('7.9.8');
-					// workerSend('main:getVersion', (response: WorkerMessage) => {
-					// 	resolve(response.args[0] as string);
-					// });
+					workerSend('main:getVersion', (response: WorkerMessage) => {
+						resolve(response.args[0] as string);
+					});
 				});
 			},
 		});
 
 		return ws;
 	} else {
-		process.on('message', (message: WorkerMessage) => {
-			switch (message.type) {
+		process.on('message', (message: string) => {
+			console.log('worker got a message', message);
+			switch (message) {
 				case 'main:getVersion': {
 					setImmediate(() => {
-						process.send?.({ type: 'main:getVersion', args: ['1.2.3'] });
+						process.send?.({
+							type: 'main:getVersion',
+							args: ['1.2.3-dummy'],
+						});
 					});
 				}
 			}
