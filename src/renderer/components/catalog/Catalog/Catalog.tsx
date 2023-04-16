@@ -68,7 +68,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 				</div>
 				<div className="font-normal text-sm text-gray-500">
 					{games.length} game{games.length === 1 ? '' : 's'}
-					{filter.trim() ? ' that match' : ''}
+					{filter.trim() ? ` that match${games.length === 1 ? 'es' : ''}` : ''}
 				</div>
 			</li>,
 			...games,
