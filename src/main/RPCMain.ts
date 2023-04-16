@@ -1,15 +1,25 @@
 import cluster from 'node:cluster';
 import WebSocket, { AddressInfo } from 'ws';
 
-export interface RPCProxy {
-	handleGetVersion(): Promise<string>;
+type Request = {
+	type: string;
+	args: any[];
+};
+
+type Response = {
+	type: string;
+	result: string;
+};
+
+export interface RPCHandler {
+	handle(message: Request): Promise<Response>;
 }
 
 class WSMain {
 	_server: WebSocket.Server;
 	_socket?: WebSocket;
 
-	constructor(private _proxy: RPCProxy) {
+	constructor(private _handler: RPCHandler) {
 		this._server = new WebSocket.Server({ port: 9999 });
 
 		this._server.on('connection', (s) => {
@@ -21,18 +31,10 @@ class WSMain {
 		});
 	}
 
-	private async _onMessage(message: string) {
-		const data = JSON.parse(message.toString()) as WorkerMessage;
-		console.log(data);
-		if (data.type === 'main:getVersion') {
-			const version = await this._proxy.handleGetVersion();
-
-			if (this._socket) {
-				this._socket.send(JSON.stringify({ ...data, result: version }));
-			} else {
-				console.log('hmmm, dont have a socket?');
-			}
-		}
+	private async _onMessage(rawMessage: Buffer) {
+		const message = JSON.parse(rawMessage.toString()) as Request;
+		const response = await this._handler.handle(message);
+		this._socket?.send(JSON.stringify(response));
 	}
 
 	get address(): AddressInfo | string {
@@ -44,37 +46,30 @@ class WSMain {
 	}
 }
 
-type WorkerMessage = {
-	type: string;
-	args: any[];
-};
-
 function rpcMain(): WSMain | undefined {
 	if (cluster.isPrimary) {
 		const worker = cluster.fork();
 
-		const listeners: Record<string, (message: WorkerMessage) => void> = {};
+		const listeners: Record<string, (response: Response) => void> = {};
 
-		cluster.on('message', (worker: any, message: WorkerMessage) => {
-			console.log('primary got a message', message);
-			const listener = listeners[message.type];
-			listener?.(message);
+		cluster.on('message', (_worker: Worker, response: Response) => {
+			const listener = listeners[response.type];
+			listener?.(response);
 		});
 
-		function workerSend(type: string, cb: (response: WorkerMessage) => void) {
-			console.log('workerSend', type);
-			listeners[type] = (message) => {
-				cb(message);
-				delete listeners[type];
+		function workerSend(message: Request, cb: (response: Response) => void) {
+			listeners[message.type] = (response) => {
+				cb(response);
+				delete listeners[message.type];
 			};
-			worker.send(type);
+			worker.send(message);
 		}
 
 		const ws = new WSMain({
-			handleGetVersion(): Promise<string> {
+			handle(message: Request): Promise<Response> {
 				return new Promise((resolve) => {
-					workerSend('main:getVersion', (response: WorkerMessage) => {
-						resolve(response.args[0] as string);
+					workerSend(message, (response: Response) => {
+						resolve(response);
 					});
 				});
 			},
@@ -82,14 +77,13 @@ function rpcMain(): WSMain | undefined {
 
 		return ws;
 	} else {
-		process.on('message', (message: string) => {
-			console.log('worker got a message', message);
-			switch (message) {
+		process.on('message', (message: Request) => {
+			switch (message.type) {
 				case 'main:getVersion': {
 					setImmediate(() => {
 						process.send?.({
 							type: 'main:getVersion',
-							args: ['1.2.3-dummy'],
+							result: '1.2.3-dummy',
 						});
 					});
 				}

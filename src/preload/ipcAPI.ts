@@ -9,15 +9,12 @@ const ipcAPI = {
 		// return ipcRenderer.invoke('main:getVersion');
 		return new Promise((resolve) => {
 			const socket = new WebSocket('ws://localhost:9999');
-			console.log('created socket');
 			socket.onmessage = (e) => {
-				console.log('got a message on renderer');
 				console.log(e.data);
 				const data = JSON.parse(e.data);
 				resolve(data.result);
 			};
 			socket.onopen = () => {
-				console.log('socket opened');
 				socket.send(JSON.stringify({ type: 'main:getVersion' }));
 			};
 		});
