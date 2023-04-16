@@ -34,6 +34,10 @@ class WSMain {
 	get address(): AddressInfo | string {
 		return this._server.address();
 	}
+
+	close() {
+		this._server.close();
+	}
 }
 
 type WorkerMessage = {
