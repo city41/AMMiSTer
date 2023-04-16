@@ -28,6 +28,8 @@ import { rpcMain } from './RPCMain';
 
 const debug = Debug('main/main.ts');
 
+rpcMain();
+
 if (cluster.isPrimary) {
 	let mainWindow: BrowserWindow | undefined;
 
@@ -484,7 +486,5 @@ if (cluster.isPrimary) {
 		}
 	);
 }
-
-rpcMain();
 
 export {};

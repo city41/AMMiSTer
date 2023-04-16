@@ -13,6 +13,7 @@ function ConnectedFooter(props: PublicFooterProps) {
 
 	useEffect(() => {
 		window.ipcAPI.getVersion().then((v) => {
+			console.log('got a version', v);
 			setLocalVersion(v);
 		});
 

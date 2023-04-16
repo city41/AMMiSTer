@@ -14,19 +14,23 @@ class WSMain {
 
 		this._server.on('connection', (s) => {
 			this._socket = s;
-			s.on('message', this._onMessage);
+			s.on('message', this._onMessage.bind(this));
 			s.on('close', () => {
 				this._socket = undefined;
 			});
 		});
 	}
 
-	private async _onMessage(message: string, ...args: any[]) {
-		if (message === 'main:getVersion') {
+	private async _onMessage(message: string) {
+		const data = JSON.parse(message.toString()) as WorkerMessage;
+		console.log(data);
+		if (data.type === 'main:getVersion') {
 			const version = await this._proxy.handleGetVersion();
 
 			if (this._socket) {
-				this._socket.send(version);
+				this._socket.send(JSON.stringify({ ...data, result: version }));
+			} else {
+				console.log('hmmm, dont have a socket?');
 			}
 		}
 	}
@@ -67,9 +71,10 @@ function rpcMain(): WSMain | undefined {
 		const ws = new WSMain({
 			handleGetVersion(): Promise<string> {
 				return new Promise((resolve) => {
-					workerSend('main:getVersion', (response: WorkerMessage) => {
-						resolve(response.args[0] as string);
-					});
+					resolve('7.9.8');
+					// workerSend('main:getVersion', (response: WorkerMessage) => {
+					// 	resolve(response.args[0] as string);
+					// });
 				});
 			},
 		});
