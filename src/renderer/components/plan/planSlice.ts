@@ -47,7 +47,7 @@ type RotationBulkAddCriteria = {
 type StringArrayBulkAddCriteria = {
 	gameAspect:
 		| 'manufacturer'
-		| 'categories'
+		| 'category'
 		| 'move_inputs'
 		| 'series'
 		| 'platform'
@@ -615,7 +615,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 		);
 
 		const capcomFighters = horizontalCapcomEntries
-			.filter((ce) => ce.categories.some((c) => c.includes('Fight')))
+			.filter((ce) => ce.category.some((c) => c.includes('Fight')))
 			.map((ce) => {
 				return {
 					db_id: ce.db_id,
@@ -623,7 +623,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				};
 			});
 		const capcomShooters = horizontalCapcomEntries
-			.filter((ce) => ce.categories.some((c) => c.includes('Shoot')))
+			.filter((ce) => ce.category.some((c) => c.includes('Shoot')))
 			.map((ce) => {
 				return {
 					db_id: ce.db_id,
@@ -631,7 +631,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 				};
 			});
 		const segaShooters = horizontalSegaEntries
-			.filter((ce) => ce.categories.some((c) => c.includes('Shoot')))
+			.filter((ce) => ce.category.some((c) => c.includes('Shoot')))
 			.map((ce) => {
 				return {
 					db_id: ce.db_id,
@@ -723,7 +723,7 @@ function matchesCriteria(
 		case 'move_inputs':
 		case 'special_controls':
 		case 'platform':
-		case 'categories': {
+		case 'category': {
 			if (criteria.operator === 'is') {
 				return (entryValue as string[]).some((ev) => ev === criteria.value);
 			} else {

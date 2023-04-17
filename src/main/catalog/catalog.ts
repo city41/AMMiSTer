@@ -358,13 +358,13 @@ async function parseMraToCatalogEntry(
 		const {
 			name,
 			manufacturer,
+			category,
 			year,
 			rom,
 			mameversion = DEFAULT_MAME_VERSION,
 			rbf,
 			setname,
 			parent,
-			category,
 		} = parsed.misterromdescription;
 
 		const rbfFileEntry = fileEntries.find(
@@ -419,9 +419,9 @@ async function parseMraToCatalogEntry(
 			db_id,
 			gameName: name,
 			romSlug: romSlug ?? null,
-			manufacturer: xmlToArray(manufacturer),
+			manufacturer: metadataEntry.manufacturer ?? xmlToArray(manufacturer),
 			yearReleased,
-			categories: xmlToArray(category),
+			category: metadataEntry.category ?? xmlToArray(category),
 			mameVersion: mameversion,
 			alternative: metadataEntry.alternative ?? false,
 			bootleg: metadataEntry.bootleg ?? false,

@@ -142,7 +142,7 @@ export type NonHashedCatalogFileEntry = Omit<
  */
 export type GameMetadata = {
 	manufacturer: string[];
-	categories: string[];
+	category: string[];
 	series: string[];
 	platform: string[];
 	move_inputs: string[];

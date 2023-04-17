@@ -4,7 +4,7 @@ const mockCatalogEntry: CatalogEntry = {
 	db_id: 'jtcores',
 	romSlug: 'sfa2',
 	gameName: 'Street Fighter Alpha 2 (Euro 960229)',
-	categories: ['Fighter - Versus'],
+	category: ['Fighter - Versus'],
 	titleScreenshotUrl:
 		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/sfa2.png',
 	gameplayScreenshotUrl:
