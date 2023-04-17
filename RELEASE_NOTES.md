@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.25.3
+
+- [All] Bug fix: exporting a plan would delete files unexpectedly.
+
 ## Version 0.25.2
 
 - [Windows] Bug fix: core (rbf files) are said to be missing when they are not.
