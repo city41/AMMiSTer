@@ -9,7 +9,7 @@ type GameAspect =
 	| 'gameName'
 	| 'region'
 	| 'manufacturer'
-	| 'categories'
+	| 'category'
 	| 'series'
 	| 'platform'
 	| 'move_inputs'
@@ -37,7 +37,7 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	switch (gameAspect) {
 		case 'gameName':
 		case 'region':
-		case 'categories':
+		case 'category':
 		case 'series':
 		case 'platform':
 		case 'move_inputs':
@@ -79,13 +79,9 @@ const getAllOptionValues = memoize(
 				return [];
 			}
 
-			v = String(v);
+			v = (Array.isArray(v) ? v : [v]).map(String);
 
-			if (Array.isArray(v)) {
-				return v;
-			}
-
-			return [v];
+			return v;
 		});
 
 		return Array.from(new Set(rawValues)).sort();
@@ -122,7 +118,7 @@ function ValueInput({
 	switch (gameAspect) {
 		case 'gameName':
 		case 'region':
-		case 'categories':
+		case 'category':
 		case 'series':
 		case 'platform':
 		case 'move_inputs':
@@ -201,7 +197,7 @@ function Criteria({
 			>
 				<option value="gameName">Title</option>
 				<option value="manufacturer">Manufacturer</option>
-				<option value="categories">Category</option>
+				<option value="category">Category</option>
 				<option value="yearReleased">Year</option>
 				<option value="region">Region</option>
 				<option value="rotation">Rotation</option>

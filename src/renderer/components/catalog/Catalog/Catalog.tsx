@@ -20,7 +20,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 		(ge: CatalogEntryType) => {
 			const f = filter.toLowerCase().trim();
 			return (
-				ge.categories.some((c) => c.toLowerCase().includes(f)) ||
+				ge.category.some((c) => c.toLowerCase().includes(f)) ||
 				ge.gameName.toLowerCase().includes(f) ||
 				ge.yearReleased?.toString().includes(f) ||
 				ge.manufacturer.some((m) => m.toLowerCase().includes(f))
