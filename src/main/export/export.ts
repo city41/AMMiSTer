@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
+import Debug from 'debug';
 import winston from 'winston';
 import uniqBy from 'lodash/uniqBy';
 
@@ -33,6 +34,8 @@ import { getCurrentCatalog } from '../catalog';
 import { isPlanGameEntry } from '../plan';
 import { getCatalogEntryForMraPath } from '../catalog/util';
 
+const debug = Debug('main/export/export.ts');
+
 class CancelExportError extends Error {}
 
 let exportLogger: winston.Logger;
@@ -53,9 +56,14 @@ async function turnLogIntoArray(logFilePath: string): Promise<void> {
 async function createExportLogger(planName: string, initiator: string) {
 	const rootDir = await settings.getSetting('rootDir');
 	const safePlanName = planName.replace(/\s/g, '_');
-	const logFileName = `export-log--${initiator}-${safePlanName}-${new Date().toISOString()}.json`;
+	const logFileName =
+		`export-log--${initiator}-${safePlanName}-${new Date().toISOString()}.json`.replace(
+			/:/g,
+			'_'
+		);
 
 	const logFilePath = path.resolve((rootDir ?? '').toString(), logFileName);
+	debug('createExportLogger, path:', logFilePath);
 
 	const logger = winston.createLogger({
 		level: 'info',

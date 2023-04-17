@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.25.5
+
+- [Windows] Bug fix: export logs issue that prevented them from being created. These files help debug export problems.
+
 ## Version 0.25.4
 
 - [All] Getting the game's categories from the arcade database instead of the MRA file.
