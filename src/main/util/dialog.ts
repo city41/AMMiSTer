@@ -1,4 +1,4 @@
-import path from 'node:path';
+import path from './universalPath';
 import { BrowserWindow, dialog } from 'electron';
 import * as settings from '../settings';
 

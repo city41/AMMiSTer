@@ -7,6 +7,8 @@ const GAME_CACHE_DIR = 'gameCache';
 /**
  * Returns the root directory of the game cache, or throws
  * if called before it has been established
+ *
+ * NOTE: The returned path is absolute and OS specific
  */
 export async function getGameCacheDir(): Promise<string> {
 	const rootDir = await settings.getSetting('rootDir');
@@ -15,6 +17,7 @@ export async function getGameCacheDir(): Promise<string> {
 		throw new Error('db#getGameCacheDir: rootDir is not set in settings');
 	}
 
+	// we want an OS specific path, so using the main path.resolve
 	return path.resolve(rootDir.toString(), GAME_CACHE_DIR);
 }
 
@@ -52,32 +55,5 @@ export async function exists(filePath: string): Promise<boolean> {
 		return (await fsp.stat(filePath)).isFile();
 	} catch {
 		return false;
-	}
-}
-
-export function misterPathJoiner(...segments: string[]): string {
-	const result = path.join(...segments);
-
-	if (process.platform !== 'win32') {
-		return result;
-	} else {
-		// convert all \ to /
-		const cleanedResult = result.replace(/\\/g, '/');
-
-		// incoming path was unix absolute? make it unix absolute again,
-		// which the windows version of path.join will strip
-		if (segments[0]?.startsWith('/')) {
-			return '/' + cleanedResult;
-		} else {
-			return cleanedResult;
-		}
-	}
-}
-
-export function toLocalOSPath(p: string): string {
-	if (process.platform !== 'win32') {
-		return p;
-	} else {
-		return p.replace(/\//g, '\\');
 	}
 }

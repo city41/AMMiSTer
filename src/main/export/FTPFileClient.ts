@@ -1,9 +1,8 @@
-import path from 'node:path';
+import path from '../util/universalPath';
 import { ReadStream } from 'fs';
 import { Client, FileInfo } from 'basic-ftp';
 import winston from 'winston';
 import { FileClient, FileClientConnectConfig } from './types';
-import { misterPathJoiner } from '../util/fs';
 
 const TIMEOUT_MS = 15 * 1000;
 
@@ -30,15 +29,11 @@ class FTPFileClient implements FileClient {
 
 		// this will be something like ['media', '_Arcade'], and is
 		// the root destination to write to
-		this.mountPath = misterPathJoiner(...mountPathSegments);
+		this.mountPath = path.join(...mountPathSegments);
 	}
 
 	getMountPath() {
 		return this.mountPath;
-	}
-
-	getDestinationPathJoiner() {
-		return misterPathJoiner;
 	}
 
 	async connect(): Promise<void> {

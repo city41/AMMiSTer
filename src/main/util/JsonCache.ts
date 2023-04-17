@@ -1,4 +1,4 @@
-import path from 'node:path';
+import path from './universalPath';
 import fsp from 'node:fs/promises';
 import * as settings from '../settings';
 

@@ -1,5 +1,5 @@
 import os from 'node:os';
-import path from 'node:path';
+import path from './universalPath';
 import decompress from 'decompress';
 import mkdirp from 'mkdirp';
 

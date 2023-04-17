@@ -4,6 +4,10 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import mkdirp from 'mkdirp';
 
+// Note that everything happening in here is local to the machine
+// running AMMister. That means we are using the regular path module
+// for OS specific file path operations
+
 axiosRetry(axios, {
 	retries: 2,
 	retryDelay(retryCount) {
