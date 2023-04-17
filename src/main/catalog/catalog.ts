@@ -1,14 +1,14 @@
 import crypto from 'node:crypto';
 import Debug from 'debug';
 import os from 'node:os';
-import path from 'node:path';
+import path from '../util/universalPath';
 import fsp from 'node:fs/promises';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
 import { JsonCache } from '../util/JsonCache';
 import uniqBy from 'lodash/uniqBy';
 
-import { downloadFile } from '../util/network';
+import { downloadFile } from '../util/downloadFile';
 import { extractZipFileToPath } from '../util/zip';
 import {
 	Catalog,
@@ -25,7 +25,7 @@ import {
 	HashedCatalogFileEntry,
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
-import { exists, getGameCacheDir, toLocalOSPath } from '../util/fs';
+import { exists, getGameCacheDir } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
@@ -156,8 +156,7 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 	const entries = Object.entries(db.files);
 
 	return entries.map((e) => {
-		const relFilePathFromDb = e[0];
-		const relFilePath = toLocalOSPath(relFilePathFromDb);
+		const relFilePath = e[0];
 		const { hash, size } = e[1];
 
 		return {
@@ -165,7 +164,7 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 			type: path.extname(relFilePath).substring(1) as 'mra' | 'rbf',
 			relFilePath,
 			fileName: path.basename(relFilePath),
-			remoteUrl: db.base_files_url + relFilePathFromDb,
+			remoteUrl: db.base_files_url + relFilePath,
 			md5: hash,
 			size,
 		};
@@ -452,10 +451,8 @@ async function parseMraToCatalogEntry(
 				mra: {
 					db_id,
 					type: 'mra',
-					fileName: path.basename(mraAbsFilePath),
-					relFilePath: mraAbsFilePath.substring(
-						mraAbsFilePath.indexOf('_Arcade')
-					),
+					fileName: path.basename(mraFileEntry.relFilePath),
+					relFilePath: mraFileEntry.relFilePath,
 					md5: mraFileEntry.md5,
 					status: 'ok',
 				},
@@ -575,7 +572,6 @@ async function downloadRom(
 
 	try {
 		const fileName = path.basename(remoteUrl);
-		// path.join is used to account for OS specific path separators
 		const relFilePath = path.join('games', 'mame', fileName);
 		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 

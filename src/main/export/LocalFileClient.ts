@@ -1,4 +1,3 @@
-import path from 'node:path';
 import fsp from 'node:fs/promises';
 import { ReadStream } from 'node:fs';
 import mkdirp from 'mkdirp';
@@ -26,10 +25,6 @@ class LocalFileClient implements FileClient {
 
 	getMountPath() {
 		return this.destDirPath;
-	}
-
-	getDestinationPathJoiner() {
-		return path.join;
 	}
 
 	async listDir(dirPath: string): Promise<string[]> {

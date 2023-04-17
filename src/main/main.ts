@@ -1,4 +1,5 @@
-import path from 'node:path';
+import path from './util/universalPath';
+import nodepath from 'node:path';
 import Debug from 'debug';
 import mkdirp from 'mkdirp';
 import {
@@ -227,7 +228,10 @@ async function createWindow() {
 		height: 600,
 		webPreferences: {
 			devTools: isDev,
-			preload: path.join(__dirname, '../preload.bundle.js'),
+			// nodepath is to handle __dirname being OS specific
+			// by using an OS specific join, the resulting path is correct
+			// on Windows and posix
+			preload: nodepath.join(__dirname, '../preload.bundle.js'),
 			webSecurity: !isDev,
 		},
 	});

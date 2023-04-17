@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.25.6",
+	"version": "0.25.7",
 	"description": "An Arcade Game Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
