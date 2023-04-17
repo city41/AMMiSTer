@@ -578,6 +578,10 @@ async function getExistingDestPaths(
 	rootDir: string,
 	curDirPath: string
 ): Promise<DestFileOperationPath[]> {
+	const logger = exportLogger.child({
+		method: getExistingDestPaths.name,
+	});
+
 	const paths: DestFileOperationPath[] = [];
 	const rawPaths: string[] = [];
 
@@ -585,7 +589,6 @@ async function getExistingDestPaths(
 	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
-		// since this is running on the mister, path.join is incorrect
 		const p = client.getDestinationPathJoiner()(curDirPath, entry);
 		const isDirectory = await client.isDir(p);
 
@@ -593,6 +596,7 @@ async function getExistingDestPaths(
 			const subPaths = await getExistingDestPaths(client, rootDir, p);
 			paths.push(...subPaths);
 		} else {
+			logger.info({ p, rootDir, context: 'dropping rootDir from p' });
 			rawPaths.push(p.replace(rootDir, ''));
 		}
 	}
@@ -695,12 +699,12 @@ async function doExport(
 		});
 		const destArcadePaths = await getExistingDestPaths(
 			client,
-			mountPath + '/',
+			path.join(mountPath, '/'),
 			destPathJoiner(mountPath, '_Arcade')
 		);
 		const destRomPaths = await getExistingDestPaths(
 			client,
-			mountPath + '/',
+			path.join(mountPath, '/'),
 			destPathJoiner(mountPath, 'games', 'mame')
 		);
 		const destPaths = destArcadePaths.concat(destRomPaths);

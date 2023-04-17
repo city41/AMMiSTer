@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.25.6
+
+- [Windows] Bug fix: fixed part of export that was not handling Windows file paths correctly
+
 ## Version 0.25.5
 
 - [Windows] Bug fix: export logs issue that prevented them from being created. These files help debug export problems.
