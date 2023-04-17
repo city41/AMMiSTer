@@ -192,11 +192,11 @@ async function assertExportLog(dir: string) {
 }
 
 describe('export integration', function () {
-	beforeAll(async function () {
+	beforeAll(function () {
 		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
 	});
 
-	afterEach(async function () {
+	afterEach(function () {
 		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
 	});
 
@@ -358,6 +358,98 @@ describe('export integration', function () {
 				catalogEntries
 			);
 		});
+
+		// This was added to confirm Jotego's cores (which lack the date in their name) still work,
+		// the first stab at handling this caused ambiguous export operations, so would delete cores
+		// that should not be deleted
+		it('should successfully export the same plan with Jotego games multiple times', async function () {
+			// @ts-expect-error doesnt know it is a mock
+			getSetting.mockImplementation((settingKey: keyof Settings) => {
+				switch (settingKey) {
+					case 'rootDir':
+						return Promise.resolve(TMP_DIR);
+					case 'downloadRoms':
+						return Promise.resolve(false);
+					case 'updateDbs': {
+						const updateDbs = defaultUpdateDbs.map((udb, i, a) => {
+							return {
+								...udb,
+								enabled: udb.db_id === 'jtcores',
+							};
+						});
+
+						return Promise.resolve(updateDbs);
+					}
+					case 'exportOptimization':
+						return Promise.resolve('space');
+					default:
+						return Promise.resolve('mock-setting');
+				}
+			});
+
+			const updateCatalogCallback = jest.fn().mockReturnValue(true);
+			await updateCatalog(updateCatalogCallback);
+
+			const catalog = updateCatalogCallback.mock.lastCall?.[0]
+				.catalog as Catalog;
+			const { updatedAt, ...rest } = catalog;
+			const catalogEntries = Object.values(rest).flat(1);
+			const firstEntry = catalogEntries[0];
+
+			const plan: Plan = {
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+				directoryName: 'integration',
+				isExpanded: true,
+				games: [
+					{
+						directoryName: 'foo',
+						isExpanded: true,
+						games: [
+							{
+								directoryName: 'bar',
+								isExpanded: true,
+								games: [
+									{
+										db_id: firstEntry.db_id,
+										relFilePath: firstEntry.files.mra.relFilePath,
+									},
+								],
+							},
+						],
+					},
+				],
+			};
+
+			const exportDir = path.resolve(TMP_DIR, 'exported-plan');
+
+			const exportCallback = jest.fn().mockReturnValue(true);
+
+			for (let i = 0; i < 3; ++i) {
+				await exportToDirectory(plan, exportDir, exportCallback);
+
+				await assertExportedMras(
+					path.resolve(exportDir, '_Arcade'),
+					plan.games,
+					catalogEntries
+				);
+
+				await assertNoEmptyMraDirectories(path.resolve(exportDir, '_Arcade'));
+				await assertNoExtraRbfsBeyondPlan(
+					path.resolve(exportDir, '_Arcade', 'cores'),
+					plan,
+					catalogEntries
+				);
+
+				await assertExportedRbfsFromPlan(
+					path.resolve(exportDir, '_Arcade', 'cores'),
+					plan.games,
+					catalogEntries
+				);
+
+				await assertExportLog(TMP_DIR);
+			}
+		}, 30000);
 	});
 
 	describe('speed exports', function () {

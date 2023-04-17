@@ -115,16 +115,17 @@ function isPlanGameDirectoryEntry(
 	return 'directoryName' in obj;
 }
 
-const FAR_FUTURE_RBF_DATE = new Date(2100, 1, 1);
-
 function getDatedFilenamePathComponents(fileName: string): {
 	fileNameBase: string;
 	extension: string;
 	date: Date;
-} {
+} | null {
 	const split = path.parse(fileName).name.split('_');
-	const date =
-		convertFileNameDate(split[split.length - 1]) ?? FAR_FUTURE_RBF_DATE;
+	const date = convertFileNameDate(split[split.length - 1]);
+
+	if (!date) {
+		return null;
+	}
 
 	return {
 		fileNameBase: split[0],
@@ -411,14 +412,32 @@ function getSrcFileOperationPathsFromCatalogEntry(
 		});
 	}
 	if (entry.files.rbf) {
-		paths.push({
-			type: 'dated-filename',
-			db_id: entry.db_id,
-			cacheRelDirPath: path.dirname(entry.files.rbf.relFilePath),
-			destRelDirPath: path.dirname(entry.files.rbf.relFilePath),
-			fileName: entry.files.rbf.fileName,
-			...getDatedFilenamePathComponents(entry.files.rbf.fileName),
-		});
+		// most cores encode their date of creation into their name, like "Foo_20230204",
+		// if that is available, great, we can use that date as a guide if this core has
+		// been updated or not
+		const datedPathComponents = getDatedFilenamePathComponents(
+			entry.files.rbf.fileName
+		);
+
+		if (datedPathComponents) {
+			paths.push({
+				type: 'dated-filename',
+				db_id: entry.db_id,
+				cacheRelDirPath: path.dirname(entry.files.rbf.relFilePath),
+				destRelDirPath: path.dirname(entry.files.rbf.relFilePath),
+				fileName: entry.files.rbf.fileName,
+				...datedPathComponents,
+			});
+		} else {
+			// otherwise we have to treat it as an exact file, which means always copy it.
+			// Jotego cores do not encode dates into their names, for example
+			paths.push({
+				type: 'exact',
+				db_id: entry.db_id,
+				cacheRelPath: entry.files.rbf.relFilePath,
+				destRelPath: entry.files.rbf.relFilePath,
+			});
+		}
 	}
 	const romPaths = entry.files.roms.flatMap((re) => {
 		if (re.status !== 'ok') {

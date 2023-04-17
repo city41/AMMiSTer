@@ -35,6 +35,15 @@ export function convertFileNameDate(
 	].join('');
 
 	const d = new Date(withDashes);
+
+	if (
+		d.getFullYear() < 2020 ||
+		d.getFullYear() > new Date().getFullYear() ||
+		isNaN(d.getTime())
+	) {
+		return null;
+	}
+
 	return d;
 }
 
