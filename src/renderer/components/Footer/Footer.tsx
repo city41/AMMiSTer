@@ -13,6 +13,8 @@ type InternalFooterProps = {
 	updatedAt?: number;
 	localVersion: string;
 	mainVersion: string;
+	planPath?: string | null;
+	planIsDirty?: boolean | null;
 };
 
 const REPO_URL = 'https://github.com/city41/AMMiSTer/';
@@ -23,6 +25,8 @@ function Footer({
 	updatedAt,
 	localVersion,
 	mainVersion,
+	planPath,
+	planIsDirty,
 }: PublicFooterProps & InternalFooterProps) {
 	return (
 		<div
@@ -42,6 +46,12 @@ function Footer({
 				</div>
 			)}
 			<div className="flex-1" />
+			{planPath && (
+				<div className="text-xs text-gray-600">
+					{planIsDirty ? '*' : ''}
+					{planPath}
+				</div>
+			)}
 			{!!localVersion && (
 				<a
 					href="https://github.com/city41/AMMiSTer/blob/main/RELEASE_NOTES.md"

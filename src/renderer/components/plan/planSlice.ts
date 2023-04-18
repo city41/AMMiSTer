@@ -91,6 +91,7 @@ type InternalPlanState = {
 	// undefined -> unknown if there is a plan or not, main has not told us
 	// null -> main told us there is no plan
 	plan: Plan | null | undefined;
+	planPath: string | null;
 	isDirty: boolean;
 	criteriaMatch: CatalogEntry[] | null;
 	missingDetailEntry: PlanGameEntry | null;
@@ -100,6 +101,7 @@ type PlanState = StateWithHistory<InternalPlanState>;
 
 const initialState: InternalPlanState = {
 	plan: undefined,
+	planPath: null,
 	isDirty: false,
 	criteriaMatch: null,
 	missingDetailEntry: null,
@@ -206,6 +208,12 @@ const planSlice = createSlice({
 		setPlan(state: InternalPlanState, action: PayloadAction<Plan | null>) {
 			state.plan = action.payload;
 			state.isDirty = false;
+		},
+		setPlanPath(
+			state: InternalPlanState,
+			action: PayloadAction<string | null>
+		) {
+			state.planPath = action.payload;
 		},
 		addCatalogEntry(
 			state: InternalPlanState,
@@ -583,11 +591,18 @@ const loadNewPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	const plan = await window.ipcAPI.newPlan();
 	plan.directoryName = 'New Plan';
 	dispatch(planSlice.actions.setPlan(plan));
+	dispatch(planSlice.actions.setPlanPath(null));
 	dispatch(ActionCreators.clearHistory());
 };
 
 const loadOpenedPlan =
-	(plan: Plan | null): PlanSliceThunk =>
+	({
+		plan,
+		planPath,
+	}: {
+		plan: Plan | null;
+		planPath: string | null;
+	}): PlanSliceThunk =>
 	(dispatch, getState) => {
 		const { plan: currentPlan, isDirty } = getState().plan.present;
 
@@ -602,6 +617,7 @@ const loadOpenedPlan =
 		}
 
 		dispatch(planSlice.actions.setPlan(plan));
+		dispatch(planSlice.actions.setPlanPath(planPath));
 		dispatch(ActionCreators.clearHistory());
 	};
 
@@ -686,10 +702,11 @@ const savePlanAs = (): PlanSliceThunk => async (dispatch, getState) => {
 	const plan = getState().plan.present.plan;
 
 	if (plan) {
-		const wasSaved = await window.ipcAPI.savePlanAs(plan);
+		const { wasSaved, planPath } = await window.ipcAPI.savePlanAs(plan);
 
 		if (wasSaved) {
 			dispatch(planSlice.actions.clearDirty());
+			dispatch(planSlice.actions.setPlanPath(planPath));
 		}
 	}
 };
@@ -698,10 +715,11 @@ const savePlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	const plan = getState().plan.present.plan;
 
 	if (plan) {
-		const wasSaved = await window.ipcAPI.savePlan(plan);
+		const { wasSaved, planPath } = await window.ipcAPI.savePlan(plan);
 
 		if (wasSaved) {
 			dispatch(planSlice.actions.clearDirty());
+			dispatch(planSlice.actions.setPlanPath(planPath));
 		}
 	}
 };
