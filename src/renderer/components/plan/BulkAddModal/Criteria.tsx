@@ -3,21 +3,9 @@ import clsx from 'clsx';
 import { CloseIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
 import memoize from 'lodash/memoize';
-import { NOT_SET_SENTINEL } from '../planSlice';
+import { BulkAddCriteria, NOT_SET_SENTINEL } from '../planSlice';
 
-type GameAspect =
-	| 'gameName'
-	| 'region'
-	| 'manufacturer'
-	| 'category'
-	| 'series'
-	| 'platform'
-	| 'move_inputs'
-	| 'special_controls'
-	| 'rotation'
-	| 'yearReleased'
-	| 'num_buttons'
-	| 'resolution';
+type GameAspect = BulkAddCriteria['gameAspect'];
 
 type CriteriaProps = {
 	className?: string;
@@ -52,6 +40,7 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 				</>
 			);
 		}
+		case 'players':
 		case 'yearReleased':
 		case 'num_buttons': {
 			return (
@@ -124,6 +113,7 @@ function ValueInput({
 		case 'move_inputs':
 		case 'special_controls':
 		case 'yearReleased':
+		case 'players':
 		case 'num_buttons':
 		case 'resolution':
 		case 'manufacturer': {
@@ -207,6 +197,7 @@ function Criteria({
 				<option value="move_inputs">Controls</option>
 				<option value="special_controls">Special Controls</option>
 				<option value="num_buttons">No. of Buttons</option>
+				<option value="players">No. of Players</option>
 			</select>
 			<select
 				className="px-2 py-1"

@@ -20,6 +20,13 @@ const batchGroupBy = new BatchGroupBy();
 
 const NOT_SET_SENTINEL = '__NOT__SET__Criteria_Value__';
 
+type NumberOfPlayersBulkAddCriteria = {
+	gameAspect: 'players';
+	operator: 'is' | 'is-not';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	value: any;
+};
+
 type ResolutionBulkAddCriteria = {
 	gameAspect: 'resolution';
 	operator: 'is' | 'is-not';
@@ -72,6 +79,7 @@ type NumberBulkAddCriteria = {
 };
 
 type BulkAddCriteria =
+	| NumberOfPlayersBulkAddCriteria
 	| ResolutionBulkAddCriteria
 	| RotationBulkAddCriteria
 	| StringArrayBulkAddCriteria
@@ -816,6 +824,7 @@ function matchesCriteria(
 		}
 		case 'region':
 		case 'resolution':
+		case 'players':
 		case 'gameName': {
 			const valS = entryValue as string;
 			switch (criteria.operator) {
