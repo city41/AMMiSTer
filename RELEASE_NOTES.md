@@ -18,10 +18,9 @@ You will need to rebuild your catalog.json file:
 
 1. Open AMMiSTer
 2. go to Catalog > Open Folder
-3. In the folder that opens, go up one directory
-4. delete catalog.json
-5. Close AMMiSTer and re-open it
-6. Click to build the catalog (this won't take long, it will still use all the cores, roms, etc it downloaded before)
+3. delete catalog.json
+4. Close AMMiSTer and re-open it
+5. Click to build the catalog (this won't take long, it will still use all the cores, roms, etc it downloaded before)
 
 ==== Older Plan files no longer work in Windows ====
 
