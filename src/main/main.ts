@@ -37,7 +37,10 @@ async function loadPlan(planPath: string) {
 	const openedPlan = await plan.openPlan(planPath);
 	if (openedPlan) {
 		debug('loadPlan: sending opened plan to mainWindow', planPath);
-		mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
+		mainWindow!.webContents.send('menu:loadOpenedPlan', {
+			plan: openedPlan,
+			planPath,
+		});
 		lastPlanSavePath = planPath;
 		await settings.addRecentPlan(planPath);
 		await settings.setSetting('mostRecentPlanDir', path.dirname(planPath));
@@ -65,7 +68,10 @@ async function buildMainMenu(): Promise<void> {
 				{
 					label: 'New Plan',
 					accelerator: 'CommandOrControl+N',
-					click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
+					click: () => {
+						lastPlanSavePath = null;
+						mainWindow!.webContents.send('menu:loadNewPlan');
+					},
 				},
 				{
 					type: 'separator',
@@ -390,10 +396,10 @@ ipcMain.handle('plan:savePlanAs', async (_event, p: Plan) => {
 		lastPlanSavePath = savedPlanPath;
 		await settings.addRecentPlan(savedPlanPath);
 
-		return true;
+		return { wasSaved: true, planPath: savedPlanPath };
 	}
 
-	return false;
+	return { wasSaved: false, planPath: null };
 });
 
 ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
@@ -406,12 +412,16 @@ ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
 	}
 
 	if (lastPlanSavePath) {
-		plan.savePlan(p, lastPlanSavePath);
-		settings.addRecentPlan(lastPlanSavePath);
-		return true;
+		// savePlan will return the actual path that the plan got saved to
+		// typically it adds '.amip' if it is missing
+		const savedPlanPath = await plan.savePlan(p, lastPlanSavePath);
+		lastPlanSavePath = savedPlanPath;
+		await settings.addRecentPlan(savedPlanPath);
+
+		return { wasSaved: true, planPath: savedPlanPath };
 	}
 
-	return false;
+	return { wasSaved: false, planPath: null };
 });
 
 let exportProceeding = true;
