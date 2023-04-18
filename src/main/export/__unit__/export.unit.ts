@@ -208,9 +208,7 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
-					[]
-				);
+				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([]);
 			});
 
 			it('should leave dest alone if src is older (multiple underscores)', function () {
@@ -238,9 +236,7 @@ describe('export', function () {
 					},
 				];
 
-				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
-					[]
-				);
+				expect(buildFileOperations(srcOpPaths, destOpPaths)).toEqual([]);
 			});
 
 			it('should leave dest alone if src is same age (multiple underscores)', function () {
