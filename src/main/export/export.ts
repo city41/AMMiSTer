@@ -135,8 +135,10 @@ function getDatedFilenamePathComponents(fileName: string): {
 		return null;
 	}
 
+	split.pop();
+
 	return {
-		fileNameBase: split[0],
+		fileNameBase: split.join('_'),
 		extension: path.extname(fileName),
 		date,
 	};
@@ -145,14 +147,17 @@ function getDatedFilenamePathComponents(fileName: string): {
 function buildDestFileOperationPath(p: string): DestFileOperationPath {
 	const fileName = path.basename(p);
 	const split = path.parse(fileName).name.split('_');
-	const fileNameDate = convertFileNameDate(split[1]);
+	const fileNameDate = convertFileNameDate(split[split.length - 1]);
 
-	if (split.length === 2 && fileNameDate) {
+	if (split.length > 1 && fileNameDate) {
+		split.pop();
+		const fileNameBase = split.join('_');
+
 		return {
 			type: 'dated-filename',
 			extension: path.extname(fileName),
 			fileName,
-			fileNameBase: split[0],
+			fileNameBase,
 			relDirPath: path.dirname(p),
 			date: fileNameDate,
 		};

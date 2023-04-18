@@ -224,6 +224,66 @@ describe('export', function () {
 				);
 			});
 
+			it('should leave dest alone if src is older (multiple underscores)', function () {
+				const srcOpPaths: SrcFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						db_id: 'mockdb',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
+						fileName: 'foo_bar_20230101.rbf',
+						fileNameBase: 'foo_bar',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				const destOpPaths: DestFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						relDirPath: '_Arcade/cores',
+						fileName: 'foo_bar_20230102.rbf',
+						fileNameBase: 'foo_bar',
+						extension: '.rbf',
+						date: new Date('2023-01-02'),
+					},
+				];
+
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[]
+				);
+			});
+
+			it('should leave dest alone if src is same age (multiple underscores)', function () {
+				const srcOpPaths: SrcFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						db_id: 'mockdb',
+						cacheRelDirPath: '_Arcade/cores',
+						destRelDirPath: '_Arcade/cores',
+						fileName: 'foo_bar_20230101.rbf',
+						fileNameBase: 'foo_bar',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				const destOpPaths: DestFileOperationPath[] = [
+					{
+						type: 'dated-filename',
+						relDirPath: '_Arcade/cores',
+						fileName: 'foo_bar_20230101.rbf',
+						fileNameBase: 'foo_bar',
+						extension: '.rbf',
+						date: new Date('2023-01-01'),
+					},
+				];
+
+				expect(buildFileOperations(srcOpPaths, destOpPaths, path.join)).toEqual(
+					[]
+				);
+			});
+
 			it('should copy src and delete dest if dest is older', function () {
 				const srcOpPaths: SrcFileOperationPath[] = [
 					{
@@ -276,13 +336,24 @@ describe('export', function () {
 
 		it('should return dated file paths as dated-filename file operation path', function () {
 			expect(
-				buildDestFileOperationPath('_Arcade/cores/foo_20230101.mra')
+				buildDestFileOperationPath('_Arcade/cores/foo_20230101.rbf')
 			).toEqual({
 				type: 'dated-filename',
 				relDirPath: '_Arcade/cores',
-				fileName: 'foo_20230101.mra',
+				fileName: 'foo_20230101.rbf',
 				fileNameBase: 'foo',
-				extension: '.mra',
+				extension: '.rbf',
+				date: new Date('2023-01-01'),
+			});
+
+			expect(
+				buildDestFileOperationPath('_Arcade/cores/foo_bar__buz_20230101.rbf')
+			).toEqual({
+				type: 'dated-filename',
+				relDirPath: '_Arcade/cores',
+				fileName: 'foo_bar__buz_20230101.rbf',
+				fileNameBase: 'foo_bar__buz',
+				extension: '.rbf',
 				date: new Date('2023-01-01'),
 			});
 		});
@@ -293,6 +364,13 @@ describe('export', function () {
 			).toEqual({
 				type: 'exact',
 				relPath: '_Arcade/cores/foo_21111111.mra',
+			});
+
+			expect(
+				buildDestFileOperationPath('_Arcade/cores/foo_bar__buz_21111111.mra')
+			).toEqual({
+				type: 'exact',
+				relPath: '_Arcade/cores/foo_bar__buz_21111111.mra',
 			});
 
 			expect(buildDestFileOperationPath('_Arcade/cores/foo_2111.mra')).toEqual({
