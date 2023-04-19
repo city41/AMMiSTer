@@ -85,6 +85,10 @@ function ConnectedPlan() {
 		window.ipcAPI.noPlan(() => {
 			dispatch(loadOpenedPlan({ plan: null, planPath: null }));
 		});
+
+		window.ipcAPI.menu_notAPlan(() => {
+			alert('Plan not found, or this is not an AMMiSTer plan');
+		});
 	}, []);
 
 	function handleItemMove(args: {
