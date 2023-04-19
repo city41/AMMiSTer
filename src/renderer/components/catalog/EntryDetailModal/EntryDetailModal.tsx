@@ -24,12 +24,11 @@ function EntryDetailModal({
 	}
 
 	if (
-		!entry.files.rbf ||
-		entry.files.rbf.status === 'missing' ||
-		entry.files.rbf.status === 'unexpected-missing'
+		entry.files.rbf?.status === 'missing' ||
+		entry.files.rbf?.status === 'unexpected-missing'
 	) {
 		rbfStatus = '(missing)';
-	} else if (entry.files.rbf.status === 'corrupt') {
+	} else if (entry.files.rbf?.status === 'corrupt') {
 		rbfStatus = '(corrupt)';
 	}
 
@@ -166,26 +165,28 @@ function EntryDetailModal({
 							{entry.files.mra.fileName} {mraStatus}
 						</dd>
 					</div>
-					<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-						<dt
-							className={clsx('text-sm font-medium text-gray-500', {
-								'text-red-700':
-									!entry.files.rbf || entry.files.rbf.status !== 'ok',
-							})}
-						>
-							Core (RBF)
-						</dt>
-						<dd
-							className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-								'italic text-gray-500':
-									!entry.files.rbf || entry.files.rbf.status !== 'ok',
-								'text-gray-900':
-									entry.files.rbf && entry.files.rbf.status === 'ok',
-							})}
-						>
-							{entry.files.rbf?.relFilePath} {rbfStatus}
-						</dd>
-					</div>
+					{!!entry.files.rbf && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt
+								className={clsx('text-sm font-medium text-gray-500', {
+									'text-red-700':
+										!entry.files.rbf || entry.files.rbf.status !== 'ok',
+								})}
+							>
+								Core (RBF)
+							</dt>
+							<dd
+								className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
+									'italic text-gray-500':
+										!entry.files.rbf || entry.files.rbf.status !== 'ok',
+									'text-gray-900':
+										entry.files.rbf && entry.files.rbf.status === 'ok',
+								})}
+							>
+								{entry.files.rbf?.relFilePath} {rbfStatus}
+							</dd>
+						</div>
+					)}
 					{entry.files.roms.map((r) => {
 						let statusText = '';
 

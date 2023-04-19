@@ -20,6 +20,13 @@ const batchGroupBy = new BatchGroupBy();
 
 const NOT_SET_SENTINEL = '__NOT__SET__Criteria_Value__';
 
+type DbIdBulkAddCriteria = {
+	gameAspect: 'db_id';
+	operator: 'is' | 'is-not';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	value: any;
+};
+
 type NumberOfPlayersBulkAddCriteria = {
 	gameAspect: 'players';
 	operator: 'is' | 'is-not';
@@ -79,6 +86,7 @@ type NumberBulkAddCriteria = {
 };
 
 type BulkAddCriteria =
+	| DbIdBulkAddCriteria
 	| NumberOfPlayersBulkAddCriteria
 	| ResolutionBulkAddCriteria
 	| RotationBulkAddCriteria
@@ -840,6 +848,7 @@ function matchesCriteria(
 				}
 			}
 		}
+		case 'db_id':
 		case 'region':
 		case 'resolution':
 		case 'players':

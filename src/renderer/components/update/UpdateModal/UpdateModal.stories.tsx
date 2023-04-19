@@ -17,6 +17,7 @@ const update1: Update = {
 		db_id: 'jtcores',
 		fileName: 'Street Fighter Alpha 2 (Euro 960229).mra',
 		md5: 'dummy hash',
+		dbRelFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 		relFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 		remoteUrl: 'https://example.com',
 	},
@@ -145,6 +146,7 @@ export const FileError = () => {
 				fileEntry: {
 					fileName: 'foo.rbf',
 					db_id: 'jtcores',
+					dbRelFilePath: '_Arcade/cores/foo.rbf',
 					relFilePath: '_Arcade/cores/foo.rbf',
 					type: 'rbf',
 					remoteUrl: '',

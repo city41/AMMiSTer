@@ -54,9 +54,8 @@ function CatalogEntry({
 		!entry.files.mra ||
 		entry.files.mra.status === 'unexpected-missing' ||
 		entry.files.mra.status === 'corrupt' ||
-		!entry.files.rbf ||
-		entry.files.rbf.status === 'unexpected-missing' ||
-		entry.files.rbf.status === 'corrupt' ||
+		entry.files.rbf?.status === 'unexpected-missing' ||
+		entry.files.rbf?.status === 'corrupt' ||
 		(downloadingRoms &&
 			entry.files.roms.length > 0 &&
 			entry.files.roms.every((r) => r.status === 'missing')) ||

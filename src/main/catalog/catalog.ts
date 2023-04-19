@@ -30,6 +30,7 @@ import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
 import * as settings from '../settings';
+import { defaultUpdateDbs } from '../settings/defaultUpdateDbs';
 
 let _currentCatalog: Catalog | null = null;
 
@@ -148,6 +149,20 @@ function cleanDbId(db_id: string): string {
 	return db_id.replace(/\//g, '_').replace(/\\/g, '_');
 }
 
+function flattenRelFilePath(relFilePath: string): string {
+	const split = relFilePath.split('/');
+
+	const flattenedPath = [split[0]];
+
+	if (split[1] === 'cores') {
+		flattenedPath.push(split[1]);
+	}
+
+	flattenedPath.push(split[split.length - 1]);
+
+	return flattenedPath.join('/');
+}
+
 /**
  * Takes a db as pulled from the internet and converts it
  * into FileEntrys for easier processing
@@ -156,15 +171,17 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 	const entries = Object.entries(db.files);
 
 	return entries.map((e) => {
-		const relFilePath = e[0];
-		const { hash, size } = e[1];
+		const dbRelFilePath = e[0];
+		const flattenedRelFilePath = flattenRelFilePath(e[0]);
+		const { hash, size, url } = e[1];
 
 		return {
 			db_id: cleanDbId(db.db_id),
-			type: path.extname(relFilePath).substring(1) as 'mra' | 'rbf',
-			relFilePath,
-			fileName: path.basename(relFilePath),
-			remoteUrl: db.base_files_url + relFilePath,
+			type: path.extname(flattenedRelFilePath).substring(1) as 'mra' | 'rbf',
+			dbRelFilePath,
+			relFilePath: flattenedRelFilePath,
+			fileName: path.basename(flattenedRelFilePath),
+			remoteUrl: url ?? db.base_files_url + dbRelFilePath,
 			md5: hash,
 			size,
 		};
@@ -341,6 +358,11 @@ async function parseMraToCatalogEntry(
 	fileEntries: HashedFileEntry[],
 	metadataDb: MetadataDB
 ): Promise<CatalogEntry> {
+	const updateDb = defaultUpdateDbs.find((udb) => udb.db_id === db_id);
+	if (!updateDb) {
+		throw new Error('failed to find a default updatedb entry for: ' + db_id);
+	}
+
 	debug(
 		`parseMraToCatalogEntry(${db_id}, ${mraFileEntry.relFilePath}, fileEntries, metadataDb)`
 	);
@@ -386,7 +408,7 @@ async function parseMraToCatalogEntry(
 
 		const romCatalogFileEntries: NonHashedCatalogFileEntry[] = [];
 
-		if (romFile) {
+		if (romFile && !updateDb.isDependent) {
 			for (const r of romFile.split('|')) {
 				const romExists = await exists(
 					path.resolve(gameCacheDir, db_id, 'games', 'mame', r)
@@ -452,6 +474,7 @@ async function parseMraToCatalogEntry(
 					db_id,
 					type: 'mra',
 					fileName: path.basename(mraFileEntry.relFilePath),
+					dbRelFilePath: mraFileEntry.dbRelFilePath,
 					relFilePath: mraFileEntry.relFilePath,
 					md5: mraFileEntry.md5,
 					status: 'ok',
@@ -460,11 +483,12 @@ async function parseMraToCatalogEntry(
 			},
 		};
 
-		if (rbfFileEntry) {
+		if (rbfFileEntry && !updateDb.isDependent) {
 			catalogEntry.files.rbf = {
 				db_id,
 				type: 'rbf',
 				fileName: path.basename(rbfFileEntry.relFilePath),
+				dbRelFilePath: rbfFileEntry.dbRelFilePath,
 				relFilePath: rbfFileEntry.relFilePath,
 				md5: rbfFileEntry.md5,
 				status: 'ok',
@@ -708,7 +732,13 @@ async function updateCatalog(
 
 	const downloadRomsSetting = await settings.getSetting('downloadRoms');
 	const updateDbs = await settings.getSetting<UpdateDbConfig[]>('updateDbs');
-	const enabledUpdateDbs = updateDbs.filter((db) => db.enabled);
+
+	const allNonDependentDbsEnabled = updateDbs
+		.filter((udb) => !udb.isDependent)
+		.every((udb) => udb.enabled);
+	const enabledUpdateDbs = updateDbs.filter(
+		(db) => db.enabled && (!db.isDependent || allNonDependentDbsEnabled)
+	);
 
 	const callback: UpdateCallback = (args) => {
 		debug(args.message);
@@ -759,7 +789,7 @@ async function updateCatalog(
 				(f) =>
 					f.relFilePath.startsWith('_Arcade') &&
 					// TODO: deal with alternatives
-					!f.relFilePath.includes('_alternatives')
+					!f.dbRelFilePath.includes('_alternatives')
 			);
 
 			dbFileEntryMap[updateDb.db_id] = dbFileEntries;

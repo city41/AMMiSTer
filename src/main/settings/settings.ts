@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import electronSettings from 'electron-settings';
-import { SettingChangeListener, Settings, SettingsValue } from './types';
+import {
+	SettingChangeListener,
+	Settings,
+	SettingsValue,
+	UpdateDbConfig,
+} from './types';
 import { defaultUpdateDbs } from './defaultUpdateDbs';
 
 const SETTINGS_FILE = 'ammister-settings.json';
@@ -25,6 +30,14 @@ async function init(userDataPath: string): Promise<void> {
 
 	if (!hasUpdateDbs) {
 		await setSetting('updateDbs', defaultUpdateDbs);
+	} else {
+		const existingUpdateDbs = await getSetting<UpdateDbConfig[]>('updateDbs');
+		const newUpdateDbs = defaultUpdateDbs.filter((udb) => {
+			return !existingUpdateDbs.some((edb) => edb.db_id === udb.db_id);
+		});
+
+		const finalUpdateDbs = existingUpdateDbs.concat(newUpdateDbs);
+		await setSetting('updateDbs', finalUpdateDbs);
 	}
 
 	const hasExportOptimization = await hasSetting('exportOptimization');

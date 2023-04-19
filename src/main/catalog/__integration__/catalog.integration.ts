@@ -20,10 +20,10 @@ jest.mock('../../settings', () => {
 				case 'downloadRoms':
 					return Promise.resolve(false);
 				case 'updateDbs': {
-					const updateDbs = defaultUpdateDbs.map((udb, i, a) => {
+					const updateDbs = defaultUpdateDbs.map((udb) => {
 						return {
 							...udb,
-							enabled: i === a.length - 1,
+							enabled: udb.db_id === 'theypsilon_unofficial_distribution',
 						};
 					});
 

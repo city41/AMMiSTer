@@ -23,6 +23,7 @@ type CriteriaProps = {
 
 function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	switch (gameAspect) {
+		case 'db_id':
 		case 'gameName':
 		case 'region':
 		case 'category':
@@ -105,6 +106,7 @@ function ValueInput({
 	catalog: Catalog;
 }) {
 	switch (gameAspect) {
+		case 'db_id':
 		case 'gameName':
 		case 'region':
 		case 'category':
@@ -198,6 +200,7 @@ function Criteria({
 				<option value="special_controls">Special Controls</option>
 				<option value="num_buttons">No. of Buttons</option>
 				<option value="players">No. of Players</option>
+				<option value="db_id">Database</option>
 			</select>
 			<select
 				className="px-2 py-1"

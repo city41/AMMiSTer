@@ -6,6 +6,7 @@ export type DBFileEntry = {
 	hash: string;
 	size: number;
 	tags: number[];
+	url?: string;
 };
 
 /**
@@ -30,9 +31,20 @@ export type HashedFileEntry = {
 	 */
 	db_id: string;
 	type: 'mra' | 'rbf';
+
+	/**
+	 * Its relative filepath as found in the db.json.
+	 * This is mostly only used for reference, as relFilePath
+	 * is used primarily for file operations
+	 */
+	dbRelFilePath: string;
+
 	/**
 	 * Its relative filepath as found in the db.json,
-	 * Typically starts with "_Arcade/", this rel file path
+	 * except any folders between "_Arcade"/"Arcade/core" and the file have been removed.
+	 * This is done to "undo" organization already found in some dbs.
+	 *
+	 * Typically starts with "_Arcade/" or "_Arcade/cores", this rel file path
 	 * is also used when storing it locally at
 	 * <rootDir>/gameCache/<db_id>/<relFilePath>
 	 */
