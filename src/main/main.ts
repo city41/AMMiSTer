@@ -45,11 +45,8 @@ async function loadPlan(planPath: string) {
 		await settings.addRecentPlan(planPath);
 		await settings.setSetting('mostRecentPlanDir', path.dirname(planPath));
 	} else {
-		debug(
-			'loadPlan: plan.openPlan returned null, returning null to let the UI know there is no plan',
-			planPath
-		);
-		mainWindow!.webContents.send('menu:loadOpenedPlan', null);
+		debug('loadPlan: plan.openPlan returned null', planPath);
+		mainWindow!.webContents.send('menu:notAPlan');
 	}
 }
 

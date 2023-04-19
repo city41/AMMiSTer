@@ -168,6 +168,10 @@ const ipcAPI = {
 	menu_settings(callback: () => void) {
 		ipcRenderer.on('menu:settings', callback);
 	},
+
+	menu_notAPlan(callback: () => void) {
+		ipcRenderer.on('menu:notAPlan', callback);
+	},
 };
 
 export { ipcAPI };
