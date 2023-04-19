@@ -58,10 +58,17 @@ function SettingsModal({
 				</div>
 				<div className="bg-yellow-50 py-4">
 					<dl className="flex flex-col gap-y-2">
-						<div className="px-6 py-8 grid grid-cols-2 gap-x-4 gap-y-4">
+						<div className="px-6 py-8 grid grid-cols-2 gap-x-4 gap-y-4 items-center">
 							<dt className="text-sm font-medium text-gray-600 flex flex-row gap-x-2">
 								<label htmlFor="downloadRoms">
 									Download ROMs from archive.org
+									<div
+										className={clsx('text-xs text-red-600', {
+											invisible: !pendingSettings.downloadRoms,
+										})}
+									>
+										Warning: these files may be copyrighted
+									</div>
 								</label>
 							</dt>
 							<dd className="mt-0 text-gray-900 flex flex-row justify-end">
