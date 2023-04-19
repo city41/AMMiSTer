@@ -1,7 +1,8 @@
 import React from 'react';
 import clsx from 'clsx';
-import { CatalogEntry } from '../../../../main/catalog/types';
+import { Catalog, CatalogEntry } from '../../../../main/catalog/types';
 import { CheckIcon } from '../../../icons';
+import { ResolveMissingGameDrop } from './ResolveMissingGameDrop';
 
 type MissingGameToResolve = {
 	mraPath: string;
@@ -11,11 +12,12 @@ type MissingGameToResolve = {
 		| [CatalogEntry, CatalogEntry]
 		| [CatalogEntry, CatalogEntry, CatalogEntry]
 		| null;
-	replacementChoice?: 'entry' | 'remove';
+	replacementChoice?: 'entry' | 'drop' | 'remove';
 	replacementEntry?: CatalogEntry;
 };
 
 type ResolveMissingGameEntryProps = {
+	catalog: Catalog;
 	missingGame: MissingGameToResolve;
 	minimizeIfResolved?: boolean;
 	onChange: (newMg: MissingGameToResolve) => void;
@@ -61,6 +63,7 @@ function GameEntry({ gameName, onClick, isChosen }: GameEntryProps) {
 }
 
 function ResolveMissingGameEntry({
+	catalog,
 	missingGame,
 	minimizeIfResolved,
 	onChange,
@@ -68,11 +71,6 @@ function ResolveMissingGameEntry({
 	const icon = missingGame.replacementChoice ? (
 		<CheckIcon className="text-green-700 w-6" />
 	) : null;
-
-	const choseOwnGame =
-		missingGame.replacementChoice === 'entry' &&
-		!!missingGame.replacementEntry &&
-		!missingGame.potentialReplacements?.includes(missingGame.replacementEntry);
 
 	return (
 		<div
@@ -120,9 +118,32 @@ function ResolveMissingGameEntry({
 							/>
 						);
 					})}
+					<ResolveMissingGameDrop
+						className="px-4 h-8 w-60 grid place-items-center border-4"
+						entry={
+							missingGame.replacementChoice === 'drop'
+								? missingGame.replacementEntry
+								: undefined
+						}
+						onGameChosen={({ db_id, mraFileName }) => {
+							const db = catalog[db_id];
+
+							const entry = db.find(
+								(e) => e.files.mra.fileName === mraFileName
+							);
+
+							if (entry) {
+								onChange({
+									...missingGame,
+									replacementEntry: entry,
+									replacementChoice: 'drop',
+								});
+							}
+						}}
+					/>
 					<div
 						className={clsx(
-							'border-4 grid place-items-center text-xs cursor-pointer self-start px-4 h-8 w-24',
+							'border-4 grid place-items-center text-xs cursor-pointer self-start px-4 h-8 w-60',
 							{
 								'border-red-600 bg-red-600 text-white':
 									missingGame.replacementChoice === 'remove',
@@ -147,24 +168,6 @@ function ResolveMissingGameEntry({
 						}}
 					>
 						remove
-					</div>
-					<div
-						className={clsx(
-							'hidden border-2 border-dashed border-gray-200 xgrid place-items-center text-sm px-2',
-							{
-								'border-green-700': choseOwnGame,
-							}
-						)}
-						style={{ gridColumn: 5 }}
-					>
-						{choseOwnGame ? (
-							<GameEntry
-								gameName={missingGame.replacementEntry!.gameName}
-								isChosen
-							/>
-						) : (
-							<>or, drag a game here</>
-						)}
 					</div>
 				</div>
 			)}

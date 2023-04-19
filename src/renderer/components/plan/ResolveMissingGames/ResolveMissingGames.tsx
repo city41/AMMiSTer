@@ -7,9 +7,11 @@ import {
 	ResolveMissingGameEntry,
 } from './ResolveMissingGameEntry';
 import { DangerIcon } from '../../../icons';
+import { Catalog } from '../../../../main/catalog/types';
 
 type InternalResolveMissingGamesProps = {
 	missingGames: MissingGameToResolve[];
+	catalog: Catalog;
 	onMissingGamesUpdated: (newMissingGames: MissingGameToResolve[]) => void;
 	onOkay: () => void;
 	onCancel: () => void;
@@ -22,6 +24,7 @@ type PublicResolveMissingGamesProps = {
 function ResolveMissingGames({
 	className,
 	missingGames,
+	catalog,
 	onMissingGamesUpdated,
 	onOkay,
 	onCancel,
@@ -99,6 +102,7 @@ function ResolveMissingGames({
 						>
 							<ResolveMissingGameEntry
 								missingGame={mg}
+								catalog={catalog}
 								minimizeIfResolved={minimizeResolved}
 								onChange={(changedMg) => {
 									const newMgs = missingGames.map((omg) => {

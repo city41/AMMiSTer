@@ -162,6 +162,7 @@ function ConnectedResolveMissingGames({
 
 	return (
 		<ResolveMissingGames
+			catalog={catalog}
 			missingGames={missingGames}
 			onCancel={onClose}
 			onOkay={handleOkay}
