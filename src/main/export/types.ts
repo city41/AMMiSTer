@@ -87,7 +87,6 @@ export interface FileClient {
 	connect(): Promise<void>;
 	disconnect(): Promise<void>;
 	getMountPath(): string;
-	getDestinationPathJoiner(): PathJoiner;
 
 	listDir(dirPath: string): Promise<string[]>;
 	isDir(filePath: string): Promise<boolean>;

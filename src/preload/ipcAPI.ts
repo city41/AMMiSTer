@@ -72,11 +72,15 @@ const ipcAPI = {
 		return ipcRenderer.invoke('plan:newPlan');
 	},
 
-	savePlanAs(plan: Plan): Promise<boolean> {
+	savePlanAs(
+		plan: Plan
+	): Promise<{ wasSaved: boolean; planPath: string | null }> {
 		return ipcRenderer.invoke('plan:savePlanAs', plan);
 	},
 
-	savePlan(plan: Plan): Promise<boolean> {
+	savePlan(
+		plan: Plan
+	): Promise<{ wasSaved: boolean; planPath: string | null }> {
 		return ipcRenderer.invoke('plan:savePlan', plan);
 	},
 
@@ -144,9 +148,11 @@ const ipcAPI = {
 		ipcRenderer.on('menu:loadNewPlan', callback);
 	},
 
-	menu_loadOpenedPlan(callback: (plan: Plan) => void) {
-		ipcRenderer.on('menu:loadOpenedPlan', (_event, plan) => {
-			callback(plan);
+	menu_loadOpenedPlan(
+		callback: (args: { plan: Plan; planPath: string }) => void
+	) {
+		ipcRenderer.on('menu:loadOpenedPlan', (_event, ags) => {
+			callback(ags);
 		});
 	},
 
@@ -172,6 +178,10 @@ const ipcAPI = {
 
 	menu_settings(callback: () => void) {
 		ipcRenderer.on('menu:settings', callback);
+	},
+
+	menu_notAPlan(callback: () => void) {
+		ipcRenderer.on('menu:notAPlan', callback);
 	},
 };
 

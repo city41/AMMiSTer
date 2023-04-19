@@ -29,6 +29,12 @@ function ConnectedFooter(props: PublicFooterProps) {
 	}, []);
 
 	const catalog = useSelector((state: AppState) => state.catalog.catalog);
+	const { planPath, isDirty } = useSelector((state: AppState) => {
+		return {
+			planPath: state.plan.present.planPath,
+			isDirty: state.plan.present.isDirty,
+		};
+	});
 
 	return (
 		<Footer
@@ -36,6 +42,8 @@ function ConnectedFooter(props: PublicFooterProps) {
 			updatedAt={catalog?.updatedAt}
 			localVersion={localVersion}
 			mainVersion={mainVersion}
+			planPath={planPath}
+			planIsDirty={isDirty}
 		/>
 	);
 }

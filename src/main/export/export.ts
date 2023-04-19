@@ -1,6 +1,7 @@
-import path from 'node:path';
+import path from '../util/universalPath';
 import fsp from 'node:fs/promises';
 import fs from 'node:fs';
+import Debug from 'debug';
 import winston from 'winston';
 import uniqBy from 'lodash/uniqBy';
 
@@ -22,7 +23,6 @@ import {
 	DestExactFileOperationPath,
 	DestDatedFilenameFileOperationPath,
 	FileClient,
-	PathJoiner,
 } from './types';
 import { FTPFileClient } from './FTPFileClient';
 import { convertFileNameDate, getGameCacheDir } from '../util/fs';
@@ -32,6 +32,8 @@ import { ExportOptimization, UpdateDbConfig } from '../settings/types';
 import { getCurrentCatalog } from '../catalog';
 import { isPlanGameEntry } from '../plan';
 import { getCatalogEntryForMraPath } from '../catalog/util';
+
+const debug = Debug('main/export/export.ts');
 
 class CancelExportError extends Error {}
 
@@ -53,9 +55,14 @@ async function turnLogIntoArray(logFilePath: string): Promise<void> {
 async function createExportLogger(planName: string, initiator: string) {
 	const rootDir = await settings.getSetting('rootDir');
 	const safePlanName = planName.replace(/\s/g, '_');
-	const logFileName = `export-log--${initiator}-${safePlanName}-${new Date().toISOString()}.json`;
+	const logFileName =
+		`export-log--${initiator}-${safePlanName}-${new Date().toISOString()}.json`.replace(
+			/:/g,
+			'_'
+		);
 
 	const logFilePath = path.resolve((rootDir ?? '').toString(), logFileName);
+	debug('createExportLogger, path:', logFilePath);
 
 	const logger = winston.createLogger({
 		level: 'info',
@@ -127,8 +134,10 @@ function getDatedFilenamePathComponents(fileName: string): {
 		return null;
 	}
 
+	split.pop();
+
 	return {
-		fileNameBase: split[0],
+		fileNameBase: split.join('_'),
 		extension: path.extname(fileName),
 		date,
 	};
@@ -137,14 +146,17 @@ function getDatedFilenamePathComponents(fileName: string): {
 function buildDestFileOperationPath(p: string): DestFileOperationPath {
 	const fileName = path.basename(p);
 	const split = path.parse(fileName).name.split('_');
-	const fileNameDate = convertFileNameDate(split[1]);
+	const fileNameDate = convertFileNameDate(split[split.length - 1]);
 
-	if (split.length === 2 && fileNameDate) {
+	if (split.length > 1 && fileNameDate) {
+		split.pop();
+		const fileNameBase = split.join('_');
+
 		return {
 			type: 'dated-filename',
 			extension: path.extname(fileName),
 			fileName,
-			fileNameBase: split[0],
+			fileNameBase,
 			relDirPath: path.dirname(p),
 			date: fileNameDate,
 		};
@@ -182,8 +194,7 @@ function isDestDatedFileOperationPath(
 
 function buildFileOperations(
 	srcOpPaths: SrcFileOperationPath[],
-	destOpPaths: DestFileOperationPath[],
-	destPathJoiner: (...segments: string[]) => string
+	destOpPaths: DestFileOperationPath[]
 ): FileOperation[] {
 	const srcExactPaths = srcOpPaths.filter(isSrcExactFileOperationPath);
 	const destExactPaths = destOpPaths.filter(isDestExactFileOperationPath);
@@ -253,10 +264,7 @@ function buildFileOperations(
 						srcOpPath.cacheRelDirPath,
 						srcOpPath.fileName
 					),
-					destPath: destPathJoiner(
-						srcOpPath.destRelDirPath,
-						srcOpPath.fileName
-					),
+					destPath: path.join(srcOpPath.destRelDirPath, srcOpPath.fileName),
 				},
 			];
 		}
@@ -308,7 +316,7 @@ function buildFileOperations(
 			return [
 				{
 					action: 'delete',
-					destPath: destPathJoiner(destOpPath.relDirPath, destOpPath.fileName),
+					destPath: path.join(destOpPath.relDirPath, destOpPath.fileName),
 				},
 			];
 		} else {
@@ -350,11 +358,7 @@ async function performFileSystemFileOperations(
 		const srcPath =
 			'srcPath' in fileOp ? path.resolve(srcDirRoot, fileOp.srcPath) : '';
 
-		// dest paths might be for the mister, path.join is wrong
-		const destPath = client.getDestinationPathJoiner()(
-			destDirRoot,
-			fileOp.destPath
-		);
+		const destPath = path.join(destDirRoot, fileOp.destPath);
 
 		logger.info({ srcPath, destPath });
 
@@ -397,8 +401,7 @@ const actionToVerb: Record<FileOperation['action'], string> = {
 
 function getSrcFileOperationPathsFromCatalogEntry(
 	entry: CatalogEntry,
-	currentDirPath: string,
-	destPathJoiner: PathJoiner
+	currentDirPath: string
 ): SrcFileOperationPath[] {
 	const paths: SrcFileOperationPath[] = [];
 
@@ -408,7 +411,7 @@ function getSrcFileOperationPathsFromCatalogEntry(
 			db_id: entry.db_id,
 			cacheRelPath: entry.files.mra.relFilePath,
 			// only mras go into subdirectories
-			destRelPath: destPathJoiner(currentDirPath, entry.files.mra.fileName),
+			destRelPath: path.join(currentDirPath, entry.files.mra.fileName),
 		});
 	}
 	if (entry.files.rbf) {
@@ -462,8 +465,7 @@ function getSrcPathsFromPlan(
 	planDir: PlanGameDirectory,
 	currentDirPath: string,
 	catalog: Catalog,
-	updateDbConfigs: UpdateDbConfig[],
-	destPathJoiner: PathJoiner
+	updateDbConfigs: UpdateDbConfig[]
 ): SrcFileOperationPath[] {
 	const paths: SrcFileOperationPath[] = [];
 
@@ -474,8 +476,7 @@ function getSrcPathsFromPlan(
 				// mra directories need to start with _
 				path.join(currentDirPath, `_${entry.directoryName}`),
 				catalog,
-				updateDbConfigs,
-				destPathJoiner
+				updateDbConfigs
 			);
 			paths.push(...subPaths);
 		} else if (isPlanGameEntry(entry)) {
@@ -494,8 +495,7 @@ function getSrcPathsFromPlan(
 
 			const entryPaths = getSrcFileOperationPathsFromCatalogEntry(
 				catalogEntry,
-				currentDirPath,
-				destPathJoiner
+				currentDirPath
 			);
 			paths.push(...entryPaths);
 		}
@@ -505,8 +505,7 @@ function getSrcPathsFromPlan(
 }
 
 async function getSpeedSrcPathsFromCatalog(
-	catalog: Catalog,
-	destPathJoiner: PathJoiner
+	catalog: Catalog
 ): Promise<SrcFileOperationPath[]> {
 	const { updatedAt, ...restOfCatalog } = catalog;
 	const entries = Object.values(restOfCatalog).flat(1);
@@ -516,8 +515,7 @@ async function getSpeedSrcPathsFromCatalog(
 	for (const entry of entries) {
 		const entryPaths = await getSrcFileOperationPathsFromCatalogEntry(
 			entry,
-			'', // this is only used for mras, which we don't care about
-			destPathJoiner
+			'' // this is only used for mras, which we don't care about
 		);
 		const entryPathsWithoutMra = entryPaths.filter((ep) => {
 			return (
@@ -533,8 +531,7 @@ async function getSpeedSrcPathsFromCatalog(
 
 async function getAllSrcPaths(
 	plan: Plan,
-	catalog: Catalog,
-	destPathJoiner: PathJoiner
+	catalog: Catalog
 ): Promise<SrcFileOperationPath[]> {
 	const updateDbConfigs = await settings.getSetting<UpdateDbConfig[]>(
 		'updateDbs'
@@ -544,8 +541,7 @@ async function getAllSrcPaths(
 		plan.games,
 		'_Arcade',
 		catalog,
-		updateDbConfigs,
-		destPathJoiner
+		updateDbConfigs
 	);
 
 	const exportOptimization = await settings.getSetting<
@@ -556,10 +552,7 @@ async function getAllSrcPaths(
 		return srcPathsFromPlan;
 	}
 
-	const speedSrcPathsFromCatalog = await getSpeedSrcPathsFromCatalog(
-		catalog,
-		destPathJoiner
-	);
+	const speedSrcPathsFromCatalog = await getSpeedSrcPathsFromCatalog(catalog);
 
 	// no need to uniq, they'll be uniq'd later
 	return srcPathsFromPlan.concat(speedSrcPathsFromCatalog);
@@ -577,8 +570,7 @@ async function getExistingDestPaths(
 	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
-		// since this is running on the mister, path.join is incorrect
-		const p = client.getDestinationPathJoiner()(curDirPath, entry);
+		const p = path.join(curDirPath, entry);
 		const isDirectory = await client.isDir(p);
 
 		if (isDirectory) {
@@ -609,7 +601,7 @@ async function deleteEmptyDestDirectories(
 	const entries = await client.listDir(curDirPath);
 
 	for (const entry of entries) {
-		const p = client.getDestinationPathJoiner()(curDirPath, entry);
+		const p = path.join(curDirPath, entry);
 		const isDirectory = await client.isDir(p);
 
 		if (isDirectory) {
@@ -675,10 +667,9 @@ async function doExport(
 		await client.connect();
 
 		const mountPath = client.getMountPath();
-		const destPathJoiner = client.getDestinationPathJoiner();
 		exportLogger.info({ mountPath });
 
-		const srcPaths = await getAllSrcPaths(plan, catalog, destPathJoiner);
+		const srcPaths = await getAllSrcPaths(plan, catalog);
 		exportLogger.info({ [getAllSrcPaths.name]: srcPaths });
 
 		callback({
@@ -687,13 +678,13 @@ async function doExport(
 		});
 		const destArcadePaths = await getExistingDestPaths(
 			client,
-			mountPath + '/',
-			destPathJoiner(mountPath, '_Arcade')
+			path.join(mountPath, '/'),
+			path.join(mountPath, '_Arcade')
 		);
 		const destRomPaths = await getExistingDestPaths(
 			client,
-			mountPath + '/',
-			destPathJoiner(mountPath, 'games', 'mame')
+			path.join(mountPath, '/'),
+			path.join(mountPath, 'games', 'mame')
 		);
 		const destPaths = destArcadePaths.concat(destRomPaths);
 		exportLogger.info({
@@ -704,11 +695,7 @@ async function doExport(
 			[getExistingDestPaths.name]: destRomPaths,
 			for: 'games/mame',
 		});
-		const fileOperations = buildFileOperations(
-			srcPaths,
-			destPaths,
-			destPathJoiner
-		);
+		const fileOperations = buildFileOperations(srcPaths, destPaths);
 
 		exportLogger.info({ [buildFileOperations.name]: fileOperations });
 
@@ -739,10 +726,7 @@ async function doExport(
 			exportType,
 			message: 'Cleaning up empty directories',
 		});
-		await deleteEmptyDestDirectories(
-			client,
-			destPathJoiner(mountPath, '_Arcade')
-		);
+		await deleteEmptyDestDirectories(client, path.join(mountPath, '_Arcade'));
 
 		await client.disconnect();
 		const duration = Date.now() - start;

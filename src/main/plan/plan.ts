@@ -1,4 +1,4 @@
-import path from 'node:path';
+import path from '../util/universalPath';
 import fsp from 'node:fs/promises';
 import Debug from 'debug';
 import {

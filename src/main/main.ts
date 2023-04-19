@@ -1,4 +1,5 @@
-import path from 'node:path';
+import path from './util/universalPath';
+import nodepath from 'node:path';
 import cluster from 'node:cluster';
 import Debug from 'debug';
 import mkdirp from 'mkdirp';
@@ -42,16 +43,16 @@ if (cluster.isPrimary) {
 		const openedPlan = await plan.openPlan(planPath);
 		if (openedPlan) {
 			debug('loadPlan: sending opened plan to mainWindow', planPath);
-			mainWindow!.webContents.send('menu:loadOpenedPlan', openedPlan);
+			mainWindow!.webContents.send('menu:loadOpenedPlan', {
+				plan: openedPlan,
+				planPath,
+			});
 			lastPlanSavePath = planPath;
 			await settings.addRecentPlan(planPath);
 			await settings.setSetting('mostRecentPlanDir', path.dirname(planPath));
 		} else {
-			debug(
-				'loadPlan: plan.openPlan returned null, returning null to let the UI know there is no plan',
-				planPath
-			);
-			mainWindow!.webContents.send('menu:loadOpenedPlan', null);
+			debug('loadPlan: plan.openPlan returned null', planPath);
+			mainWindow!.webContents.send('menu:notAPlan');
 		}
 	}
 
@@ -70,7 +71,10 @@ if (cluster.isPrimary) {
 					{
 						label: 'New Plan',
 						accelerator: 'CommandOrControl+N',
-						click: () => mainWindow!.webContents.send('menu:loadNewPlan'),
+						click: () => {
+							lastPlanSavePath = null;
+							mainWindow!.webContents.send('menu:loadNewPlan');
+						},
 					},
 					{
 						type: 'separator',
@@ -233,7 +237,10 @@ if (cluster.isPrimary) {
 			height: 600,
 			webPreferences: {
 				devTools: isDev,
-				preload: path.join(__dirname, '../preload.bundle.js'),
+				// nodepath is to handle __dirname being OS specific
+				// by using an OS specific join, the resulting path is correct
+				// on Windows and posix
+				preload: nodepath.join(__dirname, '../preload.bundle.js'),
 				webSecurity: !isDev,
 			},
 		});
@@ -392,10 +399,10 @@ if (cluster.isPrimary) {
 			lastPlanSavePath = savedPlanPath;
 			await settings.addRecentPlan(savedPlanPath);
 
-			return true;
+			return { wasSaved: true, planPath: savedPlanPath };
 		}
 
-		return false;
+		return { wasSaved: false, planPath: null };
 	});
 
 	ipcMain.handle('plan:savePlan', async (_event, p: Plan) => {
@@ -408,12 +415,16 @@ if (cluster.isPrimary) {
 		}
 
 		if (lastPlanSavePath) {
-			plan.savePlan(p, lastPlanSavePath);
-			settings.addRecentPlan(lastPlanSavePath);
-			return true;
+			// savePlan will return the actual path that the plan got saved to
+			// typically it adds '.amip' if it is missing
+			const savedPlanPath = await plan.savePlan(p, lastPlanSavePath);
+			lastPlanSavePath = savedPlanPath;
+			await settings.addRecentPlan(savedPlanPath);
+
+			return { wasSaved: true, planPath: savedPlanPath };
 		}
 
-		return false;
+		return { wasSaved: false, planPath: null };
 	});
 
 	let exportProceeding = true;

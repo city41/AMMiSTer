@@ -63,15 +63,17 @@ function ConnectedPlan() {
 
 		window.ipcAPI.menu_loadNewPlan(handleNewPlan);
 
-		window.ipcAPI.menu_loadOpenedPlan(async (plan: Plan) => {
-			if (!plan) {
-				alert(
-					'This plan could not be found, or the file is not an AMMiSter plan'
-				);
-			} else {
-				dispatch(loadOpenedPlan(plan));
+		window.ipcAPI.menu_loadOpenedPlan(
+			async ({ plan, planPath }: { plan: Plan; planPath: string }) => {
+				if (!plan) {
+					alert(
+						'This plan could not be found, or the file is not an AMMiSter plan'
+					);
+				} else {
+					dispatch(loadOpenedPlan({ plan, planPath }));
+				}
 			}
-		});
+		);
 
 		window.ipcAPI.menu_savePlanAs(async () => {
 			dispatch(savePlanAs());
@@ -81,7 +83,11 @@ function ConnectedPlan() {
 			dispatch(savePlan());
 		});
 		window.ipcAPI.noPlan(() => {
-			dispatch(loadOpenedPlan(null));
+			dispatch(loadOpenedPlan({ plan: null, planPath: null }));
+		});
+
+		window.ipcAPI.menu_notAPlan(() => {
+			alert('Plan not found, or this is not an AMMiSTer plan');
 		});
 	}, []);
 

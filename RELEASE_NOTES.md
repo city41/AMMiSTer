@@ -4,6 +4,48 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.26.0
+
+- [All] Bulk criteria for number of players added
+- [All] The currently opened plan's location is listed in the footer
+- [All] User is alerted if the file they tried to open is not a plan
+- [All] Some minor bug fixes around saving plans
+- [Windows] Bug fix: the recent plans menu item was showing the entire path
+
+## Version 0.25.7
+
+- [Windows] Large change to address the Windows problems with exporting.
+
+For Windows, this is a big change. For Linux and Mac this change does hardly anything.
+
+This should fix most (and hopefully all) of the export and general issues that Windows users have been seeing.
+
+==== WINDOWS USERS ALERT====
+
+You will need to rebuild your catalog.json file:
+
+1. Open AMMiSTer
+2. go to Catalog > Open Folder
+3. delete catalog.json
+4. Close AMMiSTer and re-open it
+5. Click to build the catalog (this won't take long, it will still use all the cores, roms, etc it downloaded before)
+
+==== Older Plan files no longer work in Windows ====
+
+This means all plan files made in Windows before this version will no longer work. Sorry about that,
+but sometimes that is how early software goes. You will know a plan does not work if AMMiSTer says all the games
+are missing, and the missing game resolver does not work (clicking okay does nothing).
+
+The upside, all AMMiSTer plan files are now compatible across all OSes.
+
+## Version 0.25.6
+
+- [Windows] Bug fix: fixed part of export that was not handling Windows file paths correctly
+
+## Version 0.25.5
+
+- [Windows] Bug fix: export logs issue that prevented them from being created. These files help debug export problems.
+
 ## Version 0.25.4
 
 - [All] Getting the game's categories from the arcade database instead of the MRA file.

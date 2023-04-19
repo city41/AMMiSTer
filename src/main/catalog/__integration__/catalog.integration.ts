@@ -1,5 +1,5 @@
 import os from 'node:os';
-import path from 'node:path';
+import path from '../../util/universalPath';
 import fsp from 'node:fs/promises';
 import { Settings } from '../../settings/types';
 import { defaultUpdateDbs } from '../../settings/defaultUpdateDbs';
