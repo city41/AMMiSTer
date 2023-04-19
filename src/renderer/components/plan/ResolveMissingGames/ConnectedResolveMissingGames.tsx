@@ -121,10 +121,19 @@ function buildMissingGameEntries(
 	const availableGames = Object.values(restofCatalog).flat(1);
 
 	return missingGames.map((mg) => {
+		const potentialReplacements = getPotentialReplacementGames(
+			mg,
+			availableGames
+		);
+
 		return {
 			mraPath: mg.relFilePath,
 			planPath: mg.planPath,
-			potentialReplacements: getPotentialReplacementGames(mg, availableGames),
+			potentialReplacements,
+			replacementChoice: potentialReplacements?.length ? 'entry' : undefined,
+			replacementEntry: potentialReplacements?.length
+				? potentialReplacements[0]
+				: undefined,
 		};
 	});
 }

@@ -35,16 +35,23 @@ function GameEntry({ gameName, onClick, isChosen }: GameEntryProps) {
 	return (
 		<div
 			className={clsx(
-				'border px-4 py-2 flex flex-col border-gray-300 cursor-pointer',
+				'border-4 px-2 py-2 flex flex-row items-center gap-x-2 border-gray-300 cursor-pointer',
 				{
-					'border-4 border-green-700': isChosen,
-					'hover:bg-green-100': !isChosen,
+					'border-green-700': isChosen,
+					'hover:bg-green-100 border-gray-300': !isChosen,
 				}
 			)}
 			onClick={onClick}
 		>
 			<div
-				className={clsx('text-xs text-center mb-4 border-b border-gray-400')}
+				style={{ marginLeft: 'calc(-.5rem - 1px)' }}
+				className={clsx(
+					'text-xs px-2 py-1 bg-gray-500 text-white w-24 h-8 grid place-items-center',
+					{
+						'bg-green-700': isChosen,
+						'bg-gray-500': !isChosen,
+					}
+				)}
 			>
 				replace with
 			</div>
@@ -70,8 +77,7 @@ function ResolveMissingGameEntry({
 	return (
 		<div
 			className={clsx(
-				'flex flex-col gap-y-4 items-start border px-4 py-2 shadow-lg border-gray-200',
-				{ 'opacity-50': !!missingGame.replacementChoice }
+				'flex flex-col gap-y-4 items-start border px-4 py-2 shadow-lg border-gray-200'
 			)}
 		>
 			<div
@@ -89,7 +95,7 @@ function ResolveMissingGameEntry({
 				</div>
 			</div>
 			{(!minimizeIfResolved || !missingGame.replacementChoice) && (
-				<div className="grid grid-cols-5 gap-x-3">
+				<div className="w-full flex flex-col items-stretch gap-y-2">
 					{missingGame.potentialReplacements?.map((pr) => {
 						return (
 							<GameEntry
@@ -103,19 +109,25 @@ function ResolveMissingGameEntry({
 											replacementEntry: pr,
 											replacementChoice: 'entry',
 										});
+									} else {
+										onChange({
+											...missingGame,
+											replacementEntry: undefined,
+											replacementChoice: undefined,
+										});
 									}
 								}}
 							/>
 						);
 					})}
 					<div
-						style={{ gridColumn: 4 }}
 						className={clsx(
-							'border-2 border-red-200 grid place-items-center text-sm cursor-pointer',
+							'border-4 grid place-items-center text-xs cursor-pointer self-start px-4 h-8 w-24',
 							{
-								'border-4 border-red-600 text-red-600':
+								'border-red-600 bg-red-600 text-white':
 									missingGame.replacementChoice === 'remove',
-								'hover:bg-red-100': missingGame.replacementChoice !== 'remove',
+								'border-red-100 hover:bg-red-100':
+									missingGame.replacementChoice !== 'remove',
 							}
 						)}
 						onClick={() => {
@@ -124,6 +136,12 @@ function ResolveMissingGameEntry({
 									...missingGame,
 									replacementEntry: undefined,
 									replacementChoice: 'remove',
+								});
+							} else {
+								onChange({
+									...missingGame,
+									replacementEntry: undefined,
+									replacementChoice: undefined,
 								});
 							}
 						}}
