@@ -4,6 +4,14 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.26.0
+
+- [All] Bulk criteria for number of players added
+- [All] The currently opened plan's location is listed in the footer
+- [All] User is alerted if the file they tried to open is not a plan
+- [All] Some minor bug fixes around saving plans
+- [Windows] Bug fix: the recent plans menu item was showing the entire path
+
 ## Version 0.25.7
 
 - [Windows] Large change to address the Windows problems with exporting.
