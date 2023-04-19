@@ -47,6 +47,11 @@ class WSMain {
 }
 
 function rpcMain(): WSMain | undefined {
+	cluster.setupPrimary({
+		exec: process.execPath,
+		execArgv: process.execArgv,
+	});
+
 	if (cluster.isPrimary) {
 		const worker = cluster.fork();
 

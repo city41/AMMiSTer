@@ -5,19 +5,8 @@ import { ExportStatus, FileClientConnectConfig } from 'src/main/export/types';
 import { Plan } from 'src/main/plan/types';
 
 const ipcAPI = {
-	getVersion(): Promise<string> {
-		// return ipcRenderer.invoke('main:getVersion');
-		return new Promise((resolve) => {
-			const socket = new WebSocket('ws://localhost:9999');
-			socket.onmessage = (e) => {
-				console.log(e.data);
-				const data = JSON.parse(e.data);
-				resolve(data.result);
-			};
-			socket.onopen = () => {
-				socket.send(JSON.stringify({ type: 'main:getVersion' }));
-			};
-		});
+	onRpcPort(callback: (port: number) => void) {
+		ipcRenderer.on('rpc:port', (_event, port: number) => callback(port));
 	},
 
 	getAllSettings(): Promise<Settings> {
@@ -151,8 +140,8 @@ const ipcAPI = {
 	menu_loadOpenedPlan(
 		callback: (args: { plan: Plan; planPath: string }) => void
 	) {
-		ipcRenderer.on('menu:loadOpenedPlan', (_event, ags) => {
-			callback(ags);
+		ipcRenderer.on('menu:loadOpenedPlan', (_event, args) => {
+			callback(args);
 		});
 	},
 

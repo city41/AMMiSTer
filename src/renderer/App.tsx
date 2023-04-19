@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -14,8 +14,20 @@ import { Welcome } from './components/Welcome';
 import { UpdateModal } from './components/update/UpdateModal';
 import { store } from './store';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { RPC } from './RPC';
 
 function App() {
+	window.rpc = new RPC();
+
+	useEffect(() => {
+		window.ipcAPI.onRpcPort((port: number) => {
+			window.rpc?.open(port);
+		});
+		window.rpc?.open(9999);
+
+		return () => window.rpc?.close();
+	}, []);
+
 	return (
 		<ErrorBoundary>
 			<DndProvider backend={HTML5Backend}>

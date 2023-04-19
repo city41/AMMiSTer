@@ -2,6 +2,7 @@ declare global {
 	interface Window {
 		/** APIs for Electron IPC */
 		ipcAPI: typeof import('../preload/ipcAPI').ipcAPI;
+		rpc?: import('../renderer/RPC').RPC;
 	}
 }
 

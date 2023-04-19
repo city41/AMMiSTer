@@ -12,8 +12,7 @@ function ConnectedFooter(props: PublicFooterProps) {
 	const [mainVersion, setMainVersion] = useState('');
 
 	useEffect(() => {
-		window.ipcAPI.getVersion().then((v) => {
-			console.log('got a version', v);
+		window.rpc?.getVersion().then((v) => {
 			setLocalVersion(v);
 		});
 
