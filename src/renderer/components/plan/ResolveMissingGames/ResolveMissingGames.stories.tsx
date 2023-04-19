@@ -1,4 +1,6 @@
 import React from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Meta } from '@storybook/react';
 import { ResolveMissingGames } from './ResolveMissingGames';
 import { mockCatalogEntry } from '../../catalog/mockCatalogEntry';
@@ -11,14 +13,23 @@ const meta: Meta = {
 
 export default meta;
 
+// @ts-expect-error
+const catalog: CatalogType = {
+	updatedAt: Date.now(),
+	jtcores: [mockCatalogEntry, mockCatalogEntry],
+};
+
 export const NoMissingGames = () => {
 	return (
-		<ResolveMissingGames
-			missingGames={[]}
-			onOkay={() => {}}
-			onCancel={() => {}}
-			onMissingGamesUpdated={() => {}}
-		/>
+		<DndProvider backend={HTML5Backend}>
+			<ResolveMissingGames
+				catalog={catalog}
+				missingGames={[]}
+				onOkay={() => {}}
+				onCancel={() => {}}
+				onMissingGamesUpdated={() => {}}
+			/>
+		</DndProvider>
 	);
 };
 
@@ -37,12 +48,15 @@ export const OneMissingGame = () => {
 	};
 
 	return (
-		<ResolveMissingGames
-			missingGames={[missingGame]}
-			onOkay={() => {}}
-			onCancel={() => {}}
-			onMissingGamesUpdated={() => {}}
-		/>
+		<DndProvider backend={HTML5Backend}>
+			<ResolveMissingGames
+				catalog={catalog}
+				missingGames={[missingGame]}
+				onOkay={() => {}}
+				onCancel={() => {}}
+				onMissingGamesUpdated={() => {}}
+			/>
+		</DndProvider>
 	);
 };
 
@@ -95,11 +109,14 @@ export const FourMissingGames = () => {
 	};
 
 	return (
-		<ResolveMissingGames
-			missingGames={[missingGame1, missingGame2, missingGame3, missingGame4]}
-			onOkay={() => {}}
-			onCancel={() => {}}
-			onMissingGamesUpdated={() => {}}
-		/>
+		<DndProvider backend={HTML5Backend}>
+			<ResolveMissingGames
+				catalog={catalog}
+				missingGames={[missingGame1, missingGame2, missingGame3, missingGame4]}
+				onOkay={() => {}}
+				onCancel={() => {}}
+				onMissingGamesUpdated={() => {}}
+			/>
+		</DndProvider>
 	);
 };
