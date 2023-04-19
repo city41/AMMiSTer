@@ -7,6 +7,7 @@ export type UpdateDbConfig = {
 	displayName: string;
 	url: string;
 	enabled: boolean;
+	isDependent?: boolean;
 };
 
 /**

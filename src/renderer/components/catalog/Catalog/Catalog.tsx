@@ -29,8 +29,12 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 		[filter]
 	);
 
+	const allNonDependentDbsEnabled = updateDbConfigs
+		.filter((udb) => !udb.isDependent)
+		.every((udb) => udb.enabled);
+
 	const lis = updateDbConfigs.flatMap((db) => {
-		if (!db.enabled) {
+		if (!db.enabled || (db.isDependent && !allNonDependentDbsEnabled)) {
 			return [];
 		}
 

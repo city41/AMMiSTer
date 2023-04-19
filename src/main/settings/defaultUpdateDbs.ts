@@ -25,6 +25,13 @@ const defaultUpdateDbs: UpdateDbConfig[] = [
 		url: 'https://raw.githubusercontent.com/theypsilon/Distribution_Unofficial_MiSTer/main/unofficialdb.json.zip',
 		enabled: true,
 	},
+	{
+		db_id: 'arcade_offset_folder',
+		displayName: 'Atrac17: Arcade Offset',
+		url: 'https://raw.githubusercontent.com/atrac17/Arcade_Offset/db/arcadeoffsetdb.json.zip',
+		enabled: true,
+		isDependent: true,
+	},
 ];
 
 export { defaultUpdateDbs };

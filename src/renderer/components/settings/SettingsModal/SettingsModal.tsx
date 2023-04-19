@@ -41,6 +41,10 @@ function SettingsModal({
 		});
 	}
 
+	const allNonDependentDbsEnabled = pendingSettings.updateDbs
+		.filter((udb) => !udb.isDependent)
+		.every((udb) => udb.enabled);
+
 	return (
 		<Modal {...rest} closeButton>
 			<div
@@ -93,43 +97,105 @@ function SettingsModal({
 							</dt>
 							<dd className="mt-0 text-gray-900">
 								<ul className="flex flex-col gap-y-2">
-									{pendingSettings.updateDbs.map((db) => {
-										return (
-											<li
-												key={db.db_id}
-												className="grid"
-												style={{ gridTemplateColumns: '1fr max-content' }}
-											>
-												<label
-													htmlFor={db.db_id}
-													className="text-sm cursor-pointer"
+									{pendingSettings.updateDbs
+										.filter((udb) => !udb.isDependent)
+										.map((db) => {
+											return (
+												<li
+													key={db.db_id}
+													className="grid"
+													style={{ gridTemplateColumns: '1fr max-content' }}
 												>
-													{db.displayName}
-												</label>
-												<Toggle
-													checked={!!db.enabled}
-													id={db.db_id}
-													onChange={() => {
-														setPendingSettings((ps) => {
-															return {
-																...ps,
-																updateDbs: ps.updateDbs.map((udb) => {
-																	if (udb.db_id === db.db_id) {
-																		return {
-																			...udb,
-																			enabled: !udb.enabled,
-																		};
-																	} else {
-																		return udb;
-																	}
-																}),
-															};
-														});
-													}}
-												/>
-											</li>
-										);
-									})}
+													<label
+														htmlFor={db.db_id}
+														className="text-sm cursor-pointer"
+													>
+														{db.displayName}
+													</label>
+													<Toggle
+														checked={!!db.enabled}
+														id={db.db_id}
+														onChange={() => {
+															setPendingSettings((ps) => {
+																return {
+																	...ps,
+																	updateDbs: ps.updateDbs.map((udb) => {
+																		if (udb.db_id === db.db_id) {
+																			return {
+																				...udb,
+																				enabled: !udb.enabled,
+																			};
+																		} else {
+																			return udb;
+																		}
+																	}),
+																};
+															});
+														}}
+													/>
+												</li>
+											);
+										})}
+								</ul>
+							</dd>
+						</div>
+						<Rule />
+						<div className="px-6 py-5 grid grid-cols-2 gap-4">
+							<dt className="text-sm font-medium text-gray-600 flex flex-row gap-x-2">
+								<label htmlFor="downloadRoms">
+									Extra Databases
+									<div
+										className={clsx('text-xs text-red-600', {
+											invisible: allNonDependentDbsEnabled,
+										})}
+									>
+										To use these databases, all main databases above must be
+										enabled
+									</div>
+								</label>
+							</dt>
+							<dd className="mt-0 text-gray-900">
+								<ul className="flex flex-col gap-y-2">
+									{pendingSettings.updateDbs
+										.filter((udb) => udb.isDependent)
+										.map((db) => {
+											return (
+												<li
+													key={db.db_id}
+													className="grid"
+													style={{ gridTemplateColumns: '1fr max-content' }}
+												>
+													<label
+														htmlFor={db.db_id}
+														className="text-sm cursor-pointer"
+													>
+														{db.displayName}
+													</label>
+													<Toggle
+														checked={!!db.enabled && allNonDependentDbsEnabled}
+														disabled={!allNonDependentDbsEnabled}
+														id={db.db_id}
+														onChange={() => {
+															setPendingSettings((ps) => {
+																return {
+																	...ps,
+																	updateDbs: ps.updateDbs.map((udb) => {
+																		if (udb.db_id === db.db_id) {
+																			return {
+																				...udb,
+																				enabled: !udb.enabled,
+																			};
+																		} else {
+																			return udb;
+																		}
+																	}),
+																};
+															});
+														}}
+													/>
+												</li>
+											);
+										})}
 								</ul>
 							</dd>
 						</div>
