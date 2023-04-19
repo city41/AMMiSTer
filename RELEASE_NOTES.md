@@ -4,6 +4,36 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.27.0
+
+- [All] Better styling and drag/drop added to the missing game resolver
+
+This feature is still not done, but it does work. After doing an update, sometimes MRA file names
+are changed. AMMiSTer can't truly do anything about this. Instead it will alert you if you plan
+contains games that are no longer in the catalog, and let you fix it. It chooses games that are
+probably the correct replacement. A lot of times you just need to press okay, but if needed you can
+choose other games.
+
+If you want to try this out:
+
+1. Take one of your plan files and open it in a text editor
+2. For one of the games, change the `relFilePath` to something else.
+3. Open that plan up in AMMiSTer
+
+For example, change this
+
+```
+  "relFilePath": "_Arcade/Alien vs. Predator (Euro 940520).mra"
+```
+
+To this
+
+```
+"relFilePath": "_Arcade/Alie vs. Predator (Euro 940520).mra"
+```
+
+Now the missing game resolver should pop up and offer to fix Alien vs Predator for you.
+
 ## Version 0.26.0
 
 - [All] Bulk criteria for number of players added
