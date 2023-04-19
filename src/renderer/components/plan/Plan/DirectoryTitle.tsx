@@ -61,6 +61,26 @@ function DirectoryTitle({
 		}
 	}, [isEditing]);
 
+	useEffect(() => {
+		setDirName(node.title as string);
+	}, [node.title]);
+
+	function handleEditComplete() {
+		setIsEditing(false);
+		if (node.parentPath.length === 0) {
+			// TODO: can the plan itself not be handled separately?
+			onPlanRename(dirName);
+		} else {
+			const newName = dirName;
+			onDirectoryRename({
+				parentPath: node.parentPath,
+				name: node.title as string,
+				newName: newName,
+			});
+			onSetFocusedId(node.parentPath.concat(newName).join('/'));
+		}
+	}
+
 	const titleEl = isEditing ? (
 		<Input
 			ref={inputRef}
@@ -70,21 +90,20 @@ function DirectoryTitle({
 			onChange={(e) => {
 				setDirName(e.target.value);
 			}}
-			onBlur={() => {
-				setIsEditing(false);
-				if (node.parentPath.length === 0) {
-					// TODO: can the plan itself not be handled separately?
-					onPlanRename(dirName);
-				} else {
-					const newName = dirName;
-					onDirectoryRename({
-						parentPath: node.parentPath,
-						name: node.title as string,
-						newName,
-					});
-					onSetFocusedId(node.parentPath.concat(newName).join('/'));
+			onKeyDown={(e) => {
+				switch (e.key) {
+					case 'Enter': {
+						handleEditComplete();
+						break;
+					}
+					case 'Escape': {
+						setDirName(node.title as string);
+						setIsEditing(false);
+						break;
+					}
 				}
 			}}
+			onBlur={() => handleEditComplete()}
 		/>
 	) : (
 		<div
