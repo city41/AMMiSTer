@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.28.0
+
+- [All] Atrac17's Arcade Offset database was added.
+
 ## Version 0.27.0
 
 - [All] Better styling and drag/drop added to the missing game resolver
