@@ -33,6 +33,7 @@ const mockCatalogEntry: CatalogEntry = {
 			dbRelFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 			relFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 			status: 'ok',
+			size: 123,
 		},
 		rbf: {
 			type: 'rbf',
@@ -42,6 +43,7 @@ const mockCatalogEntry: CatalogEntry = {
 			dbRelFilePath: '_Arcade/cores/jtcps2_20220819.rbf',
 			relFilePath: '_Arcade/cores/jtcps2_20220819.rbf',
 			status: 'ok',
+			size: 456,
 		},
 		roms: [
 			{
@@ -50,6 +52,7 @@ const mockCatalogEntry: CatalogEntry = {
 				fileName: 'sfa2.zip',
 				relFilePath: 'games/mame/sfa2.zip',
 				status: 'ok',
+				size: 789,
 			},
 			{
 				type: 'rom',
@@ -57,6 +60,7 @@ const mockCatalogEntry: CatalogEntry = {
 				fileName: 'qsound.zip',
 				relFilePath: 'games/mame/qsound.zip',
 				status: 'ok',
+				size: 789,
 			},
 		],
 	},

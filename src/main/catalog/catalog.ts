@@ -25,7 +25,7 @@ import {
 	HashedCatalogFileEntry,
 } from './types';
 import { UpdateDbConfig } from '../settings/types';
-import { exists, getGameCacheDir } from '../util/fs';
+import { exists, getGameCacheDir, size } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
@@ -410,9 +410,8 @@ async function parseMraToCatalogEntry(
 
 		if (romFile && !updateDb.isDependent) {
 			for (const r of romFile.split('|')) {
-				const romExists = await exists(
-					path.resolve(gameCacheDir, db_id, 'games', 'mame', r)
-				);
+				const romPath = path.resolve(gameCacheDir, db_id, 'games', 'mame', r);
+				const romExists = await exists(romPath);
 
 				romCatalogFileEntries.push({
 					db_id,
@@ -421,6 +420,7 @@ async function parseMraToCatalogEntry(
 					relFilePath: path.join('games', 'mame', r),
 					type: 'rom',
 					status: romExists ? 'ok' : 'missing',
+					size: await size(romPath),
 				});
 			}
 		}
@@ -478,6 +478,7 @@ async function parseMraToCatalogEntry(
 					relFilePath: mraFileEntry.relFilePath,
 					md5: mraFileEntry.md5,
 					status: 'ok',
+					size: mraFileEntry.size,
 				},
 				roms: romCatalogFileEntries,
 			},
@@ -492,6 +493,7 @@ async function parseMraToCatalogEntry(
 				relFilePath: rbfFileEntry.relFilePath,
 				md5: rbfFileEntry.md5,
 				status: 'ok',
+				size: rbfFileEntry.size,
 			};
 		}
 
@@ -624,6 +626,7 @@ async function downloadRom(
 				relFilePath,
 				fileName,
 				remoteUrl,
+				size: await size(localPath),
 			},
 			updateReason,
 		};

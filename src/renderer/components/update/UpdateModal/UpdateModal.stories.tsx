@@ -20,6 +20,7 @@ const update1: Update = {
 		dbRelFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 		relFilePath: '_Arcade/Street Fighter 2 (Euro 960229).mra',
 		remoteUrl: 'https://example.com',
+		size: 456,
 	},
 };
 
@@ -31,6 +32,7 @@ const update2: Update = {
 		fileName: 'sfa2.zip',
 		relFilePath: 'games/mame/sfa2.zip',
 		remoteUrl: 'https://example.com',
+		size: 456,
 	},
 };
 
@@ -151,6 +153,7 @@ export const FileError = () => {
 					type: 'rbf',
 					remoteUrl: '',
 					md5: 'mock-hash',
+					size: 456,
 				},
 			}}
 			onClose={() => {}}

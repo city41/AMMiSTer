@@ -9,6 +9,30 @@ type EntryDetailModalProps = {
 	entry: CatalogEntry;
 };
 
+function formatSize(size: number | undefined): string | undefined {
+	if (!size) {
+		return;
+	}
+
+	const kilobytes = size / 1024;
+	const megabytes = kilobytes / 1024;
+	const gigabytes = megabytes / 1024;
+
+	if (kilobytes < 1) {
+		return `${size} bytes`;
+	}
+
+	if (megabytes < 1) {
+		return `${kilobytes.toFixed(2)} kb`;
+	}
+
+	if (gigabytes < 1) {
+		return `${megabytes.toFixed(2)} mb`;
+	}
+
+	return `${gigabytes.toFixed(2)} gb`;
+}
+
 function EntryDetailModal({
 	isOpen,
 	onRequestClose,
@@ -157,12 +181,20 @@ function EntryDetailModal({
 							MRA
 						</dt>
 						<dd
-							className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-								'italic text-gray-500': entry.files.mra.status !== 'ok',
-								'text-gray-900': entry.files.mra.status === 'ok',
-							})}
+							className={clsx(
+								'mt-1 text-sm sm:col-span-2 sm:mt-0 flex flex-row gap-x-2 items-baseline',
+								{
+									'italic text-gray-500': entry.files.mra.status !== 'ok',
+									'text-gray-900': entry.files.mra.status === 'ok',
+								}
+							)}
 						>
-							{entry.files.mra.fileName} {mraStatus}
+							<div>
+								{entry.files.mra.fileName} {mraStatus}
+							</div>
+							<div className="text-xs ml-2 text-gray-500 italic">
+								{formatSize(entry.files.mra.size)}
+							</div>
 						</dd>
 					</div>
 					{!!entry.files.rbf && (
@@ -176,14 +208,22 @@ function EntryDetailModal({
 								Core (RBF)
 							</dt>
 							<dd
-								className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-									'italic text-gray-500':
-										!entry.files.rbf || entry.files.rbf.status !== 'ok',
-									'text-gray-900':
-										entry.files.rbf && entry.files.rbf.status === 'ok',
-								})}
+								className={clsx(
+									'mt-1 text-sm sm:col-span-2 sm:mt-0 flex flex-row gap-x-2 items-baseline',
+									{
+										'italic text-gray-500':
+											!entry.files.rbf || entry.files.rbf.status !== 'ok',
+										'text-gray-900':
+											entry.files.rbf && entry.files.rbf.status === 'ok',
+									}
+								)}
 							>
-								{entry.files.rbf?.relFilePath} {rbfStatus}
+								<div>
+									{entry.files.rbf?.relFilePath} {rbfStatus}{' '}
+								</div>
+								<div className="text-xs ml-2 text-gray-500 italic">
+									{formatSize(entry.files.rbf?.size)}
+								</div>
 							</dd>
 						</div>
 					)}
@@ -209,12 +249,20 @@ function EntryDetailModal({
 									ROM
 								</dt>
 								<dd
-									className={clsx('mt-1 text-sm sm:col-span-2 sm:mt-0', {
-										'italic text-gray-500': r.status !== 'ok',
-										'text-gray-900': r.status === 'ok',
-									})}
+									className={clsx(
+										'mt-1 text-sm sm:col-span-2 sm:mt-0 flex flex-row gap-x-2 items-baseline',
+										{
+											'italic text-gray-500': r.status !== 'ok',
+											'text-gray-900': r.status === 'ok',
+										}
+									)}
 								>
-									{r.relFilePath} {statusText}
+									<div>
+										{r.relFilePath} {statusText}
+									</div>
+									<div className="text-xs ml-2 text-gray-500 italic">
+										{formatSize(r.size)}
+									</div>
 								</dd>
 							</div>
 						);

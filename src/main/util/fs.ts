@@ -57,3 +57,11 @@ export async function exists(filePath: string): Promise<boolean> {
 		return false;
 	}
 }
+
+export async function size(filePath: string): Promise<number> {
+	try {
+		return (await fsp.stat(filePath)).size;
+	} catch {
+		return 0;
+	}
+}

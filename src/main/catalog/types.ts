@@ -61,6 +61,11 @@ export type HashedFileEntry = {
 	 * TODO: make discriminated unions
 	 */
 	md5: string;
+
+	/**
+	 * The size of the file, in bytes
+	 */
+	size: number;
 };
 
 export type NonHashedFileEntry = {
@@ -82,6 +87,11 @@ export type NonHashedFileEntry = {
 	 * the latest version of it. Basically just base_file_url/<relFilePath>
 	 */
 	remoteUrl: string;
+
+	/**
+	 * The size of the file, in bytes
+	 */
+	size: number;
 };
 
 export type FileEntry = HashedFileEntry | NonHashedFileEntry;
