@@ -20,9 +20,8 @@ function ConnectedSettingsModal() {
 		});
 	}, []);
 
-	async function handleOk(newSettings: Settings) {
+	async function handleSettingsChange(newSettings: Settings) {
 		dispatch(setAllSettings(newSettings));
-		setModalOpen(false);
 	}
 
 	if (!settings) {
@@ -36,7 +35,7 @@ function ConnectedSettingsModal() {
 				setModalOpen(false);
 			}}
 			settings={settings}
-			onOk={handleOk}
+			onSettingsChange={handleSettingsChange}
 		/>
 	);
 }

@@ -1,15 +1,14 @@
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Toggle from 'react-toggle';
 import { Settings } from '../../../../main/settings/types';
-import { Button } from '../../Button';
 import { Modal, ModalProps } from '../../Modal';
 
 type PublicSettingsModalProps = ModalProps & { className?: string };
 
 type InternalSettingsModalProps = {
 	settings: Settings;
-	onOk: (newSettings: Settings) => void;
+	onSettingsChange: (newSettings: Settings) => void;
 };
 
 const EXPORT_OPTIMIZATION_WIKI_URL =
@@ -22,26 +21,18 @@ function Rule() {
 function SettingsModal({
 	className,
 	settings,
-	onOk,
+	onSettingsChange,
 	...rest
 }: PublicSettingsModalProps & InternalSettingsModalProps) {
-	const [pendingSettings, setPendingSettings] = useState({ ...settings });
-
-	useEffect(() => {
-		setPendingSettings({ ...settings, ...pendingSettings });
-	}, [settings]);
-
 	function handleExportOptimizationChange() {
-		setPendingSettings((ps) => {
-			return {
-				...ps,
-				exportOptimization:
-					ps.exportOptimization === 'space' ? 'speed' : 'space',
-			};
+		onSettingsChange({
+			...settings,
+			exportOptimization:
+				settings.exportOptimization === 'space' ? 'speed' : 'space',
 		});
 	}
 
-	const allNonDependentDbsEnabled = pendingSettings.updateDbs
+	const allNonDependentDbsEnabled = settings.updateDbs
 		.filter((udb) => !udb.isDependent)
 		.every((udb) => udb.enabled);
 
@@ -68,7 +59,7 @@ function SettingsModal({
 									Download ROMs from archive.org
 									<div
 										className={clsx('text-xs text-red-600', {
-											invisible: !pendingSettings.downloadRoms,
+											invisible: !settings.downloadRoms,
 										})}
 									>
 										Warning: these files may be copyrighted
@@ -77,14 +68,12 @@ function SettingsModal({
 							</dt>
 							<dd className="mt-0 text-gray-900 flex flex-row justify-end">
 								<Toggle
-									checked={!!pendingSettings.downloadRoms}
+									checked={!!settings.downloadRoms}
 									id="downloadRoms"
 									onChange={() => {
-										setPendingSettings((ps) => {
-											return {
-												...ps,
-												downloadRoms: !ps.downloadRoms,
-											};
+										onSettingsChange({
+											...settings,
+											downloadRoms: !settings.downloadRoms,
 										});
 									}}
 								/>
@@ -97,7 +86,7 @@ function SettingsModal({
 							</dt>
 							<dd className="mt-0 text-gray-900">
 								<ul className="flex flex-col gap-y-2">
-									{pendingSettings.updateDbs
+									{settings.updateDbs
 										.filter((udb) => !udb.isDependent)
 										.map((db) => {
 											return (
@@ -116,20 +105,18 @@ function SettingsModal({
 														checked={!!db.enabled}
 														id={db.db_id}
 														onChange={() => {
-															setPendingSettings((ps) => {
-																return {
-																	...ps,
-																	updateDbs: ps.updateDbs.map((udb) => {
-																		if (udb.db_id === db.db_id) {
-																			return {
-																				...udb,
-																				enabled: !udb.enabled,
-																			};
-																		} else {
-																			return udb;
-																		}
-																	}),
-																};
+															onSettingsChange({
+																...settings,
+																updateDbs: settings.updateDbs.map((udb) => {
+																	if (udb.db_id === db.db_id) {
+																		return {
+																			...udb,
+																			enabled: !udb.enabled,
+																		};
+																	} else {
+																		return udb;
+																	}
+																}),
 															});
 														}}
 													/>
@@ -156,7 +143,7 @@ function SettingsModal({
 							</dt>
 							<dd className="mt-0 text-gray-900">
 								<ul className="flex flex-col gap-y-2">
-									{pendingSettings.updateDbs
+									{settings.updateDbs
 										.filter((udb) => udb.isDependent)
 										.map((db) => {
 											return (
@@ -176,20 +163,18 @@ function SettingsModal({
 														disabled={!allNonDependentDbsEnabled}
 														id={db.db_id}
 														onChange={() => {
-															setPendingSettings((ps) => {
-																return {
-																	...ps,
-																	updateDbs: ps.updateDbs.map((udb) => {
-																		if (udb.db_id === db.db_id) {
-																			return {
-																				...udb,
-																				enabled: !udb.enabled,
-																			};
-																		} else {
-																			return udb;
-																		}
-																	}),
-																};
+															onSettingsChange({
+																...settings,
+																updateDbs: settings.updateDbs.map((udb) => {
+																	if (udb.db_id === db.db_id) {
+																		return {
+																			...udb,
+																			enabled: !udb.enabled,
+																		};
+																	} else {
+																		return udb;
+																	}
+																}),
 															});
 														}}
 													/>
@@ -221,7 +206,7 @@ function SettingsModal({
 										id="exportOptimization-space"
 										name="exportOptimization"
 										value="space"
-										checked={pendingSettings.exportOptimization === 'space'}
+										checked={settings.exportOptimization === 'space'}
 										onChange={handleExportOptimizationChange}
 									/>
 									<label
@@ -237,7 +222,7 @@ function SettingsModal({
 										id="exportOptimization-speed"
 										name="exportOptimization"
 										value="speed"
-										checked={pendingSettings.exportOptimization === 'speed'}
+										checked={settings.exportOptimization === 'speed'}
 										onChange={handleExportOptimizationChange}
 									/>
 									<label
@@ -249,7 +234,7 @@ function SettingsModal({
 								</div>
 								<div
 									className={clsx('col-span-2 text-xs text-red-600', {
-										invisible: pendingSettings.exportOptimization === 'space',
+										invisible: settings.exportOptimization === 'space',
 									})}
 								>
 									Heads up: The first speed export will actually be slower.{' '}
@@ -265,24 +250,6 @@ function SettingsModal({
 							</dd>
 						</div>
 					</dl>
-				</div>
-				<div className="flex flex-row justify-end gap-x-2 px-2 py-4 border-t border-t-gray-400">
-					<Button
-						variant="danger"
-						onClick={(e) => {
-							setPendingSettings(settings);
-							rest?.onRequestClose?.(e);
-						}}
-					>
-						Cancel
-					</Button>
-					<Button
-						onClick={() => {
-							onOk(pendingSettings);
-						}}
-					>
-						Okay
-					</Button>
 				</div>
 			</div>
 		</Modal>

@@ -21,5 +21,7 @@ const mockSettings: Settings = {
 };
 
 export const Basic = () => {
-	return <SettingsModal isOpen settings={mockSettings} onOk={() => {}} />;
+	return (
+		<SettingsModal isOpen settings={mockSettings} onSettingsChange={() => {}} />
+	);
 };
