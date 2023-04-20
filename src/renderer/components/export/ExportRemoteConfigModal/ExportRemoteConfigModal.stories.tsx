@@ -18,3 +18,14 @@ export const Basic = () => {
 		/>
 	);
 };
+
+export const SpaceMode = () => {
+	return (
+		<ExportRemoteConfigModal
+			isOpen
+			onRequestClose={() => {}}
+			onExport={() => {}}
+			exportOptimization="space"
+		/>
+	);
+};

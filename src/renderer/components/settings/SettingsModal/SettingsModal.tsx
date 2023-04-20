@@ -11,7 +11,7 @@ type InternalSettingsModalProps = {
 	onSettingsChange: (newSettings: Settings) => void;
 };
 
-const EXPORT_OPTIMIZATION_WIKI_URL =
+export const EXPORT_OPTIMIZATION_WIKI_URL =
 	'https://github.com/city41/AMMiSTer/wiki/Space-vs-Speed-Exporting-Optimizations';
 
 function Rule() {

@@ -4,11 +4,14 @@ import { MisterKunIcon } from '../../../icons';
 import { Input } from '../../Input';
 import { FileClientConnectConfig } from '../../../../main/export/types';
 import { HelpButton } from '../../HelpButton';
+import { ExportOptimization } from '../../../../main/settings/types';
+import { EXPORT_OPTIMIZATION_WIKI_URL } from '../../settings/SettingsModal/SettingsModal';
 
 type ExportRemoteConfigModalProps = {
 	isOpen: boolean;
 	onRequestClose: () => void;
 	onExport: (config: FileClientConnectConfig) => void;
+	exportOptimization?: ExportOptimization;
 };
 
 function isConfigComplete(
@@ -29,6 +32,7 @@ const DEFAULT_CONFIG: FileClientConnectConfig = {
 
 function ExportRemoteConfigModal({
 	isOpen,
+	exportOptimization,
 	onRequestClose,
 	onExport,
 }: ExportRemoteConfigModalProps) {
@@ -178,6 +182,20 @@ function ExportRemoteConfigModal({
 						</dd>
 					</div>
 				</dl>
+				{exportOptimization === 'space' && (
+					<div className="text-center text-sm text-red-700">
+						This export may delete files on the MiSTer due to using
+						&quot;space&quot; exports{' '}
+						<a
+							href={EXPORT_OPTIMIZATION_WIKI_URL}
+							className="text-blue-600 underline cursor-pointer"
+							target="_blank"
+							rel="noreferrer"
+						>
+							more info
+						</a>
+					</div>
+				)}
 			</div>
 		</BaseFeedbackModal>
 	);

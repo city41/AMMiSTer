@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { FileClientConnectConfig } from '../../../../main/export/types';
 import { ExportRemoteConfigModal } from './ExportRemoteConfigModal';
 import { exportToMister } from '../exportSlice';
-import { store, dispatch } from '../../../store';
+import { store, dispatch, AppState } from '../../../store';
 
 function ConnectedExportRemoteConfigModal() {
 	const [modalOpen, setModalOpen] = useState(false);
@@ -24,6 +25,10 @@ function ConnectedExportRemoteConfigModal() {
 		});
 	}, [setModalOpen]);
 
+	const exportOptimization = useSelector((state: AppState) => {
+		return state.settings.settings?.exportOptimization;
+	});
+
 	function handleExport(config: FileClientConnectConfig) {
 		dispatch(exportToMister(config));
 		setModalOpen(false);
@@ -32,6 +37,7 @@ function ConnectedExportRemoteConfigModal() {
 	return (
 		<ExportRemoteConfigModal
 			isOpen={modalOpen}
+			exportOptimization={exportOptimization}
 			onRequestClose={() => {
 				setModalOpen(false);
 			}}
