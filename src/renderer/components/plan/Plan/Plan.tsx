@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import SortableTree, { TreeItem } from 'react-sortable-tree';
 import { UpdateDbConfig } from '../../../../main/settings/types';
@@ -257,6 +257,10 @@ function Plan({
 }: InternalPlanProps) {
 	const [mode, setMode] = useState<PlanMode>('tree');
 	const [focusedId, setFocusedId] = useState('');
+
+	useEffect(() => {
+		setMode('tree');
+	}, [plan]);
 
 	// this craziness of the planDataSeed and hidden class is due to react-sortable-tree.
 	// It renders a DragDropContext. going from plan -> no plan -> plan would create a new tree,
