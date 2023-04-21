@@ -19,6 +19,7 @@ type MissingGameToResolve = {
 };
 
 type ResolveMissingGameEntryProps = {
+	className?: string;
 	catalog: Catalog;
 	missingGame: MissingGameToResolve;
 	minimizeIfResolved?: boolean;
@@ -65,6 +66,7 @@ function GameEntry({ gameName, onClick, isChosen }: GameEntryProps) {
 }
 
 function ResolveMissingGameEntry({
+	className,
 	catalog,
 	missingGame,
 	minimizeIfResolved,
@@ -77,6 +79,7 @@ function ResolveMissingGameEntry({
 	return (
 		<div
 			className={clsx(
+				className,
 				'flex flex-col gap-y-4 items-start border px-4 py-2 shadow-lg border-gray-200'
 			)}
 		>

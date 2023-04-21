@@ -282,8 +282,10 @@ function Plan({
 
 	return (
 		<div
-			className={clsx('w-full p-8', {
+			className={clsx('w-full', {
 				hidden: !plan,
+				'p-8': mode === 'tree',
+				'pl-8 pt-8': mode === 'resolve',
 			})}
 			style={{ height: 'calc(100vh - 2rem)' }}
 		>

@@ -6,7 +6,6 @@ import {
 	MissingGameToResolve,
 	ResolveMissingGameEntry,
 } from './ResolveMissingGameEntry';
-import { DangerIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
 
@@ -66,23 +65,16 @@ function ResolveMissingGames({
 			style={{
 				maxWidth: 1300,
 			}}
-			className={clsx(
-				className,
-				'h-full w-full flex flex-col gap-y-8 px-6 py-5'
-			)}
+			className={clsx(className, 'h-full w-full flex flex-col xgap-y-8')}
 		>
 			<div className="flex flex-row gap-x-8 items-center">
 				<div>
-					<div className="px-2 py-2 bg-yellow-50 text-yellow-700 flex flex-row gap-x-2">
-						<DangerIcon className="w-6 text-red-700" />
-						This is a new, and unfinished feature
-					</div>
 					<h2 className="text-lg font-medium leading-6 text-gray-900">
 						There {missingGames.length === 1 ? 'is' : 'are'}{' '}
 						{missingGames.length} missing game
 						{missingGames.length === 1 ? '' : 's'}
 					</h2>
-					<p className="mt-2 text-sm text-gray-600 h-8">{decideText}</p>
+					<p className="mt-2 text-sm text-gray-600 pt-2 pb-6">{decideText}</p>
 				</div>
 				<div className="flex-1" />
 				<Toggle
@@ -95,7 +87,7 @@ function ResolveMissingGames({
 				</label>
 			</div>
 			{disabledDbsCausingMissingGames.length > 0 && (
-				<div>
+				<div className="mb-8">
 					<h2 className="text-lg font-medium leading-6 text-gray-900">
 						Disabled DataBases
 					</h2>
@@ -114,7 +106,7 @@ function ResolveMissingGames({
 					</ul>
 				</div>
 			)}
-			<ul className="flex flex-col overflow-y-auto">
+			<ul className="flex flex-col overflow-y-auto pr-8">
 				{missingGames.map((mg) => {
 					return (
 						<li
@@ -147,7 +139,8 @@ function ResolveMissingGames({
 					);
 				})}
 			</ul>
-			<div className="flex flex-row justify-end gap-x-2 px-2 py-4 mt-8 border-t border-t-gray-400">
+			<div className="flex-1" />
+			<div className="flex flex-row justify-end -ml-8 gap-x-2 px-2 py-4 border-t border-t-gray-400">
 				<Button variant="danger" onClick={onCancel}>
 					Cancel
 				</Button>
