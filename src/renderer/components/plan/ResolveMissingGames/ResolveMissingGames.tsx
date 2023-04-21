@@ -8,9 +8,11 @@ import {
 } from './ResolveMissingGameEntry';
 import { DangerIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
+import { UpdateDbConfig } from '../../../../main/settings/types';
 
 type InternalResolveMissingGamesProps = {
 	missingGames: MissingGameToResolve[];
+	disabledDbsCausingMissingGames: UpdateDbConfig[];
 	catalog: Catalog;
 	onMissingGamesUpdated: (newMissingGames: MissingGameToResolve[]) => void;
 	onOkay: () => void;
@@ -24,6 +26,7 @@ type PublicResolveMissingGamesProps = {
 function ResolveMissingGames({
 	className,
 	missingGames,
+	disabledDbsCausingMissingGames,
 	catalog,
 	onMissingGamesUpdated,
 	onOkay,
@@ -74,12 +77,12 @@ function ResolveMissingGames({
 						<DangerIcon className="w-6 text-red-700" />
 						This is a new, and unfinished feature
 					</div>
-					<h1 className="text-lg font-medium leading-6 text-gray-900">
+					<h2 className="text-lg font-medium leading-6 text-gray-900">
 						There {missingGames.length === 1 ? 'is' : 'are'}{' '}
 						{missingGames.length} missing game
 						{missingGames.length === 1 ? '' : 's'}
-					</h1>
-					<p className="mt-2 text-sm text-gray-600 h-16">{decideText}</p>
+					</h2>
+					<p className="mt-2 text-sm text-gray-600 h-8">{decideText}</p>
 				</div>
 				<div className="flex-1" />
 				<Toggle
@@ -91,6 +94,26 @@ function ResolveMissingGames({
 					Minimize Resolved Games
 				</label>
 			</div>
+			{disabledDbsCausingMissingGames.length > 0 && (
+				<div>
+					<h2 className="text-lg font-medium leading-6 text-gray-900">
+						Disabled DataBases
+					</h2>
+					<p className="mt-2 text-sm text-gray-600 h-8">
+						These databases have been disabled, but games in this plan came from
+						them. Try enabling them in settings.
+					</p>
+					<ul className="list-disc pl-8">
+						{disabledDbsCausingMissingGames.map((db) => {
+							return (
+								<li key={db.db_id} className="text-sm">
+									{db.displayName}
+								</li>
+							);
+						})}
+					</ul>
+				</div>
+			)}
 			<ul className="flex flex-col overflow-y-auto">
 				{missingGames.map((mg) => {
 					return (

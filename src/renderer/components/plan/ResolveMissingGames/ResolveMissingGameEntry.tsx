@@ -5,6 +5,7 @@ import { CheckIcon } from '../../../icons';
 import { ResolveMissingGameDrop } from './ResolveMissingGameDrop';
 
 type MissingGameToResolve = {
+	db_id: string;
 	mraPath: string;
 	planPath: string;
 	potentialReplacements:
@@ -14,6 +15,7 @@ type MissingGameToResolve = {
 		| null;
 	replacementChoice?: 'entry' | 'drop' | 'remove';
 	replacementEntry?: CatalogEntry;
+	owningDisabledDbDisplayName?: string;
 };
 
 type ResolveMissingGameEntryProps = {
@@ -94,6 +96,12 @@ function ResolveMissingGameEntry({
 			</div>
 			{(!minimizeIfResolved || !missingGame.replacementChoice) && (
 				<div className="w-full flex flex-col items-stretch gap-y-2">
+					{missingGame.owningDisabledDbDisplayName && (
+						<div className="text-sm text-red-600">
+							The database this game came from,{' '}
+							{missingGame.owningDisabledDbDisplayName}, has been disabled.
+						</div>
+					)}
 					{missingGame.potentialReplacements?.map((pr) => {
 						return (
 							<GameEntry

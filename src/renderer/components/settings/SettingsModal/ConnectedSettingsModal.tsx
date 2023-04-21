@@ -5,8 +5,12 @@ import { useSelector } from 'react-redux';
 import { getAllSettings, setAllSettings } from '../settingsSlice';
 import { AppState, dispatch } from '../../../store';
 
-function ConnectedSettingsModal() {
-	const [modalOpen, setModalOpen] = useState(false);
+type ConnectedSettingsModalProps = {
+	isOpen?: boolean;
+};
+
+function ConnectedSettingsModal({ isOpen }: ConnectedSettingsModalProps) {
+	const [modalOpen, setModalOpen] = useState(isOpen ?? false);
 
 	const settings = useSelector((state: AppState) => {
 		return state.settings.settings;
@@ -15,7 +19,7 @@ function ConnectedSettingsModal() {
 	useEffect(() => {
 		dispatch(getAllSettings());
 
-		window.ipcAPI.menu_settings(() => {
+		window.ipcAPI?.menu_settings(() => {
 			setModalOpen(true);
 		});
 	}, []);

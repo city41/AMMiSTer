@@ -120,19 +120,37 @@ function buildMissingGameEntries(
 	const { updatedAt, ...restofCatalog } = catalog;
 	const availableGames = Object.values(restofCatalog).flat(1);
 
+	const allNonDependentDbsEnabled = updateDbConfigs
+		.filter((udb) => !udb.isDependent)
+		.every((udb) => udb.enabled);
+
 	return missingGames.map((mg) => {
-		const potentialReplacements = getPotentialReplacementGames(
-			mg,
-			availableGames
+		const updateDb = updateDbConfigs.find((udb) => udb.db_id === mg.db_id);
+
+		// if the update db this game came from has been turned off, we
+		// won't be able to find any replacements. Replacements only make sense
+		// if they can be exported. No worries, the user will be alerted they
+		// have games in this plan from disabled DBs
+		const owningDbIsDisabled = !!(
+			!updateDb?.enabled ||
+			(!allNonDependentDbsEnabled && updateDb?.isDependent)
 		);
 
+		const potentialReplacements = owningDbIsDisabled
+			? null
+			: getPotentialReplacementGames(mg, availableGames);
+
 		return {
+			db_id: mg.db_id,
 			mraPath: mg.relFilePath,
 			planPath: mg.planPath,
 			potentialReplacements,
 			replacementChoice: potentialReplacements?.length ? 'entry' : undefined,
 			replacementEntry: potentialReplacements?.length
 				? potentialReplacements[0]
+				: undefined,
+			owningDisabledDbDisplayName: owningDbIsDisabled
+				? updateDb?.displayName
 				: undefined,
 		};
 	});
@@ -153,6 +171,10 @@ function ConnectedResolveMissingGames({
 		setMissingGames(buildMissingGameEntries(plan, catalog, updateDbConfigs));
 	}, [plan, catalog, updateDbConfigs]);
 
+	const disabledDbs = updateDbConfigs.filter((db) => {
+		return !db.enabled && missingGames.some((mg) => mg.db_id === db.db_id);
+	});
+
 	function handleOkay() {
 		const resolvedGames = missingGames.filter((mg) => !!mg.replacementChoice);
 
@@ -164,6 +186,7 @@ function ConnectedResolveMissingGames({
 		<ResolveMissingGames
 			catalog={catalog}
 			missingGames={missingGames}
+			disabledDbsCausingMissingGames={disabledDbs}
 			onCancel={onClose}
 			onOkay={handleOkay}
 			onMissingGamesUpdated={(newMissingGames) => {
