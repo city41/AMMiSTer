@@ -4,6 +4,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.29.0
+
+- [All] More improvements to the missing game resolver, it's getting there
+- [All] When exporting, warn about file deletion if in "space" mode
+- [All] Settings changes now take effect immediately
+- [All] File sizes are shown in the details modal for games
+
 ## Version 0.28.0
 
 - [All] Atrac17's Arcade Offset database was added.
