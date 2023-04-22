@@ -104,6 +104,7 @@ export type MissingRomEntry = {
 	db_id: string;
 	romFile: string;
 	mameVersion: string;
+	remoteUrl: string | null;
 };
 
 /**

@@ -9,7 +9,7 @@ import mkdirp from 'mkdirp';
 // for OS specific file path operations
 
 axiosRetry(axios, {
-	retries: 2,
+	retries: 6,
 	retryDelay(retryCount) {
 		return retryCount * 1500;
 	},
