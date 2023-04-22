@@ -50,6 +50,8 @@ const archive404Cache = new JsonCache<boolean>('archive404.json');
 const METADATADB_URL =
 	'https://raw.githubusercontent.com/Toryalai1/MiSTer_ArcadeDatabase/db/mad_db.json.zip';
 
+const ROMDB_URL =
+	'https://raw.githubusercontent.com/theypsilon/ArcadeROMsDB_MiSTer/db/arcade_roms_db.json.zip';
 /**
  * Some entries in the metadatadb don't match up with MAME slugs,
  * this map fixes that
@@ -350,14 +352,17 @@ function xmlToArray(val: string | string[] | null | undefined): string[] {
 
 /**
  * Takes an mra file and parses it to grab its metadata and ultimately
- * form an catalog entry
+ * form an catalog entry.
+ *
+ * Returns null to indicate this entry should not be added to the catalog.
+ * Today that only happens for hbmame games
  */
 async function parseMraToCatalogEntry(
 	db_id: string,
 	mraFileEntry: HashedFileEntry,
 	fileEntries: HashedFileEntry[],
 	metadataDb: MetadataDB
-): Promise<CatalogEntry> {
+): Promise<CatalogEntry | null> {
 	const updateDb = defaultUpdateDbs.find((udb) => udb.db_id === db_id);
 	if (!updateDb) {
 		throw new Error('failed to find a default updatedb entry for: ' + db_id);
@@ -423,6 +428,14 @@ async function parseMraToCatalogEntry(
 					size: await size(romPath),
 				});
 			}
+		}
+
+		const isHbmameGame = romCatalogFileEntries.some((rcfe) => {
+			return rcfe.relFilePath.includes('hbmame');
+		});
+
+		if (isHbmameGame) {
+			return null;
 		}
 
 		const romSlug = determineMAMESlug(romCatalogFileEntries, setname || parent);
@@ -522,14 +535,17 @@ async function buildSubCatalog(
 			fileEntries,
 			metadataDb
 		);
-		cb(catalogEntry);
+
+		if (catalogEntry) {
+			cb(catalogEntry);
+		}
 		return catalogEntry;
 	});
 
 	const catalogEntries = await Promise.all(catalogEntryPromises);
 
 	return {
-		[db_id]: catalogEntries,
+		[db_id]: catalogEntries.filter((ce) => !!ce) as CatalogEntry[],
 	};
 }
 
@@ -557,6 +573,15 @@ async function buildGameCatalog(
 	return catalog as Catalog;
 }
 
+function getRomDownloadUrl(
+	r: NonHashedCatalogFileEntry,
+	romDB: DBJSON
+): string | null {
+	const entry = romDB.files[`|games/mame/${r.fileName}`];
+
+	return entry?.url ?? null;
+}
+
 async function determineMissingRoms(
 	catalog: Catalog
 ): Promise<MissingRomEntry[]> {
@@ -569,6 +594,9 @@ async function determineMissingRoms(
 		)
 	);
 
+	const romDb =
+		entriesMissingTheirRom.length > 0 ? await getDbJson(ROMDB_URL) : {};
+
 	return entriesMissingTheirRom.flatMap<MissingRomEntry>((ce) => {
 		return ce.files.roms
 			.filter((r) => r.status !== 'ok')
@@ -577,27 +605,25 @@ async function determineMissingRoms(
 					db_id: ce.db_id,
 					romFile: r.fileName,
 					mameVersion: ce.mameVersion,
+					remoteUrl: getRomDownloadUrl(r, romDb as DBJSON),
 				};
 			});
 	});
 }
 
+type MissingRomEntryWRemoteUrl = Omit<MissingRomEntry, 'remoteUrl'> & {
+	remoteUrl: string;
+};
+
 async function downloadRom(
-	romEntry: MissingRomEntry,
-	overrideMameVersion?: string
+	romEntry: MissingRomEntryWRemoteUrl
 ): Promise<Update | null> {
 	const gameCacheDir = await getGameCacheDir();
 
-	const mameVersionToUse =
-		overrideMameVersion || romEntry.mameVersion || DEFAULT_MAME_VERSION;
-
-	debug(
-		`downloadRom, getting ${romEntry.romFile} with mameVersion ${mameVersionToUse}`
-	);
-	const remoteUrl = `https://archive.org/download/mame.${mameVersionToUse}/${romEntry.romFile}`;
+	debug(`downloadRom, getting ${romEntry.romFile}`);
 
 	try {
-		const fileName = path.basename(remoteUrl);
+		const fileName = path.basename(romEntry.remoteUrl);
 		const relFilePath = path.join('games', 'mame', fileName);
 		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 
@@ -607,15 +633,10 @@ async function downloadRom(
 			await fsp.readFile(localPath);
 			updateReason = 'fulfilled';
 		} catch (e) {
-			const cached404 = archive404Cache.get(remoteUrl);
-
-			if (cached404) {
-				debug(`downloadRom: cache has ${remoteUrl} as a 404`);
-				return null;
-			}
-
-			debug(`downloadRom, downloading from: ${remoteUrl}\n to: ${localPath}`);
-			await downloadFile(remoteUrl, localPath, 'application/zip');
+			debug(
+				`downloadRom, downloading from: ${romEntry.remoteUrl}\n to: ${localPath}`
+			);
+			await downloadFile(romEntry.remoteUrl, localPath, 'application/zip');
 			updateReason = 'missing';
 		}
 
@@ -625,27 +646,14 @@ async function downloadRom(
 				type: 'rom',
 				relFilePath,
 				fileName,
-				remoteUrl,
+				remoteUrl: romEntry.remoteUrl,
 				size: await size(localPath),
 			},
 			updateReason,
 		};
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
-
-		// TODO: stronger 404 signal
-		// some roms also 403 (forbidden), and in this context is essentially a 404
-		if (
-			message.includes('status code 404') ||
-			message.includes('status code 403') ||
-			message.includes('status code 5')
-		) {
-			debug('downloadRom, adding 404 to cache for', remoteUrl);
-			archive404Cache.set(remoteUrl, true);
-		} else {
-			debug('downloadRom, error', remoteUrl, message);
-			throw `${remoteUrl}: ${message}`;
-		}
+		debug(`Failed to download from ${romEntry.remoteUrl}: ${message}`);
 	}
 
 	return null;
@@ -665,15 +673,16 @@ async function downloadRoms(
 	const batches = batch(sortedRomEntries);
 
 	for (const batch of batches) {
-		const downloadPromises = batch.map((r) => {
-			return downloadRom(r).then((result) => {
-				if (result === null) {
-					return downloadRom(r, DEFAULT_MAME_VERSION);
+		const downloadPromises = batch.reduce<Array<Promise<Update | null>>>(
+			(accum, r) => {
+				if (r.remoteUrl) {
+					return accum.concat(downloadRom(r as MissingRomEntryWRemoteUrl));
 				} else {
-					return result;
+					return accum;
 				}
-			});
-		});
+			},
+			[]
+		);
 
 		try {
 			const updates = (await Promise.all(downloadPromises)).filter(
@@ -683,6 +692,7 @@ async function downloadRoms(
 				// the first thing we do is uniqBy the mising rom entries
 				(u) => !!u && u.updateReason !== 'fulfilled'
 			) as unknown as Update[];
+
 			for (const update of updates) {
 				allRomUpdates.push(update);
 				cb(update);
