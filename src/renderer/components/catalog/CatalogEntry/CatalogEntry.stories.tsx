@@ -100,7 +100,6 @@ export const Favorited = () => {
 export const NotFavorited = () => {
 	const entry = {
 		...completeEntry,
-		favorite: false,
 	};
 
 	return (
@@ -141,6 +140,23 @@ export const rotationUnknown = () => {
 		<DndProvider backend={HTML5Backend}>
 			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
 				<CatalogEntry entry={entry} onToggleFavorite={() => {}} />
+			</div>
+		</DndProvider>
+	);
+};
+
+export const IsAlternative = () => {
+	const entry = {
+		...cloneDeep(completeEntry),
+		rotation: 90,
+	} as const;
+
+	entry.files.mra.dbRelFilePath = '_Arcade/_alternatives/foo';
+
+	return (
+		<DndProvider backend={HTML5Backend}>
+			<div className="p-2 border-r border-gray-200" style={{ width: 240 }}>
+				<CatalogEntry entry={entry} isFavorite onToggleFavorite={() => {}} />
 			</div>
 		</DndProvider>
 	);

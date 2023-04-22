@@ -96,7 +96,7 @@ async function getMetadataDb(): Promise<MetadataDB> {
  * altering files in the gameCache might break AMMiSTer
  */
 async function writeGameCacheWarning(gameCacheDirPath: string): Promise<void> {
-	const warningTxt = `AMMiSTER gameCacheWarning
+	const warningTxt = `AMMiSTER gameCache Warning
 =========================
 
 Changing files in this directory or its subdirectories could cause
@@ -799,10 +799,9 @@ async function updateCatalog(
 
 			const dbResult = await getDbJson(updateDb.url);
 			const dbFileEntries = convertDbToFileEntries(dbResult).filter(
-				(f) =>
-					f.relFilePath.startsWith('_Arcade') &&
-					// TODO: deal with alternatives
-					!f.dbRelFilePath.includes('_alternatives')
+				(f) => f.relFilePath.startsWith('_Arcade') // &&
+				// TODO: deal with alternatives
+				// !f.dbRelFilePath.includes('_alternatives')
 			);
 
 			dbFileEntryMap[updateDb.db_id] = dbFileEntries;

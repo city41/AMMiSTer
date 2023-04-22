@@ -64,6 +64,8 @@ function CatalogEntry({
 				(r) => r.status === 'unexpected-missing' || r.status === 'corrupt'
 			));
 
+	const isAlternative = entry.files.mra.dbRelFilePath.includes('_alternatives');
+
 	return (
 		<div className={className}>
 			<div className="whitespace-nowrap text-ellipsis overflow-hidden">
@@ -82,6 +84,9 @@ function CatalogEntry({
 				</div>
 				{!hideIcons && (
 					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
+						{isAlternative && (
+							<div className="text-xs text-pink-700 px-1 py-0.5">alt</div>
+						)}
 						{missingOrCorruptFile && (
 							<DangerIcon className="w-5 h-5 text-red-700" />
 						)}
