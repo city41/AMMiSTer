@@ -457,7 +457,7 @@ async function parseMraToCatalogEntry(
 			yearReleased,
 			category: metadataEntry.category ?? xmlToArray(category),
 			mameVersion: mameversion,
-			alternative: metadataEntry.alternative ?? false,
+			alternative: mraFileEntry.dbRelFilePath.includes('_alternative'),
 			bootleg: metadataEntry.bootleg ?? false,
 			flip: metadataEntry.flip ?? false,
 			num_buttons: metadataEntry.num_buttons ?? null,
@@ -799,9 +799,10 @@ async function updateCatalog(
 
 			const dbResult = await getDbJson(updateDb.url);
 			const dbFileEntries = convertDbToFileEntries(dbResult).filter(
-				(f) => f.relFilePath.startsWith('_Arcade') // &&
-				// TODO: deal with alternatives
-				// !f.dbRelFilePath.includes('_alternatives')
+				(f) =>
+					f.relFilePath.startsWith('_Arcade') &&
+					(!f.dbRelFilePath.includes('_alternatives') ||
+						updateDb.includeAlternatives)
 			);
 
 			dbFileEntryMap[updateDb.db_id] = dbFileEntries;

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import Toggle from 'react-toggle';
 import { Settings } from '../../../../main/settings/types';
 import { Modal, ModalProps } from '../../Modal';
@@ -14,8 +14,19 @@ type InternalSettingsModalProps = {
 export const EXPORT_OPTIMIZATION_WIKI_URL =
 	'https://github.com/city41/AMMiSTer/wiki/Space-vs-Speed-Exporting-Optimizations';
 
-function Rule() {
-	return <div className="col-span-2 mx-4 border-b border-b-gray-300" />;
+function Rule({
+	style,
+	className,
+}: {
+	style?: CSSProperties;
+	className?: string;
+}) {
+	return (
+		<div
+			style={style}
+			className={clsx(className, 'col-span-2 mx-4 border-b border-b-gray-300')}
+		/>
+	);
 }
 
 function SettingsModal({
@@ -88,11 +99,11 @@ function SettingsModal({
 								<ul className="flex flex-col gap-y-2">
 									{settings.updateDbs
 										.filter((udb) => !udb.isDependent)
-										.map((db) => {
+										.map((db, i, a) => {
 											return (
 												<li
 													key={db.db_id}
-													className="grid"
+													className="grid gap-y-1"
 													style={{ gridTemplateColumns: '1fr max-content' }}
 												>
 													<label
@@ -120,6 +131,36 @@ function SettingsModal({
 															});
 														}}
 													/>
+													<label
+														htmlFor={db.db_id}
+														className="text-xs cursor-pointer ml-4"
+													>
+														alternatives
+													</label>
+													<Toggle
+														className="scale-75"
+														checked={!!db.enabled && !!db.includeAlternatives}
+														id={db.db_id}
+														onChange={() => {
+															onSettingsChange({
+																...settings,
+																updateDbs: settings.updateDbs.map((udb) => {
+																	if (udb.db_id === db.db_id) {
+																		return {
+																			...udb,
+																			includeAlternatives:
+																				!udb.includeAlternatives,
+																		};
+																	} else {
+																		return udb;
+																	}
+																}),
+															});
+														}}
+													/>
+													{i !== a.length - 1 && (
+														<Rule className="col-span-2 py-1 grid-row-3" />
+													)}
 												</li>
 											);
 										})}

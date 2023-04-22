@@ -82,26 +82,28 @@ function CatalogEntry({
 				<div className="flex flex-row font-normal items-center gap-x-2 text-xs text-gray-500">
 					{entry.manufacturer.join(',')} {entry.yearReleased}
 				</div>
-				{!hideIcons && (
-					<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
-						{isAlternative && (
-							<div className="text-xs text-pink-700 px-1 py-0.5">alt</div>
-						)}
-						{missingOrCorruptFile && (
-							<DangerIcon className="w-5 h-5 text-red-700" />
-						)}
-						<Monitor rotation={entry.rotation} />
-						{typeof isFavorite === 'boolean' && (
-							<FavIcon
-								onClick={onToggleFavorite}
-								className={clsx('w-5 h-5 cursor-pointer', {
-									'text-gray-500': !isFavorite,
-									'text-orange-400': isFavorite,
-								})}
-							/>
-						)}
-					</div>
-				)}
+				<div className="text-xs pr-1 flex flex-row items-center gap-x-1">
+					{isAlternative && (
+						<div className="text-xs text-pink-700 px-1 py-0.5">alt</div>
+					)}
+					{missingOrCorruptFile && (
+						<DangerIcon className="w-5 h-5 text-red-700" />
+					)}
+					{!hideIcons && (
+						<>
+							<Monitor rotation={entry.rotation} />
+							{typeof isFavorite === 'boolean' && (
+								<FavIcon
+									onClick={onToggleFavorite}
+									className={clsx('w-5 h-5 cursor-pointer', {
+										'text-gray-500': !isFavorite,
+										'text-orange-400': isFavorite,
+									})}
+								/>
+							)}
+						</>
+					)}
+				</div>
 			</div>
 		</div>
 	);

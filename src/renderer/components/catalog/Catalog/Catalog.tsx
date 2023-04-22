@@ -12,6 +12,10 @@ type InternalCatalogProps = {
 	updateDbConfigs: UpdateDbConfig[];
 };
 
+function sortByGameName(a: CatalogEntryType, b: CatalogEntryType): number {
+	return a.gameName.localeCompare(b.gameName);
+}
+
 function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 	const [filter, setFilter] = useState('');
 	const { updatedAt, ...restOfCatalog } = catalog;
@@ -44,9 +48,11 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 			return [];
 		}
 
-		const filtered = filter.trim() ? gameEntries.filter(filterFn) : gameEntries;
+		const filtered = filter.trim()
+			? gameEntries.filter(filterFn)
+			: [...gameEntries];
 
-		const games = filtered.map((ge, i) => {
+		const games = filtered.sort(sortByGameName).map((ge, i) => {
 			return (
 				<li
 					key={ge.gameName + i}
