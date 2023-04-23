@@ -105,6 +105,12 @@ function ResolveMissingGameEntry({
 							{missingGame.owningDisabledDbDisplayName}, has been disabled.
 						</div>
 					)}
+					{!missingGame.potentialReplacements && (
+						<div className="ml-4 text-sm text-red-600">
+							Unable to find possible replacements for this game. Please remove
+							it, or drag a game in from the catalog
+						</div>
+					)}
 					{missingGame.potentialReplacements?.map((pr) => {
 						return (
 							<GameEntry

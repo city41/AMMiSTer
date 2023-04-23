@@ -69,14 +69,7 @@ export const FourMissingGames = () => {
 		db_id: 'jtcores',
 		mraPath: '_Arcade/Street Fighter Alpha 2_1.mra',
 		planPath: 'Fighters',
-		potentialReplacements: [
-			{ ...mockCatalogEntry, gameName: 'Street Fighter Alpha 3 (Euro 980904)' },
-			{ ...mockCatalogEntry, gameName: 'Street Fighter Alpha (Euro 980904)' },
-			{
-				...mockCatalogEntry,
-				gameName: 'Street Fighter II: The World Warrior (World 910522)',
-			},
-		],
+		potentialReplacements: null,
 	};
 
 	const missingGame2: MissingGameToResolve = {
