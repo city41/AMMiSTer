@@ -308,7 +308,7 @@ function Plan({
 									setMode('resolve');
 								}}
 							>
-								resolve
+								fix
 							</a>
 						</div>
 					)}

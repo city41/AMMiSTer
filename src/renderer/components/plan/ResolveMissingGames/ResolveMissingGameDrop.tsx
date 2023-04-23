@@ -39,10 +39,30 @@ function ResolveMissingGameDrop({
 			ref={dropRef}
 			className={clsx(
 				className,
-				'border border-dashed border-gray-200 text-xs'
+				'flex flex-row items-center gap-x-2 p-2 border-4 border-dashed text-xs transition-all',
+				{
+					'border-gray-200 ml-4': !entry,
+					'border-green-700': entry,
+				}
 			)}
 		>
-			{entry ? entry.gameName : 'drag a game from the left here'}
+			<div
+				style={{ marginLeft: 'calc(-.5rem - 1px)' }}
+				className={clsx(
+					'text-xs px-2 py-1 text-white w-24 h-8 grid place-items-center',
+					{
+						'bg-green-700': entry,
+						'bg-gray-500': !entry,
+					}
+				)}
+			>
+				replace with
+			</div>
+			{entry ? (
+				entry.gameName
+			) : (
+				<span className="italic">drag a game from the left here</span>
+			)}
 		</div>
 	);
 }

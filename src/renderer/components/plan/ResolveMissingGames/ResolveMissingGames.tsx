@@ -74,7 +74,7 @@ function ResolveMissingGames({
 						{missingGames.length} missing game
 						{missingGames.length === 1 ? '' : 's'}
 					</h2>
-					<p className="mt-2 text-sm text-gray-600 pt-2 pb-6">{decideText}</p>
+					<p className="mt-2 text-sm text-gray-600 pt-2 h-20">{decideText}</p>
 				</div>
 				<div className="flex-1" />
 				<Toggle

@@ -40,10 +40,10 @@ function GameEntry({ gameName, onClick, isChosen }: GameEntryProps) {
 	return (
 		<div
 			className={clsx(
-				'border-4 px-2 py-2 flex flex-row items-center gap-x-2 border-gray-300 cursor-pointer',
+				'border-4 p-2 flex flex-row items-center gap-x-2 border-gray-300 cursor-pointer transition-all',
 				{
 					'border-green-700': isChosen,
-					'hover:bg-green-100 border-gray-300': !isChosen,
+					'hover:bg-green-100 border-gray-300 ml-4': !isChosen,
 				}
 			)}
 			onClick={onClick}
@@ -130,7 +130,6 @@ function ResolveMissingGameEntry({
 						);
 					})}
 					<ResolveMissingGameDrop
-						className="px-4 h-8 w-60 grid place-items-center border-4"
 						entry={
 							missingGame.replacementChoice === 'drop'
 								? missingGame.replacementEntry
@@ -154,11 +153,11 @@ function ResolveMissingGameEntry({
 					/>
 					<div
 						className={clsx(
-							'border-4 grid place-items-center text-xs cursor-pointer self-start px-4 h-8 w-60',
+							'border-4 grid place-items-center text-xs cursor-pointer self-start px-4 h-8 w-60 transition-all',
 							{
 								'border-red-600 bg-red-600 text-white':
 									missingGame.replacementChoice === 'remove',
-								'border-red-100 hover:bg-red-100':
+								'border-red-100 hover:bg-red-100 ml-4':
 									missingGame.replacementChoice !== 'remove',
 							}
 						)}
@@ -178,7 +177,7 @@ function ResolveMissingGameEntry({
 							}
 						}}
 					>
-						remove
+						remove from the plan
 					</div>
 				</div>
 			)}

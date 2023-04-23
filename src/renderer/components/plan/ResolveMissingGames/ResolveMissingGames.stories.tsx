@@ -112,7 +112,7 @@ export const FourMissingGames = () => {
 				gameName: 'Street Fighter II: The World Warrior (World 910522)',
 			},
 		],
-		replacementChoice: 'entry',
+		replacementChoice: 'drop',
 		replacementEntry: mockCatalogEntry,
 	};
 
