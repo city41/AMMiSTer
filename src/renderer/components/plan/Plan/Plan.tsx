@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
 import SortableTree, { TreeItem } from 'react-sortable-tree';
 import { UpdateDbConfig } from '../../../../main/settings/types';
@@ -15,14 +15,15 @@ import { PlanTreeItem } from './types';
 import { FocusedDirectory } from './FocusedDirectory';
 import { DirectoryTitle } from './DirectoryTitle';
 import { ResolveMissingGames } from '../ResolveMissingGames';
-
-type PlanMode = 'tree' | 'resolve';
+import { PlanMode } from '../planSlice';
 
 type InternalPlanProps = {
+	mode: PlanMode;
 	plan: Plan | null;
 	catalog: Catalog | null;
 	updateDbConfigs: UpdateDbConfig[];
 	isDirty: boolean;
+	onModeChange: (newMode: PlanMode) => void;
 	onItemMove: (args: {
 		prevParentPath: string[];
 		newParentPath: string[];
@@ -241,10 +242,12 @@ function findFocusedNode(
 }
 
 function Plan({
+	mode,
 	plan,
 	catalog,
 	updateDbConfigs,
 	isDirty,
+	onModeChange,
 	onItemAdd,
 	onItemDelete,
 	onItemMove,
@@ -255,12 +258,7 @@ function Plan({
 	onBulkAdd,
 	onBulkRemoveMissing,
 }: InternalPlanProps) {
-	const [mode, setMode] = useState<PlanMode>('tree');
 	const [focusedId, setFocusedId] = useState('');
-
-	useEffect(() => {
-		setMode('tree');
-	}, [plan]);
 
 	// this craziness of the planDataSeed and hidden class is due to react-sortable-tree.
 	// It renders a DragDropContext. going from plan -> no plan -> plan would create a new tree,
@@ -305,7 +303,7 @@ function Plan({
 							<a
 								className="text-blue-600 text-sm underline cursor-pointer"
 								onClick={() => {
-									setMode('resolve');
+									onModeChange('resolve');
 								}}
 							>
 								fix
@@ -421,7 +419,7 @@ function Plan({
 					plan={plan}
 					catalog={catalog}
 					updateDbConfigs={updateDbConfigs}
-					onClose={() => setMode('tree')}
+					onClose={() => onModeChange('tree')}
 				/>
 			)}
 		</div>

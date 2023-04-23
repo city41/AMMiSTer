@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState, dispatch } from '../../../store';
-import { clearMissingDetailEntry } from '../planSlice';
+import { clearMissingDetailEntry, setMode } from '../planSlice';
 import { MissingEntryModal } from './MissingEntryModal';
 
 function ConnectedMissingEntryModal() {
@@ -25,12 +25,18 @@ function ConnectedMissingEntryModal() {
 		dispatch(clearMissingDetailEntry());
 	}
 
+	function handleResolve() {
+		dispatch(clearMissingDetailEntry());
+		dispatch(setMode('resolve'));
+	}
+
 	return (
 		<MissingEntryModal
 			isOpen
 			entry={detailEntry}
 			updateDbConfigs={settings.updateDbs}
 			onRequestClose={handleClose}
+			onResolve={handleResolve}
 		/>
 	);
 }

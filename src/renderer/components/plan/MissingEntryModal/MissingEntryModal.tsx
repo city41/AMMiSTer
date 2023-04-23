@@ -6,6 +6,7 @@ import { Modal } from '../../Modal';
 type MissingEntryModalProps = {
 	isOpen: boolean;
 	onRequestClose?: () => void;
+	onResolve: () => void;
 	entry: PlanGameEntry;
 	updateDbConfigs: UpdateDbConfig[];
 };
@@ -13,6 +14,7 @@ type MissingEntryModalProps = {
 function MissingEntryModal({
 	isOpen,
 	onRequestClose,
+	onResolve,
 	entry,
 	updateDbConfigs,
 }: MissingEntryModalProps) {
@@ -40,8 +42,14 @@ function MissingEntryModal({
 						</li>
 					)}
 					<li>
-						The MRA file name changed in an update. Try searching the catalog
-						for the new entry, remove this one, and add that one.
+						The MRA file name changed may have changed in an update,{' '}
+						<a
+							className="text-blue-600 underline cursor-pointer"
+							onClick={onResolve}
+						>
+							try to find a replacement
+						</a>
+						.
 					</li>
 				</ul>
 			</div>

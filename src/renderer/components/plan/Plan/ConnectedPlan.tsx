@@ -16,6 +16,8 @@ import {
 	toggleDirectoryExpansion,
 	undo,
 	redo,
+	PlanMode,
+	setMode,
 } from '../../plan/planSlice';
 import { AppState, dispatch } from '../../../store';
 
@@ -24,6 +26,7 @@ import { PlanEmptyState } from './PlanEmptyState';
 import { BulkAddModal } from '../BulkAddModal';
 
 function ConnectedPlan() {
+	const mode = useSelector((state: AppState) => state.plan.present.mode);
 	const plan = useSelector((state: AppState) => state.plan.present.plan);
 	const catalog = useSelector((state: AppState) => state.catalog.catalog);
 	const isDirty = useSelector((state: AppState) => state.plan.present.isDirty);
@@ -140,6 +143,10 @@ function ConnectedPlan() {
 		dispatch(deleteAllMissingGamesInDirectory(args));
 	}
 
+	function handleModeChange(newMode: PlanMode) {
+		dispatch(setMode(newMode));
+	}
+
 	// if plan is undefined, then main is still loading it,
 	// since this will only take a couple seconds at most, the
 	// "loading state" is just blank
@@ -159,10 +166,12 @@ function ConnectedPlan() {
 	return (
 		<>
 			<Plan
+				mode={mode}
 				plan={plan}
 				catalog={catalog}
 				updateDbConfigs={updateDbConfigs}
 				isDirty={isDirty}
+				onModeChange={handleModeChange}
 				onItemAdd={handleItemAdd}
 				onItemDelete={handleItemDelete}
 				onItemMove={handleItemMove}

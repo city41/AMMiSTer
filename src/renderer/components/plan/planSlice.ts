@@ -94,7 +94,10 @@ type BulkAddCriteria =
 	| StringBulkAddCriteria
 	| NumberBulkAddCriteria;
 
+type PlanMode = 'tree' | 'resolve';
+
 type InternalPlanState = {
+	mode: PlanMode;
 	// undefined and null are crucially different
 	// undefined -> unknown if there is a plan or not, main has not told us
 	// null -> main told us there is no plan
@@ -108,6 +111,7 @@ type InternalPlanState = {
 type PlanState = StateWithHistory<InternalPlanState>;
 
 const initialState: InternalPlanState = {
+	mode: 'tree',
 	plan: undefined,
 	planPath: null,
 	isDirty: false,
@@ -210,12 +214,18 @@ const planSlice = createSlice({
 	name: 'plan',
 	initialState,
 	reducers: {
+		setMode(state: InternalPlanState, action: PayloadAction<PlanMode>) {
+			state.mode = action.payload;
+		},
 		clearDirty(state: InternalPlanState) {
 			state.isDirty = false;
 		},
 		setPlan(state: InternalPlanState, action: PayloadAction<Plan | null>) {
-			state.plan = action.payload;
-			state.isDirty = false;
+			if (action.payload !== state.plan) {
+				state.plan = action.payload;
+				state.isDirty = false;
+				state.mode = 'tree';
+			}
 		},
 		setPlanPath(
 			state: InternalPlanState,
@@ -949,6 +959,7 @@ function buildCriteriaMatch(criteria: BulkAddCriteria[]): PlanSliceThunk {
 
 const reducer = planSlice.reducer;
 const {
+	setMode,
 	setPlan,
 	moveItem,
 	deleteItem,
@@ -971,6 +982,7 @@ const undoableReducer = undoable(reducer, {
 		'plan/savePlan',
 		'plan/savePlanAs',
 		'plan/buildCriteriaMatch',
+		planSlice.actions.setMode.toString(),
 		planSlice.actions.setCriteriaMatch.toString(),
 		planSlice.actions.resetCriteriaMatch.toString(),
 		planSlice.actions.clearDirty.toString(),
@@ -984,6 +996,7 @@ export {
 	loadOpenedPlan,
 	loadNewPlan,
 	loadDemoPlan,
+	setMode,
 	setPlan,
 	savePlan,
 	savePlanAs,
@@ -1007,4 +1020,4 @@ export {
 	getAllGamesInPlan,
 	NOT_SET_SENTINEL,
 };
-export type { PlanState, BulkAddCriteria };
+export type { PlanState, BulkAddCriteria, PlanMode };

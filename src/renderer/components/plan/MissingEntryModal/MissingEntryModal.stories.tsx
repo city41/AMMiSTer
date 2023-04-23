@@ -30,6 +30,7 @@ export const DisabledUpdateDB = () => {
 			updateDbConfigs={[mockUpdateDbConfig]}
 			isOpen
 			onRequestClose={() => {}}
+			onResolve={() => {}}
 		/>
 	);
 };
@@ -46,6 +47,7 @@ export const UnknownReason = () => {
 			updateDbConfigs={[mockDb]}
 			isOpen
 			onRequestClose={() => {}}
+			onResolve={() => {}}
 		/>
 	);
 };
