@@ -6,6 +6,13 @@ export type DBFileEntry = {
 	hash: string;
 	size: number;
 	tags: number[];
+
+	/**
+	 * In some dbs, the url for downloading the file is
+	 * <base_files_url>/<key to this file in the object>,
+	 * and in other dbs, they include an explicit download url
+	 * here
+	 */
 	url?: string;
 };
 
@@ -22,12 +29,12 @@ export type DBJSON = {
 };
 
 /**
- * A struct representing a mister file, mostly used
+ * A struct representing a mister file (ie an mra, a core, etc), mostly used
  * in local situations away from a db.json
  */
 export type HashedFileEntry = {
 	/**
-	 * the db.json file it came from
+	 * the db.json file id it came from
 	 */
 	db_id: string;
 	type: 'mra' | 'rbf';
@@ -35,13 +42,16 @@ export type HashedFileEntry = {
 	/**
 	 * Its relative filepath as found in the db.json.
 	 * This is mostly only used for reference, as relFilePath
-	 * is used primarily for file operations
+	 * is used primarily for file operations.
+	 *
+	 * The two can differ as some dbs already do a simple "organization"
+	 * that AMMiSter does not want. Instead the user can put the game wherever they want.
 	 */
 	dbRelFilePath: string;
 
 	/**
 	 * Its relative filepath as found in the db.json,
-	 * except any folders between "_Arcade"/"Arcade/core" and the file have been removed.
+	 * except any folders between "_Arcade" or "Arcade/core" and the file have been removed.
 	 * This is done to "undo" organization already found in some dbs.
 	 *
 	 * Typically starts with "_Arcade/" or "_Arcade/cores", this rel file path
@@ -49,10 +59,18 @@ export type HashedFileEntry = {
 	 * <rootDir>/gameCache/<db_id>/<relFilePath>
 	 */
 	relFilePath: string;
+
+	/**
+	 * the file's name. In the case of MRAs, this is visible in the UI at times,
+	 * mostly when a plan has an mra path in it that is no longer in the catalog
+	 */
 	fileName: string;
+
 	/**
 	 * Where it can be found on the internet. Used to download
-	 * the latest version of it. Basically just base_file_url/<relFilePath>
+	 * the latest version of it. Basically just base_file_url/<relFilePath>,
+	 * but some dbs have a specific url entry for each file. In that case,
+	 * that url is populated here.
 	 */
 	remoteUrl: string;
 
@@ -68,6 +86,12 @@ export type HashedFileEntry = {
 	size: number;
 };
 
+/**
+ * ROM files are not hashed, so this is really a type for ROM files.
+ *
+ * TODO: now that we are using the arcade rom db,
+ * I think they now have hashes
+ */
 export type NonHashedFileEntry = {
 	/**
 	 * the db.json file it came from
@@ -76,7 +100,7 @@ export type NonHashedFileEntry = {
 	type: 'rom';
 	/**
 	 * Its relative filepath as found in the db.json,
-	 * Typically starts with "_Arcade/", this rel file path
+	 * Typically starts with "games/mame/", this rel file path
 	 * is also used when storing it locally at
 	 * <rootDir>/gameCache/<db_id>/<relFilePath>
 	 */
@@ -84,12 +108,16 @@ export type NonHashedFileEntry = {
 	fileName: string;
 	/**
 	 * Where it can be found on the internet. Used to download
-	 * the latest version of it. Basically just base_file_url/<relFilePath>
+	 * the latest version of it. Basically just base_file_url/<relFilePath>,
+	 * or can be from the url in the file entry for the arcade rom db
 	 */
 	remoteUrl: string;
 
 	/**
 	 * The size of the file, in bytes
+	 *
+	 * TODO: this is calculated locally, but the arcade rom db
+	 * has this.
 	 */
 	size: number;
 };
@@ -98,7 +126,8 @@ export type FileEntry = HashedFileEntry | NonHashedFileEntry;
 
 /**
  * Since roms in mra files can be multiple files separated by a pipe,
- * this type is used to capture that
+ * this type is used to capture that. A typical MRA might have multiple
+ * of these.
  */
 export type MissingRomEntry = {
 	db_id: string;
@@ -204,7 +233,7 @@ export type CatalogEntry = GameMetadata & {
 /**
  * All of the local files that AMMister knows about.
  *
- * Sinde it is indexed by db_id, it's also can represent
+ * Since it is indexed by db_id, it can also represent
  * a subcatalog by only having some dbs in it
  */
 export type Catalog = {
@@ -217,6 +246,10 @@ export type UpdateError = {
 	message?: string;
 };
 
+/**
+ * The status of an ongoing "check for updates".
+ * Used to report to the use through the UI's modal
+ */
 export type UpdateStatus = {
 	message: string;
 	complete?: boolean;
@@ -229,4 +262,5 @@ export type UpdateStatus = {
 };
 
 // return true to keep going, false to cancel
+// TODO: is this still true? Don't we now throw on cancel?
 export type UpdateCallback = (status: UpdateStatus) => boolean;
