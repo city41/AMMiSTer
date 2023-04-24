@@ -23,11 +23,13 @@ function isPlanGameEntry(obj: unknown): obj is PlanGameEntry {
 		return false;
 	}
 
-	if (!('db_id' in obj) || typeof obj.db_id !== 'string') {
+	const p = obj as PlanGameEntry;
+
+	if (typeof p.db_id !== 'string') {
 		return false;
 	}
 
-	if (!('relFilePath' in obj) || typeof obj.relFilePath !== 'string') {
+	if (typeof p.relFilePath !== 'string') {
 		return false;
 	}
 
@@ -106,6 +108,9 @@ function newPlan(): Plan {
 	};
 }
 
+/**
+ * See explanation below at convertLegacyPlan
+ */
 function convertLegacyDirectory(
 	games: LegacyPlanGameDirectory | PlanGameDirectory
 ): PlanGameDirectory {
@@ -139,6 +144,14 @@ function convertLegacyDirectory(
 	);
 }
 
+/**
+ * Plans used to just store CatalogEntrys in them. This was a bad idea,
+ * as updates could change the name of MRA files, causing orphans. Plan entries
+ * are now just a db_id and mra file path, and use the current catalog to get
+ * the rest of the info. 
+ * 
+ * This function converts the old style plan to new style
+ */
 function convertLegacyPlan(plan: LegacyPlan | Plan): Plan {
 	return {
 		...plan,
@@ -146,6 +159,10 @@ function convertLegacyPlan(plan: LegacyPlan | Plan): Plan {
 	};
 }
 
+/**
+ * Saves the given plan to the given file path. Returns the final saved
+ * path. The only difference from input to output path can be adding .amip extension
+ */
 async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	if (path.extname(filePath) !== '.amip') {
 		filePath += '.amip';
@@ -158,6 +175,10 @@ async function savePlan(plan: Plan, filePath: string): Promise<string> {
 	return filePath;
 }
 
+/**
+ * Opens a plan at the given path, and verifies the file contains a plan.
+ * If it does not, or can't be found, null is returned.
+ */
 async function openPlan(path: string): Promise<Plan | null> {
 	debug(`openPlan(${path})`);
 
@@ -167,7 +188,7 @@ async function openPlan(path: string): Promise<Plan | null> {
 		const finalPlan = convertLegacyPlan(plan);
 
 		if (!isPlan(finalPlan)) {
-			debug('openPlan: isPlan returned false for serializedPlan');
+			debug('openPlan: isPlan returned false');
 			return null;
 		}
 
