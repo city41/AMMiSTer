@@ -5,7 +5,6 @@ import path from '../util/universalPath';
 import fsp from 'node:fs/promises';
 import mkdirp from 'mkdirp';
 import { XMLParser } from 'fast-xml-parser';
-import { JsonCache } from '../util/JsonCache';
 import uniqBy from 'lodash/uniqBy';
 
 import { downloadFile } from '../util/downloadFile';
@@ -44,8 +43,6 @@ const xmlParser = new XMLParser({
 	ignoreAttributes: false,
 	numberParseOptions: { leadingZeros: false, hex: false },
 });
-
-const archive404Cache = new JsonCache<boolean>('archive404.json');
 
 const METADATADB_URL =
 	'https://raw.githubusercontent.com/Toryalai1/MiSTer_ArcadeDatabase/db/mad_db.json.zip';
@@ -774,8 +771,6 @@ async function updateCatalog(
 		await mkdirp(gameCacheDir);
 		await writeGameCacheWarning(gameCacheDir);
 
-		await archive404Cache.init();
-
 		const updates: Update[] = [];
 
 		const currentCatalog = await getCurrentCatalog();
@@ -962,8 +957,6 @@ async function updateCatalog(
 		}
 
 		return FAIL_RETURN;
-	} finally {
-		await archive404Cache.save();
 	}
 }
 
