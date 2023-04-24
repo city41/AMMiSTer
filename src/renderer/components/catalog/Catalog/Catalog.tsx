@@ -64,7 +64,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 		return [
 			<li
 				key={db.db_id}
-				className="py-2 px-1.5 font-bold sticky top-0 z-40 bg-indigo-50 text-indigo-600 grid gap-x-2 items-baseline border-b border-t border-b-indigo-500 border-t-indigo-500 first:border-t-transparent"
+				className="py-2 px-1.5 font-bold sticky top-10 z-40 bg-indigo-50 text-indigo-600 grid gap-x-2 items-baseline border-b border-t border-b-indigo-500 border-t-indigo-500"
 				style={{ gridTemplateColumns: '1fr max-content' }}
 			>
 				<div className="whitespace-nowrap text-ellipsis overflow-hidden">
@@ -81,7 +81,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 
 	return (
 		<div>
-			<div className="relative py-2 px-1.5">
+			<div className="relative px-1.5 h-10 grid place-items-center sticky top-0 z-40 bg-indigo-50">
 				<input
 					className="w-full p-0.5"
 					type="text"
@@ -91,7 +91,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 						setFilter(e.target.value);
 					}}
 				/>
-				<div className="w-4 absolute top-0 bottom-0 right-2 grid place-items-center">
+				<div className="w-4 h-10 absolute top-0 right-2 grid place-items-center">
 					<CloseIcon
 						className="w-4 h-4 cursor-pointer text-gray-500"
 						onClick={() => {
