@@ -6,6 +6,7 @@ import {
 } from '../../../../main/catalog/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
 import { CatalogEntry } from '../CatalogEntry';
+import clsx from 'clsx';
 
 type InternalCatalogProps = {
 	catalog: CatalogType;
@@ -91,7 +92,14 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 						setFilter(e.target.value);
 					}}
 				/>
-				<div className="w-4 h-10 absolute top-0 right-2 grid place-items-center">
+				<div
+					className={clsx(
+						'w-4 h-10 absolute top-0 right-2 grid place-items-center',
+						{
+							invisible: !filter,
+						}
+					)}
+				>
 					<CloseIcon
 						className="w-4 h-4 cursor-pointer text-gray-500"
 						onClick={() => {
