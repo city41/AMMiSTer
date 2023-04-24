@@ -450,6 +450,20 @@ const planSlice = createSlice({
 
 				const parent = getNode(state.plan, parentPath);
 
+				const existingFoldersWithNewName = parent.games.filter((g) => {
+					return (
+						'directoryName' in g &&
+						g.directoryName.toLowerCase() === newName.toLowerCase()
+					);
+				});
+
+				// about to rename a folder to a name that is already in this directory.
+				// for now, just don't allow this
+				// TODO: merge the two directories together
+				if (existingFoldersWithNewName.length > 0) {
+					return;
+				}
+
 				const entry = parent.games.find((g) => {
 					return 'directoryName' in g && g.directoryName === name;
 				}) as PlanGameDirectoryEntry;
