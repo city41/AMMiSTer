@@ -54,10 +54,10 @@ async function turnLogIntoArray(logFilePath: string): Promise<void> {
 
 async function createExportLogger(planName: string, initiator: string) {
 	const rootDir = await settings.getSetting('rootDir');
-	const safePlanName = planName.replace(/\s/g, '_');
 	const logFileName =
-		`export-log--${initiator}-${safePlanName}-${new Date().toISOString()}.json`.replace(
-			/:/g,
+		// Convert spaces to underscores, remove colons (which are not legal in Windows file names)
+		`export-log--${initiator}-${planName}-${new Date().toISOString()}.json`.replace(
+			/[\s:]/g,
 			'_'
 		);
 
@@ -104,6 +104,7 @@ async function clearOldLogs(initiator: string) {
 		const logFilePath = path.resolve(rootDir, logFile);
 		const stat = await fsp.stat(logFilePath);
 
+		// TODO: does this work correctly on Windows?
 		if (Date.now() - stat.mtime.getTime() > ONE_WEEK_MILLIS) {
 			try {
 				await fsp.unlink(logFilePath);
@@ -149,6 +150,7 @@ function buildDestFileOperationPath(p: string): DestFileOperationPath {
 	const fileNameDate = convertFileNameDate(split[split.length - 1]);
 
 	if (split.length > 1 && fileNameDate) {
+		// drop the date part out of split
 		split.pop();
 		const fileNameBase = split.join('_');
 
