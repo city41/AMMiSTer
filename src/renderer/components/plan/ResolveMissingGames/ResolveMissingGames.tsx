@@ -82,7 +82,7 @@ function ResolveMissingGames({
 					onChange={() => setMinimizeResolved((hr) => !hr)}
 					checked={!!minimizeResolved}
 				/>
-				<label htmlFor="hide-resolved" className="text-xs text-gray-600">
+				<label htmlFor="hide-resolved" className="text-xs text-gray-600 pr-8">
 					Minimize Resolved Games
 				</label>
 			</div>
