@@ -157,7 +157,7 @@ function FocusedDirectory({
 				</ul>
 				{focusedNode.immediateGameCount === 0 && (
 					<div className="text-sm italic text-gray-600 ml-4 my-8">
-						This folder is empty
+						This folder has no games
 					</div>
 				)}
 				{isDraggingOver && (
