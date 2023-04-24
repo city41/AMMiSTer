@@ -122,7 +122,6 @@
 		"@types/react-modal": "^3.13.1",
 		"@types/react-sortable-tree": "^0.3.16",
 		"@types/react-toggle": "^4.0.3",
-		"@types/ssh2-sftp-client": "^9.0.0",
 		"@types/string-similarity": "^4.0.0",
 		"@types/winston": "^2.4.4",
 		"@typescript-eslint/eslint-plugin": "^5.40.0",
