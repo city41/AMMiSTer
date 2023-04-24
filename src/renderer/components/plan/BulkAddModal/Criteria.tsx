@@ -4,6 +4,8 @@ import { CloseIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
 import memoize from 'lodash/memoize';
 import { BulkAddCriteria, NOT_SET_SENTINEL } from '../planSlice';
+import uniqBy from 'lodash/uniqBy';
+import { defaultUpdateDbs } from '../../../../main/settings/defaultUpdateDbs';
 
 type GameAspect = BulkAddCriteria['gameAspect'];
 
@@ -56,8 +58,27 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 	}
 }
 
+function valueToLabel(v: string, gameAspect: GameAspect): string {
+	if (gameAspect !== 'db_id') {
+		return v;
+	}
+
+	const db = defaultUpdateDbs.find((db) => db.db_id === v);
+
+	if (!db) {
+		throw new Error(
+			`Criteria#valueToLabel: Unable to find a db entry for: ${v}`
+		);
+	}
+
+	return db.displayName;
+}
+
 const getAllOptionValues = memoize(
-	function (catalog: Catalog, gameAspect: GameAspect): string[] {
+	function (
+		catalog: Catalog,
+		gameAspect: GameAspect
+	): Array<{ label: string; value: string }> {
 		const { updatedAt: ignored, ...restOfCatalog } = catalog;
 
 		const entries = Object.values(restOfCatalog).flat(1);
@@ -71,10 +92,15 @@ const getAllOptionValues = memoize(
 
 			v = (Array.isArray(v) ? v : [v]).map(String);
 
-			return v;
+			return v.map((vv) => {
+				return {
+					label: valueToLabel(vv, gameAspect),
+					value: vv,
+				};
+			});
 		});
 
-		return Array.from(new Set(rawValues)).sort();
+		return uniqBy(rawValues, JSON.stringify).sort();
 	},
 	(catalog: Catalog, gameAspect: GameAspect) => {
 		return `${catalog.updatedAt}-${gameAspect}`;
@@ -87,7 +113,7 @@ function getFirstValueFor(catalog: Catalog, gameAspect: GameAspect): string {
 	}
 
 	const values = getAllOptionValues(catalog, gameAspect);
-	return values[0];
+	return values[0].value;
 }
 
 function ValueInput({
@@ -123,8 +149,8 @@ function ValueInput({
 				<select className={className} value={value} onChange={onChange}>
 					{getAllOptionValues(catalog, gameAspect).map((o) => {
 						return (
-							<option key={o} value={o}>
-								{o}
+							<option key={o.value} value={o.value}>
+								{o.label}
 							</option>
 						);
 					})}
