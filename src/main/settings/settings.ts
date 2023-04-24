@@ -8,6 +8,8 @@ import {
 } from './types';
 import { defaultUpdateDbs } from './defaultUpdateDbs';
 
+// This is located at <electron-user-dir>/ammister in prod mode
+// and <electron-user-dir>/Electron/ in dev mode
 const SETTINGS_FILE = 'ammister-settings.json';
 
 const settingsChangeListeners: SettingChangeListener[] = [];
@@ -18,33 +20,28 @@ async function init(userDataPath: string): Promise<void> {
 		prettify: true,
 		numSpaces: 2,
 	});
-	await electronSettings.set('rootDir', userDataPath);
 
-	const hasDownloadRoms = await hasSetting('downloadRoms');
-
-	if (!hasDownloadRoms) {
-		await setSetting('downloadRoms', false);
-	}
+	await setSetting('rootDir', userDataPath);
+	await setDefaultSetting('downloadRoms', false);
+	await setDefaultSetting('exportOptimization', 'space');
 
 	const hasUpdateDbs = await hasSetting('updateDbs');
 
+	let existingUpdateDbs: UpdateDbConfig[];
 	if (!hasUpdateDbs) {
-		await setSetting('updateDbs', defaultUpdateDbs);
+		existingUpdateDbs = [];
 	} else {
-		const existingUpdateDbs = await getSetting<UpdateDbConfig[]>('updateDbs');
-		const newUpdateDbs = defaultUpdateDbs.filter((udb) => {
-			return !existingUpdateDbs.some((edb) => edb.db_id === udb.db_id);
-		});
-
-		const finalUpdateDbs = existingUpdateDbs.concat(newUpdateDbs);
-		await setSetting('updateDbs', finalUpdateDbs);
+		existingUpdateDbs = await getSetting<UpdateDbConfig[]>('updateDbs');
 	}
 
-	const hasExportOptimization = await hasSetting('exportOptimization');
+	// if new dbs were added since the user
+	// last launched the app, add them to their config
+	const newUpdateDbs = defaultUpdateDbs.filter((udb) => {
+		return !existingUpdateDbs.some((edb) => edb.db_id === udb.db_id);
+	});
 
-	if (!hasExportOptimization) {
-		await setSetting('exportOptimization', 'space');
-	}
+	const finalUpdateDbs = existingUpdateDbs.concat(newUpdateDbs);
+	await setSetting('updateDbs', finalUpdateDbs);
 }
 
 async function getAllSettings(): Promise<Settings> {
@@ -70,10 +67,25 @@ async function setSetting<T extends SettingsValue>(
 	settingsChangeListeners.forEach((scl) => scl(key, value));
 }
 
+async function setDefaultSetting<T extends SettingsValue>(
+	key: keyof Settings,
+	value: T
+): Promise<void> {
+	if (!(await hasSetting(key))) {
+		await setSetting(key, value);
+	}
+}
+
 async function setAllSettings(newSettings: Settings): Promise<void> {
 	return electronSettings.set(newSettings);
 }
 
+/**
+ * Recent plans are used to populate the "open recent" menu item.
+ *
+ * This function returns the recent plans, but clears out any that are
+ * not found, likely due to the user deleting them
+ */
 async function getRecentPlans(): Promise<string[]> {
 	const recentPlans = await getSetting<string[]>('recentPlans');
 
@@ -87,6 +99,12 @@ async function getRecentPlans(): Promise<string[]> {
 	});
 }
 
+/**
+ * Adds a recently opened plan to the recent plans list. Used to populate
+ * the "open recent" menu item.
+ *
+ * Keeps the 3 most recent plans
+ */
 async function addRecentPlan(planPath: string): Promise<void> {
 	const recentPlans = await getRecentPlans();
 
