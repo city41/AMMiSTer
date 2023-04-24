@@ -51,7 +51,7 @@ function GameEntry({ gameName, onClick, isChosen }: GameEntryProps) {
 			<div
 				style={{ marginLeft: 'calc(-.5rem - 1px)' }}
 				className={clsx(
-					'text-xs px-2 py-1 bg-gray-500 text-white w-24 h-8 grid place-items-center',
+					'text-xs px-2 py-1 text-white w-24 h-8 grid place-items-center',
 					{
 						'bg-green-700': isChosen,
 						'bg-gray-500': !isChosen,
