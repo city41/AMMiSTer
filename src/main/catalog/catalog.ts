@@ -92,7 +92,7 @@ async function getMetadataDb(): Promise<MetadataDB> {
  * altering files in the gameCache might break AMMiSTer
  */
 async function writeGameCacheWarning(gameCacheDirPath: string): Promise<void> {
-	const warningTxt = `AMMiSTER gameCacheWarning
+	const warningTxt = `AMMiSTER gameCache Warning
 =========================
 
 Changing files in this directory or its subdirectories could cause
@@ -143,10 +143,25 @@ async function getDbJson(url: string): Promise<DBJSON> {
 	return require(extractedJsonPaths[0]) as DBJSON;
 }
 
+/**
+ * this ensures db_id names don't have any forward or back slashes in them,
+ * otherwise the db's files will get stored in sub directories
+ * under the gameCache
+ */
 function cleanDbId(db_id: string): string {
 	return db_id.replace(/\//g, '_').replace(/\\/g, '_');
 }
 
+/**
+ * Given a relative file path like "_Arcade/foo/bar/game.mra",
+ * returns "_Arcade/game.mra". Will maintain "_Arcade/cores"
+ * for core files. This is the main place that "undoing"
+ * pre-existing db organization is done, pushing all files to the top
+ * of the db's cache. Instead, users will organize as they see fit.
+ *
+ * TODO: this might cause clashes if two files flatten to the same
+ * flattened path.
+ */
 function flattenRelFilePath(relFilePath: string): string {
 	const split = relFilePath.split('/');
 
@@ -187,7 +202,9 @@ function convertDbToFileEntries(db: DBJSON): HashedFileEntry[] {
 }
 
 /**
- * Returns the md5 hash of the provided data
+ * Returns the md5 hash of the provided data. This should only
+ * be used for verififcation of a local file against a provided hash,
+ * and not to set a hash.
  */
 function getFileMd5Hash(data: Buffer | string): string {
 	return crypto.createHash('md5').update(data).digest('hex');
@@ -275,6 +292,9 @@ async function downloadUpdatesForDb(
 ): Promise<Update[]> {
 	const updates: Update[] = [];
 
+	// the default batch size is 4
+	// TODO: can probably bump this up to make
+	// the update even faster
 	const batches = batch(fileEntries);
 
 	for (const batch of batches) {
@@ -293,6 +313,7 @@ async function downloadUpdatesForDb(
 				} catch (e) {
 					const message = e instanceof Error ? e.message : String(e);
 					cb(message, update);
+					// TODO: should instead just note this file errored and keep going
 					throw e;
 				}
 			}
@@ -340,6 +361,7 @@ function xmlToArray(val: string | string[] | null | undefined): string[] {
 	}
 
 	if (Array.isArray(val)) {
+		// TODO: shouldn't this be !!v ?
 		return val.filter((v) => !v);
 	}
 
@@ -417,10 +439,10 @@ async function parseMraToCatalogEntry(
 				romCatalogFileEntries.push({
 					db_id,
 					fileName: r,
-					// path.join is used to account for OS specific path separators
 					relFilePath: path.join('games', 'mame', r),
 					type: 'rom',
 					status: romExists ? 'ok' : 'missing',
+					// TODO: should be able to get this from the arcade rom db
 					size: await size(romPath),
 				});
 			}
@@ -1021,6 +1043,7 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 		} else {
 			// we don't check the hash of roms because we never get a reliable
 			// hash from anywhere. the db has no rom hashes.
+			// TODO: the arcade rom db has hashes
 			rom.status = 'ok';
 		}
 	});
