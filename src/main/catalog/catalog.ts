@@ -36,7 +36,6 @@ let _currentCatalog: Catalog | null = null;
 class CancelUpdateError extends Error {}
 class DownloadRomError extends Error {}
 
-const DEFAULT_MAME_VERSION = '0245.revival';
 const debug = Debug('main/catalog/catalog.ts');
 
 const xmlParser = new XMLParser({
@@ -384,10 +383,10 @@ async function parseMraToCatalogEntry(
 			category,
 			year,
 			rom,
-			mameversion = DEFAULT_MAME_VERSION,
 			rbf,
 			setname,
 			parent,
+			mameVersion,
 		} = parsed.misterromdescription;
 
 		const rbfFileEntry = fileEntries.find(
@@ -453,7 +452,7 @@ async function parseMraToCatalogEntry(
 			manufacturer: metadataEntry.manufacturer ?? xmlToArray(manufacturer),
 			yearReleased,
 			category: metadataEntry.category ?? xmlToArray(category),
-			mameVersion: mameversion,
+			mameVersion,
 			alternative: metadataEntry.alternative ?? false,
 			bootleg: metadataEntry.bootleg ?? false,
 			flip: metadataEntry.flip ?? false,
@@ -601,7 +600,6 @@ async function determineMissingRoms(
 				return {
 					db_id: ce.db_id,
 					romFile: r.fileName,
-					mameVersion: ce.mameVersion,
 					remoteUrl: getRomDownloadUrl(r, romDb as DBJSON),
 				};
 			});
@@ -621,6 +619,7 @@ async function downloadRom(
 
 	try {
 		const fileName = path.basename(romEntry.remoteUrl);
+		// TODO: here is where hbmame support can be added
 		const relFilePath = path.join('games', 'mame', fileName);
 		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 

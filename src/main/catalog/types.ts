@@ -132,7 +132,6 @@ export type FileEntry = HashedFileEntry | NonHashedFileEntry;
 export type MissingRomEntry = {
 	db_id: string;
 	romFile: string;
-	mameVersion: string;
 	remoteUrl: string | null;
 };
 
@@ -220,7 +219,7 @@ export type CatalogEntry = GameMetadata & {
 	romSlug: string | null;
 	gameName: string;
 	yearReleased: number | null;
-	mameVersion: string;
+	mameVersion?: string;
 	titleScreenshotUrl: string | null;
 	gameplayScreenshotUrl: string | null;
 	files: {
