@@ -1,5 +1,10 @@
 import electronSettings from 'electron-settings';
 
+/**
+ * Changes to all the types in here should be additive, and it is important that
+ * settings#init() ensures the user is up to date on all settings values.
+ */
+
 export type SettingsValue = ReturnType<typeof electronSettings.getSync>;
 
 export type UpdateDbConfig = {
