@@ -8,7 +8,10 @@ import { Catalog } from '../types';
 import { exists } from '../../util/fs';
 import { getAllCatalogEntries } from '../util';
 
-const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-catalog');
+const TMP_DIR = path.resolve(
+	os.tmpdir(),
+	`ammister-integration-tests-catalog-${Date.now()}`
+);
 
 jest.retryTimes(2);
 
@@ -141,12 +144,12 @@ describe('catalog integration', function () {
 		});
 		expect(callback).toHaveBeenNthCalledWith(callback.mock.calls.length - 1, {
 			fresh: true,
-			message: 'Added Nemesis (ROM version) to catalog',
+			message: expect.stringMatching(/Added .* to catalog/),
 		});
 
 		const lastCallArgs = callback.mock.lastCall?.[0];
 		expect(lastCallArgs.complete).toBe(true);
-		expect(lastCallArgs.updates).toHaveLength(2);
+		expect(lastCallArgs.updates).toHaveLength(5);
 		expect(lastCallArgs.message).toBe('Update finished');
 
 		const catalog = lastCallArgs.catalog as Catalog;
@@ -202,7 +205,7 @@ describe('catalog integration', function () {
 		});
 		expect(callback).toHaveBeenNthCalledWith(3, {
 			fresh: false,
-			message: 'Updating Nemesis (ROM Version).mra',
+			message: 'Updating M.I.A. - Missing in Action (rev T).mra',
 		});
 
 		const lastCallArgs2 = callback.mock.lastCall?.[0];
