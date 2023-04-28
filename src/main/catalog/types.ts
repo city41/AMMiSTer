@@ -151,6 +151,8 @@ export type Update = {
 	 */
 	fileEntry: FileEntry;
 	updateReason: UpdateReason;
+	error?: boolean;
+	errorMessage?: string;
 };
 
 /**
