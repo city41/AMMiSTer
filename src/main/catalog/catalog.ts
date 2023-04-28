@@ -31,6 +31,7 @@ import { slugMap } from './slugMap';
 import * as settings from '../settings';
 import { defaultUpdateDbs } from '../settings/defaultUpdateDbs';
 import { areAllNonDependentDbsEnabled } from '../settings/util';
+import { getAllCatalogEntries } from './util';
 
 let _currentCatalog: Catalog | null = null;
 
@@ -604,8 +605,7 @@ function getRomDownloadUrl(
 async function determineMissingRoms(
 	catalog: Catalog
 ): Promise<MissingRomEntry[]> {
-	const { updatedAt, ...restofCatalog } = catalog;
-	const catalogEntries = Object.values(restofCatalog).flat(1);
+	const catalogEntries = getAllCatalogEntries(catalog);
 
 	const entriesMissingTheirRom = catalogEntries.filter((ce) =>
 		ce.files.roms?.some(
@@ -1052,8 +1052,7 @@ async function auditCatalogEntry(entry: CatalogEntry): Promise<boolean> {
 
 async function audit(catalog: Catalog): Promise<Catalog> {
 	debug('audit called');
-	const { updatedAt, ...restOfCatalog } = catalog;
-	const entries = Object.values(restOfCatalog).flat(1);
+	const entries = getAllCatalogEntries(catalog);
 
 	debug('about to audit', entries.length, 'entries');
 	const auditPromises = entries.map((e) => auditCatalogEntry(e));

@@ -16,7 +16,6 @@ type InternalCatalogProps = {
 
 function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 	const [filter, setFilter] = useState('');
-	const { updatedAt, ...restOfCatalog } = catalog;
 
 	const filterFn = useCallback(
 		(ge: CatalogEntryType) => {
@@ -39,7 +38,7 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 			return [];
 		}
 
-		const gameEntries = restOfCatalog[db.db_id];
+		const gameEntries = catalog[db.db_id];
 		if (!gameEntries) {
 			// this can happen when a db has been re-enabled but a catalog update has not happened yet
 			return [];

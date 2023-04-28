@@ -2,6 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { CloseIcon } from '../../../icons';
 import { Catalog } from '../../../../main/catalog/types';
+import { getAllCatalogEntries } from '../../../../main/catalog/util';
 import memoize from 'lodash/memoize';
 import { BulkAddCriteria, NOT_SET_SENTINEL } from '../planSlice';
 import uniqBy from 'lodash/uniqBy';
@@ -79,9 +80,7 @@ const getAllOptionValues = memoize(
 		catalog: Catalog,
 		gameAspect: GameAspect
 	): Array<{ label: string; value: string }> {
-		const { updatedAt: ignored, ...restOfCatalog } = catalog;
-
-		const entries = Object.values(restOfCatalog).flat(1);
+		const entries = getAllCatalogEntries(catalog);
 
 		const rawValues = entries.flatMap((e) => {
 			let v = e[gameAspect];

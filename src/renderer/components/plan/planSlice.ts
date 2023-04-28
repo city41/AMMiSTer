@@ -5,7 +5,8 @@ import undoable, {
 	StateWithHistory,
 	excludeAction,
 } from 'redux-undo';
-import { Catalog, CatalogEntry } from 'src/main/catalog/types';
+import { Catalog, CatalogEntry } from '../../../main/catalog/types';
+import { getAllCatalogEntries } from '../../../main/catalog/util';
 import {
 	Plan,
 	PlanGameDirectory,
@@ -591,8 +592,7 @@ const addItem =
 		const catalog = getState().catalog.catalog;
 
 		if (plan && catalog) {
-			const { updatedAt, ...restOfCatalog } = catalog;
-			const db = restOfCatalog[db_id];
+			const db = catalog[db_id];
 			const catalogEntry = db.find((e) => {
 				return e.files.mra.fileName === mraFileName;
 			});
@@ -659,8 +659,7 @@ const loadDemoPlan = (): PlanSliceThunk => async (dispatch, getState) => {
 	if (catalog) {
 		const plan = await window.ipcAPI.newPlan();
 
-		const { updatedAt, ...restOfCatalog } = catalog;
-		const allCatalogEntries = Object.values(restOfCatalog).flat(1);
+		const allCatalogEntries = getAllCatalogEntries(catalog);
 
 		const horizontalCapcomEntries = allCatalogEntries.filter(
 			(ce) => ce.manufacturer.includes('Capcom') && ce.rotation === 0
@@ -894,9 +893,7 @@ function getEntriesBasedOnCriteria(
 	catalog: Catalog,
 	criterias: BulkAddCriteria[]
 ): CatalogEntry[] {
-	const { updatedAt, ...restOfCatalog } = catalog;
-
-	const allEntries = Object.values(restOfCatalog).flat(1);
+	const allEntries = getAllCatalogEntries(catalog);
 
 	let contenders = allEntries;
 

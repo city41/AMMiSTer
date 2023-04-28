@@ -8,7 +8,10 @@ import {
 } from '../../../../main/plan/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
 import { areAllNonDependentDbsEnabled } from '../../../../main/settings/util';
-import { getCatalogEntryForMraPath } from '../../../../main/catalog/util';
+import {
+	getAllCatalogEntries,
+	getCatalogEntryForMraPath,
+} from '../../../../main/catalog/util';
 import { MissingGameToResolve } from './ResolveMissingGameEntry';
 import {
 	PublicResolveMissingGamesProps,
@@ -118,8 +121,7 @@ function buildMissingGameEntries(
 		updateDbConfigs,
 		''
 	);
-	const { updatedAt, ...restofCatalog } = catalog;
-	const availableGames = Object.values(restofCatalog).flat(1);
+	const availableGames = getAllCatalogEntries(catalog);
 
 	const allNonDependentDbsEnabled =
 		areAllNonDependentDbsEnabled(updateDbConfigs);

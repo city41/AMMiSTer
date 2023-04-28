@@ -31,7 +31,10 @@ import { LocalFileClient } from './LocalFileClient';
 import { ExportOptimization, UpdateDbConfig } from '../settings/types';
 import { getCurrentCatalog } from '../catalog';
 import { isPlanGameEntry } from '../plan';
-import { getCatalogEntryForMraPath } from '../catalog/util';
+import {
+	getAllCatalogEntries,
+	getCatalogEntryForMraPath,
+} from '../catalog/util';
 
 const debug = Debug('main/export/export.ts');
 
@@ -509,8 +512,7 @@ function getSrcPathsFromPlan(
 async function getSpeedSrcPathsFromCatalog(
 	catalog: Catalog
 ): Promise<SrcFileOperationPath[]> {
-	const { updatedAt, ...restOfCatalog } = catalog;
-	const entries = Object.values(restOfCatalog).flat(1);
+	const entries = getAllCatalogEntries(catalog);
 
 	const paths: SrcFileOperationPath[] = [];
 

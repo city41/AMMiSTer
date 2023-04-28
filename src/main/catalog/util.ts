@@ -33,3 +33,9 @@ export function getCatalogEntryForMraPath(
 		return db.find((ce) => ce.files.mra.relFilePath === mraPath);
 	}
 }
+
+export function getAllCatalogEntries(catalog: Catalog): CatalogEntry[] {
+	const { updatedAt, ...restOfCatalog } = catalog;
+
+	return Object.values(restOfCatalog).flat(1);
+}

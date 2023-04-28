@@ -6,6 +6,7 @@ import { defaultUpdateDbs } from '../../settings/defaultUpdateDbs';
 import { updateCatalog } from '../catalog';
 import { Catalog } from '../types';
 import { exists } from '../../util/fs';
+import { getAllCatalogEntries } from '../util';
 
 const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-catalog');
 
@@ -37,16 +38,14 @@ jest.mock('../../settings', () => {
 });
 
 async function assertCatalog(catalog: Catalog) {
-	const { updatedAt, ...restOfCatalog } = catalog;
-
-	expect(typeof updatedAt).toBe('number');
+	expect(typeof catalog.updatedAt).toBe('number');
 
 	const atLeastOneDbInCatalog = defaultUpdateDbs.find(
 		(udb) => !!catalog[udb.db_id]
 	);
 	expect(!!atLeastOneDbInCatalog).toBe(true);
 
-	const entries = Object.values(restOfCatalog).flat(1);
+	const entries = getAllCatalogEntries(catalog);
 
 	for (const entry of entries) {
 		const mra = entry.files.mra;
@@ -93,16 +92,14 @@ async function assertCatalog(catalog: Catalog) {
 }
 
 async function changeFirstMra(catalog: Catalog) {
-	const { updatedAt, ...restOfCatalog } = catalog;
-
-	expect(typeof updatedAt).toBe('number');
+	expect(typeof catalog.updatedAt).toBe('number');
 
 	const atLeastOneDbInCatalog = defaultUpdateDbs.find(
 		(udb) => !!catalog[udb.db_id]
 	);
 	expect(!!atLeastOneDbInCatalog).toBe(true);
 
-	const entries = Object.values(restOfCatalog).flat(1);
+	const entries = getAllCatalogEntries(catalog);
 
 	expect(entries.length).toBeGreaterThan(0);
 

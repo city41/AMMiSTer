@@ -6,6 +6,7 @@ import {
 	CatalogEntry as CatalogEntryType,
 } from '../../../../main/catalog/types';
 import { PlanGameEntry } from '../../../../main/plan/types';
+import { getAllCatalogEntries } from '../../../../main/catalog/util';
 import { Modal, ModalProps } from '../../Modal';
 import { Criteria as CriteriaCmp } from './Criteria';
 import { Button } from '../../Button';
@@ -38,8 +39,7 @@ function BulkAddModal({
 	...rest
 }: PublicBulkAddModalProps & InternalBulkAddModalProps) {
 	const firstManufacturer = useMemo(() => {
-		const { updatedAt, ...restOfCatalog } = catalog;
-		const entries = Object.values(restOfCatalog).flat(1);
+		const entries = getAllCatalogEntries(catalog);
 		const manufacturers = entries.flatMap((e) => e.manufacturer).sort();
 
 		return manufacturers[0];
