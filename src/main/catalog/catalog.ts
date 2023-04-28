@@ -314,9 +314,11 @@ async function downloadUpdatesForDb(
 					updates.push(update);
 				} catch (e) {
 					const message = e instanceof Error ? e.message : String(e);
-					cb(message, update);
-					// TODO: should instead just note this file errored and keep going
-					throw e;
+					cb(null, {
+						...update,
+						error: true,
+						errorMessage: message,
+					});
 				}
 			}
 		});
@@ -635,17 +637,17 @@ type MissingRomEntryWRemoteUrl = Omit<MissingRomEntry, 'remoteUrl'> & {
 
 async function downloadRom(
 	romEntry: MissingRomEntryWRemoteUrl
-): Promise<Update | null> {
+): Promise<Update> {
 	const gameCacheDir = await getGameCacheDir();
 
 	debug(`downloadRom, getting ${romEntry.romFile}`);
 
-	try {
-		const fileName = path.basename(romEntry.remoteUrl);
-		// TODO: here is where hbmame support can be added
-		const relFilePath = path.join('games', 'mame', fileName);
-		const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
+	const fileName = path.basename(romEntry.remoteUrl);
+	// TODO: here is where hbmame support can be added
+	const relFilePath = path.join('games', 'mame', fileName);
+	const localPath = path.resolve(gameCacheDir, romEntry.db_id, relFilePath);
 
+	try {
 		let updateReason: UpdateReason;
 
 		try {
@@ -673,9 +675,21 @@ async function downloadRom(
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
 		debug(`Failed to download from ${romEntry.remoteUrl}: ${message}`);
-	}
 
-	return null;
+		return {
+			fileEntry: {
+				db_id: romEntry.db_id,
+				type: 'rom',
+				relFilePath,
+				fileName,
+				remoteUrl: romEntry.remoteUrl,
+				size: await size(localPath),
+			},
+			updateReason: 'missing',
+			error: true,
+			errorMessage: message,
+		};
+	}
 }
 
 async function downloadRoms(
@@ -717,6 +731,7 @@ async function downloadRoms(
 				cb(update);
 			}
 		} catch (e) {
+			// TODO: this can also be a cancel exception, in that case, just rethrow it
 			const message = e instanceof Error ? e.message : String(e);
 			throw new DownloadRomError(message);
 		}
