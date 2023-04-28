@@ -114,6 +114,31 @@ export const LotsOfUpdates = () => {
 	);
 };
 
+export const SomeUpdatesErrored = () => {
+	const updates = [];
+	for (let i = 0; i < 10; ++i) {
+		if (i % 4 === 0) {
+			updates.push({
+				...update1,
+				error: true,
+				errorMessage: 'something bad happened here',
+			});
+		} else {
+			updates.push(update1);
+		}
+	}
+
+	return (
+		<UpdateModal
+			isOpen
+			updates={updates}
+			onClose={() => {}}
+			duration={456798}
+			onCancelClick={() => {}}
+		/>
+	);
+};
+
 export const UnknownError = () => {
 	return (
 		<UpdateModal
