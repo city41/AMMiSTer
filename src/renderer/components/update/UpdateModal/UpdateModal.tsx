@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import { Update, UpdateError } from '../../../../main/catalog/types';
 import { BaseFeedbackModal } from '../../BaseFeedbackModal';
 import { DangerIcon, GiftIcon } from '../../../icons';
@@ -95,18 +96,50 @@ function UpdateModal({
 					</>
 				);
 			} else {
+				const failedUpdateCount = updates.filter((u) => u.error).length;
+				let errorMessage = '';
+				if (failedUpdateCount === 1) {
+					errorMessage = '1 update failed';
+				} else {
+					errorMessage = `${failedUpdateCount} updates failed`;
+				}
+
 				body = (
 					<div className="flex flex-col gap-y-2">
-						<ul>
+						{failedUpdateCount > 0 && (
+							<h3 className="text-red-800">however, {errorMessage}</h3>
+						)}
+						<ul className="flex flex-col gap-y-1 mt-4">
 							{updates.map((u) => (
 								<li
 									key={u.fileEntry.fileName}
-									className="text-sm text-gray-500 flex flex-row gap-x-2"
+									className={clsx(
+										'text-sm text-gray-500 grid grid-cols-6 gap-x-2 mb-4'
+									)}
 								>
-									<div className="text-gray-800">
+									<div
+										className={clsx('border-r-2 row-span-2 text-right pr-2', {
+											'border-green-600': !u.error,
+											'border-red-600': u.error,
+										})}
+									>
 										{u.fileEntry.type === 'rbf' ? 'core' : u.fileEntry.type}:
 									</div>
-									<div>{u.fileEntry.fileName}</div>
+									<div
+										className="font-bold"
+										style={{ gridColumn: '2/6', gridRow: 1 }}
+									>
+										{u.fileEntry.fileName}
+									</div>
+									{u.error && (
+										<div
+											className="flex flex-row gap-x-2 bg-red-50"
+											style={{ gridColumn: '2/6', gridRow: 2 }}
+										>
+											<div>An error occurred:</div>
+											<div className="italic">{u.errorMessage}</div>
+										</div>
+									)}
 								</li>
 							))}
 						</ul>
@@ -138,7 +171,7 @@ function UpdateModal({
 			onCancelClick={onCancelClick}
 			cancelButtonEnabled={!canceled && !error && !Array.isArray(updates)}
 			icon={GiftIcon}
-			errorOccured={!!error}
+			errorOccured={!!error || updates?.some((u) => u.error)}
 		>
 			<>
 				{body}
