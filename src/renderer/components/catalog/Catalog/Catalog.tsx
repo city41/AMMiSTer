@@ -5,6 +5,7 @@ import {
 	CatalogEntry as CatalogEntryType,
 } from '../../../../main/catalog/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
+import { areAllNonDependentDbsEnabled } from '../../../../main/settings/util';
 import { CatalogEntry } from '../CatalogEntry';
 import clsx from 'clsx';
 
@@ -30,9 +31,8 @@ function Catalog({ catalog, updateDbConfigs }: InternalCatalogProps) {
 		[filter]
 	);
 
-	const allNonDependentDbsEnabled = updateDbConfigs
-		.filter((udb) => !udb.isDependent)
-		.every((udb) => udb.enabled);
+	const allNonDependentDbsEnabled =
+		areAllNonDependentDbsEnabled(updateDbConfigs);
 
 	const lis = updateDbConfigs.flatMap((db) => {
 		if (!db.enabled || (db.isDependent && !allNonDependentDbsEnabled)) {

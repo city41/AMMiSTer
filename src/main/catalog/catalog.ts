@@ -30,6 +30,7 @@ import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
 import * as settings from '../settings';
 import { defaultUpdateDbs } from '../settings/defaultUpdateDbs';
+import { areAllNonDependentDbsEnabled } from '../settings/util';
 
 let _currentCatalog: Catalog | null = null;
 
@@ -764,9 +765,7 @@ async function updateCatalog(
 	const downloadRomsSetting = await settings.getSetting('downloadRoms');
 	const updateDbs = await settings.getSetting<UpdateDbConfig[]>('updateDbs');
 
-	const allNonDependentDbsEnabled = updateDbs
-		.filter((udb) => !udb.isDependent)
-		.every((udb) => udb.enabled);
+	const allNonDependentDbsEnabled = areAllNonDependentDbsEnabled(updateDbs);
 	const enabledUpdateDbs = updateDbs.filter(
 		(db) => db.enabled && (!db.isDependent || allNonDependentDbsEnabled)
 	);

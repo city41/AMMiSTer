@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import React from 'react';
 import Toggle from 'react-toggle';
 import { Settings } from '../../../../main/settings/types';
+import { areAllNonDependentDbsEnabled } from '../../../../main/settings/util';
 import { Modal, ModalProps } from '../../Modal';
 
 type PublicSettingsModalProps = ModalProps & { className?: string };
@@ -32,9 +33,9 @@ function SettingsModal({
 		});
 	}
 
-	const allNonDependentDbsEnabled = settings.updateDbs
-		.filter((udb) => !udb.isDependent)
-		.every((udb) => udb.enabled);
+	const allNonDependentDbsEnabled = areAllNonDependentDbsEnabled(
+		settings.updateDbs
+	);
 
 	return (
 		<Modal {...rest} closeButton>

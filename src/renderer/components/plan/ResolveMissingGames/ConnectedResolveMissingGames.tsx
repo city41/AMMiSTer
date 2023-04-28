@@ -7,6 +7,7 @@ import {
 	PlanGameEntry,
 } from '../../../../main/plan/types';
 import { UpdateDbConfig } from '../../../../main/settings/types';
+import { areAllNonDependentDbsEnabled } from '../../../../main/settings/util';
 import { getCatalogEntryForMraPath } from '../../../../main/catalog/util';
 import { MissingGameToResolve } from './ResolveMissingGameEntry';
 import {
@@ -120,9 +121,8 @@ function buildMissingGameEntries(
 	const { updatedAt, ...restofCatalog } = catalog;
 	const availableGames = Object.values(restofCatalog).flat(1);
 
-	const allNonDependentDbsEnabled = updateDbConfigs
-		.filter((udb) => !udb.isDependent)
-		.every((udb) => udb.enabled);
+	const allNonDependentDbsEnabled =
+		areAllNonDependentDbsEnabled(updateDbConfigs);
 
 	return missingGames.map((mg) => {
 		const updateDb = updateDbConfigs.find((udb) => udb.db_id === mg.db_id);
