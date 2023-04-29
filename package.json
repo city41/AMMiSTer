@@ -1,6 +1,6 @@
 {
 	"name": "ammister",
-	"version": "0.31.0",
+	"version": "0.32.0",
 	"description": "An Arcade Game Manager for the MiSTer",
 	"main": "./main/main.js",
 	"scripts": {
@@ -47,7 +47,7 @@
 		},
 		"win": {
 			"target": {
-				"target": "msi",
+				"target": "nsis",
 				"arch": [
 					"x64"
 				]
