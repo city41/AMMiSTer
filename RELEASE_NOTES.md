@@ -8,13 +8,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 - [Windows] - change installer from MSI to NSIS.
 
-This version has no changes for Mac or Linux. For Windows, this changes the installer that used to install AMMiSTer.
+This version has no changes for Mac or Linux. For Windows, this changes the installer that is used to install AMMiSTer.
 This is needed to support auto updates eventually. The new installer will default to installing AMMiSTer in
 Program Files, like most Windows apps.
 
 If you have installed the previous MSI version, you will likely end up with two versions of AMMiSTer installed. Open
 up Control Panel > Programs and Features, and uninstall the version of AMMiSTer that is listed without a version in the name,
-in other words it will just say "AMMiSTer" for the naem of the app, where as the new one says "AMMiSTer 0.31.0". If still
+in other words it will just say "AMMiSTer" for the name of the app, where as the new one says "AMMiSTer 0.31.0". If still
 not sure, just uninstall both of them, then run the new AMMiSTer Setup exe file again.
 
 ## Version 0.31.0
