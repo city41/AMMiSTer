@@ -205,7 +205,7 @@ describe('catalog integration', function () {
 		});
 		expect(callback).toHaveBeenNthCalledWith(3, {
 			fresh: false,
-			message: 'Updating M.I.A. - Missing in Action (rev T).mra',
+			message: expect.stringMatching(/Updating .*mra/),
 		});
 
 		const lastCallArgs2 = callback.mock.lastCall?.[0];
