@@ -4,6 +4,12 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.31.0
+
+- [All] If one file fails to download during an update, keeps going and notes the error in the end, rather than end the entire update.
+- [All] Missing game resolve finally finished
+- [All] Lots of small bug fixes and polish
+
 ## Version 0.30.0
 
 - [All] Download roms from archive.org using thypsilon's rom database
