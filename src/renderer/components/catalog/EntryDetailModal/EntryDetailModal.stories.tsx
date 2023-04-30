@@ -18,6 +18,23 @@ export const Basic = () => {
 	return <EntryDetailModal isOpen entry={completeEntry} />;
 };
 
+export const HasNoVideo = () => {
+	const entry = {
+		...completeEntry,
+		shortPlayVideoId: null,
+	};
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
+export const HasOnlyVideo = () => {
+	const entry = {
+		...completeEntry,
+		titleScreenshotUrl: null,
+		gameplayScreenshotUrl: null,
+	};
+	return <EntryDetailModal isOpen entry={entry} />;
+};
+
 export const MissingCategories = () => {
 	const entry = {
 		...completeEntry,

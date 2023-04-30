@@ -1,5 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
+import YouTube from 'react-youtube';
+import StarRatingComponent from 'react-star-rating-component';
 import { CatalogEntry } from '../../../../main/catalog/types';
 import { Modal } from '../../Modal';
 
@@ -72,21 +74,55 @@ function EntryDetailModal({
 				</p>
 			</div>
 			<div className="flex flex-col items-stretch">
-				{entry.titleScreenshotUrl && entry.gameplayScreenshotUrl && (
-					<div className="p-4 bg-gray-100 flex flex-row gap-x-4 justify-evenly border-t border-b border-gray-200">
-						<img
-							className="max-h-72"
-							alt={`Title Screen of ${entry.gameName}`}
-							src={entry.titleScreenshotUrl ?? ''}
-						/>
-						<img
-							className="max-h-72"
-							alt={`Gameplay of ${entry.gameName}`}
-							src={entry.gameplayScreenshotUrl ?? ''}
-						/>
+				{!!(
+					(entry.titleScreenshotUrl && entry.gameplayScreenshotUrl) ||
+					entry.shortPlayVideoId
+				) && (
+					<div
+						className={clsx(
+							'overflow-x-auto overflow-y-hidden p-4 bg-gray-100 flex flex-row gap-x-4 border-t border-b border-gray-200',
+							{
+								'justify-evenly':
+									!entry.shortPlayVideoId ||
+									(!entry.titleScreenshotUrl && !entry.gameplayScreenshotUrl),
+							}
+						)}
+					>
+						{entry.titleScreenshotUrl && (
+							<img
+								className="max-h-72"
+								alt={`Title Screen of ${entry.gameName}`}
+								src={entry.titleScreenshotUrl ?? ''}
+							/>
+						)}
+						{entry.gameplayScreenshotUrl && (
+							<img
+								className="max-h-72"
+								alt={`Gameplay of ${entry.gameName}`}
+								src={entry.gameplayScreenshotUrl ?? ''}
+							/>
+						)}
+						{entry.shortPlayVideoId && (
+							<YouTube className="max-h-72" videoId={entry.shortPlayVideoId} />
+						)}
 					</div>
 				)}
 				<dl className="bg-white">
+					{entry.arcadeItaliaRating && (
+						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+							<dt className="text-sm font-medium text-gray-500">
+								Arcade Italia Rating
+							</dt>
+							<dd>
+								<StarRatingComponent
+									name="arcadeItaliaRating"
+									value={entry.arcadeItaliaRating / 10}
+									starCount={10}
+									editing={false}
+								/>
+							</dd>
+						</div>
+					)}
 					{entry.category?.length > 0 && (
 						<div className="even:bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
 							<dt className="text-sm font-medium text-gray-500">

@@ -224,6 +224,8 @@ export type CatalogEntry = GameMetadata & {
 	mameVersion?: string;
 	titleScreenshotUrl: string | null;
 	gameplayScreenshotUrl: string | null;
+	shortPlayVideoId: string | null;
+	arcadeItaliaRating: number | null;
 	files: {
 		mra: HashedCatalogFileEntry;
 		rbf?: HashedCatalogFileEntry;
