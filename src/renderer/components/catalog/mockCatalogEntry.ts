@@ -9,6 +9,8 @@ const mockCatalogEntry: CatalogEntry = {
 		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/sfa2.png',
 	gameplayScreenshotUrl:
 		'https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/sfa2.png',
+	shortPlayVideoId: 'hh2-x8o7Jgc',
+	arcadeItaliaRating: 90,
 	mameVersion: '0229',
 	manufacturer: ['Capcom'],
 	yearReleased: 1996,

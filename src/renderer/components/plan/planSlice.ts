@@ -80,7 +80,7 @@ type StringBulkAddCriteria = {
 };
 
 type NumberBulkAddCriteria = {
-	gameAspect: 'yearReleased' | 'num_buttons';
+	gameAspect: 'yearReleased' | 'num_buttons' | 'arcadeItaliaRating';
 	operator: 'is' | 'is-not' | 'gte' | 'lte';
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
@@ -850,6 +850,7 @@ function matchesCriteria(
 			}
 		}
 		case 'yearReleased':
+		case 'arcadeItaliaRating':
 		case 'num_buttons': {
 			const numericValue = entryValue as number;
 			const criteriaValue = parseInt(criteria.value, 10);

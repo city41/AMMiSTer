@@ -44,6 +44,7 @@ function OperatorOptions({ gameAspect }: { gameAspect: GameAspect }) {
 				</>
 			);
 		}
+		case 'arcadeItaliaRating':
 		case 'players':
 		case 'yearReleased':
 		case 'num_buttons': {
@@ -99,7 +100,13 @@ const getAllOptionValues = memoize(
 			});
 		});
 
-		return uniqBy(rawValues, JSON.stringify).sort();
+		return uniqBy(rawValues, JSON.stringify).sort((a, b) => {
+			if (gameAspect === 'arcadeItaliaRating') {
+				return Number(a.value) - Number(b.value);
+			}
+
+			return a.label.localeCompare(b.label);
+		});
 	},
 	(catalog: Catalog, gameAspect: GameAspect) => {
 		return `${catalog.updatedAt}-${gameAspect}`;
@@ -143,6 +150,7 @@ function ValueInput({
 		case 'players':
 		case 'num_buttons':
 		case 'resolution':
+		case 'arcadeItaliaRating':
 		case 'manufacturer': {
 			return (
 				<select className={className} value={value} onChange={onChange}>
@@ -225,6 +233,7 @@ function Criteria({
 				<option value="special_controls">Special Controls</option>
 				<option value="num_buttons">No. of Buttons</option>
 				<option value="players">No. of Players</option>
+				<option value="arcadeItaliaRating">Arcade Italia Rating</option>
 				<option value="db_id">Database</option>
 			</select>
 			<select

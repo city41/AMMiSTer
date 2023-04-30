@@ -28,6 +28,7 @@ import { exists, getGameCacheDir, size } from '../util/fs';
 import isEqual from 'lodash/isEqual';
 import { batch } from '../util/batch';
 import { slugMap } from './slugMap';
+import { ArcadeItaliaMetadata, arcadeItaliaData } from './arcadeItaliaData';
 import * as settings from '../settings';
 import { defaultUpdateDbs } from '../settings/defaultUpdateDbs';
 import { areAllNonDependentDbsEnabled } from '../settings/util';
@@ -359,6 +360,27 @@ function determineMAMESlug(
 	return null;
 }
 
+function determineArcadeItaliaSlug(
+	romEntries: NonHashedCatalogFileEntry[],
+	fallbackSlug?: string | null
+): string | null {
+	const slugs = romEntries.map((r) => path.parse(r.fileName).name);
+
+	if (fallbackSlug) {
+		slugs.push(fallbackSlug);
+	}
+
+	for (const slug of slugs) {
+		const isCorrectSlug = !!arcadeItaliaData[slug];
+
+		if (isCorrectSlug) {
+			return slug;
+		}
+	}
+
+	return null;
+}
+
 function xmlToArray(val: string | string[] | null | undefined): string[] {
 	if (!val) {
 		return [];
@@ -460,7 +482,14 @@ async function parseMraToCatalogEntry(
 			return null;
 		}
 
-		const romSlug = determineMAMESlug(romCatalogFileEntries, setname || parent);
+		const mameSlug = determineMAMESlug(
+			romCatalogFileEntries,
+			setname || parent
+		);
+		const arcadeItaliaSlug = determineArcadeItaliaSlug(
+			romCatalogFileEntries,
+			setname || parent
+		);
 
 		let yearReleased: number | null = parseInt(year, 10);
 		if (isNaN(yearReleased)) {
@@ -468,13 +497,17 @@ async function parseMraToCatalogEntry(
 		}
 
 		const metadataEntry = (
-			romSlug ? metadataDb[romSlug] ?? {} : {}
+			mameSlug ? metadataDb[mameSlug] ?? {} : {}
 		) as Partial<GameMetadata>;
+
+		const arcadeItaliaEntry = (
+			arcadeItaliaSlug ? arcadeItaliaData[arcadeItaliaSlug] ?? {} : {}
+		) as Partial<ArcadeItaliaMetadata>;
 
 		const catalogEntry: CatalogEntry = {
 			db_id,
 			gameName: name,
-			romSlug: romSlug ?? null,
+			romSlug: mameSlug ?? null,
 			manufacturer: metadataEntry.manufacturer ?? xmlToArray(manufacturer),
 			yearReleased,
 			category: metadataEntry.category ?? xmlToArray(category),
@@ -498,12 +531,14 @@ async function parseMraToCatalogEntry(
 				isEqual(metadataEntry.special_controls, ['n-a'])
 					? []
 					: metadataEntry.special_controls,
-			titleScreenshotUrl: romSlug
-				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${romSlug}.png`
+			titleScreenshotUrl: mameSlug
+				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/titles/${mameSlug}.png`
 				: null,
-			gameplayScreenshotUrl: romSlug
-				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${romSlug}.png`
+			gameplayScreenshotUrl: mameSlug
+				? `https://raw.githubusercontent.com/city41/AMMiSTer/main/screenshots/snap/${mameSlug}.png`
 				: null,
+			shortPlayVideoId: arcadeItaliaEntry.videoId ?? null,
+			arcadeItaliaRating: arcadeItaliaEntry.rating ?? null,
 			files: {
 				mra: {
 					db_id,
