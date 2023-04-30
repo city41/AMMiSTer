@@ -29,10 +29,10 @@ Features:
 - [x] Favoriting games
 - [x] More metadata for games
 - [x] Control where AMMiSTer checks for updates (ie what update dbs it uses)
+- [x] Gameplay videos on games
 - [ ] Alternative arcade games
 - [ ] Install cores not yet in a distribution. Good for trying out beta cores. When they get into a distribution, automatically upgrade to the official release.
 - [ ] Notes on games. Helps you remember why a certain game is not in your plan
-- [ ] Start a game from AMMiSTer on a target MiSTer
 - [ ] Notifications when there are new updates
 
 **Built with:** TypeScript, React, Tailwind, Electron  
