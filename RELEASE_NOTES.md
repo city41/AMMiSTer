@@ -4,6 +4,12 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.33.0
+
+- [All] - Short play videos added to detail modal for games, thanks to Arcade Italia
+- [All] - Arcade Italia ratings added to detail modal and bulk add criteria
+- [All] - Bug Fix: Criteria values were no longer sorted correctly
+
 ## Version 0.32.0
 
 - [Windows] - change installer from MSI to NSIS.
