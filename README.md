@@ -8,6 +8,8 @@ An app for managing arcade games on the MiSTer. Download all of the arcade cores
 
 ![screenshot-newlyUpdated](https://github.com/city41/AMMiSTer/blob/main/screenshot-newlyUpdated.png?raw=true)
 
+![screenshot-bulkAddGames](https://github.com/city41/AMMiSTer/blob/main/screenshot-bulkAddGames.png?raw=true)
+
 ![screenshot-exportToMister](https://github.com/city41/AMMiSTer/blob/main/screenshot-exportToMister.png?raw=true)
 
 ![screenshot-exportToDirectory](https://github.com/city41/AMMiSTer/blob/main/screenshot-exportToDirectory.png?raw=true)
