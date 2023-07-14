@@ -884,7 +884,7 @@ async function updateCatalog(
 						});
 					} else {
 						const verb: Record<UpdateReason, string> = {
-							missing: 'Dowloading',
+							missing: 'Downloading',
 							updated: 'Updating',
 							corrupt: 'Fixing',
 							fulfilled: '',
