@@ -4,6 +4,10 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.33.1
+
+- [All] - A typo fix "Dowloading" to "Downloading", thanks Andy.
+
 ## Version 0.33.0
 
 - [All] - Short play videos added to detail modal for games, thanks to Arcade Italia
