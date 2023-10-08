@@ -7,36 +7,16 @@ import { updateCatalog } from '../catalog';
 import { Catalog } from '../types';
 import { exists } from '../../util/fs';
 import { getAllCatalogEntries } from '../util';
+import { getSetting } from '../../settings';
 
 const TMP_DIR = path.resolve(
 	os.tmpdir(),
 	`ammister-integration-tests-catalog-${Date.now()}`
 );
 
-jest.retryTimes(2);
-
 jest.mock('../../settings', () => {
 	return {
-		getSetting: jest.fn().mockImplementation((settingKey: keyof Settings) => {
-			switch (settingKey) {
-				case 'rootDir':
-					return Promise.resolve(TMP_DIR);
-				case 'downloadRoms':
-					return Promise.resolve(false);
-				case 'updateDbs': {
-					const updateDbs = defaultUpdateDbs.map((udb) => {
-						return {
-							...udb,
-							enabled: udb.db_id === 'theypsilon_unofficial_distribution',
-						};
-					});
-
-					return Promise.resolve(updateDbs);
-				}
-				default:
-					return Promise.resolve('mock-setting');
-			}
-		}),
+		getSetting: jest.fn(),
 	};
 });
 
@@ -130,90 +110,164 @@ describe('catalog integration', function () {
 		return fsp.rm(TMP_DIR, { force: true, recursive: true, retryDelay: 1000 });
 	});
 
-	it('should do a fresh update', async function () {
-		const callback = jest.fn().mockReturnValue(true);
-		await updateCatalog(callback);
+	describe('basic integration tests', function () {
+		beforeAll(function () {
+			// only enable theypsilon, since it's a tiny db
+			// @ts-expect-error doesn't know it is a mock
+			getSetting.mockImplementation((settingKey: keyof Settings) => {
+				switch (settingKey) {
+					case 'rootDir':
+						return Promise.resolve(TMP_DIR);
+					case 'downloadRoms':
+						return Promise.resolve(false);
+					case 'updateDbs': {
+						const updateDbs = defaultUpdateDbs.map((udb) => {
+							return {
+								...udb,
+								enabled: udb.db_id === 'theypsilon_unofficial_distribution',
+							};
+						});
 
-		expect(callback).toHaveBeenNthCalledWith(1, {
-			fresh: true,
-			message: 'Getting the latest MiSTer Arcade Database...',
-		});
-		expect(callback).toHaveBeenNthCalledWith(2, {
-			fresh: true,
-			message: 'Checking for anything new in The Ypsilon Unofficial',
-		});
-		expect(callback).toHaveBeenNthCalledWith(callback.mock.calls.length - 1, {
-			fresh: true,
-			message: expect.stringMatching(/Added .* to catalog/),
+						return Promise.resolve(updateDbs);
+					}
+					default:
+						return Promise.resolve('mock-setting');
+				}
+			});
 		});
 
-		const lastCallArgs = callback.mock.lastCall?.[0];
-		expect(lastCallArgs.complete).toBe(true);
-		expect(lastCallArgs.updates).toHaveLength(5);
-		expect(lastCallArgs.message).toBe('Update finished');
+		it('should do a fresh update', async function () {
+			const callback = jest.fn().mockReturnValue(true);
+			await updateCatalog(callback);
 
-		const catalog = lastCallArgs.catalog as Catalog;
-		await assertCatalog(catalog);
+			expect(callback).toHaveBeenNthCalledWith(1, {
+				fresh: true,
+				message: 'Getting the latest MiSTer Arcade Database...',
+			});
+			expect(callback).toHaveBeenNthCalledWith(2, {
+				fresh: true,
+				message: 'Checking for anything new in The Ypsilon Unofficial',
+			});
+			expect(callback).toHaveBeenNthCalledWith(callback.mock.calls.length - 1, {
+				fresh: true,
+				message: expect.stringMatching(/Added .* to catalog/),
+			});
+
+			const lastCallArgs = callback.mock.lastCall?.[0];
+			expect(lastCallArgs.complete).toBe(true);
+			// TODO: this needs to change as games are added to theypsilon
+			expect(lastCallArgs.updates).toHaveLength(29);
+			expect(lastCallArgs.message).toBe('Update finished');
+
+			const catalog = lastCallArgs.catalog as Catalog;
+			await assertCatalog(catalog);
+		});
+
+		it('should not download anything if the second update has nothing new', async function () {
+			const callback = jest.fn().mockReturnValue(true);
+			await updateCatalog(callback);
+
+			callback.mockClear();
+
+			await updateCatalog(callback);
+
+			expect(callback).toHaveBeenNthCalledWith(1, {
+				fresh: false,
+				message: 'Getting the latest MiSTer Arcade Database...',
+			});
+			expect(callback).toHaveBeenNthCalledWith(2, {
+				fresh: false,
+				message: 'Checking for anything new in The Ypsilon Unofficial',
+			});
+
+			const lastCallArgs = callback.mock.lastCall?.[0];
+			expect(lastCallArgs.complete).toBe(true);
+			expect(lastCallArgs.updates).toHaveLength(0);
+			expect(lastCallArgs.message).toBe('No updates available');
+
+			const catalog = lastCallArgs.catalog as Catalog;
+			await assertCatalog(catalog);
+		});
+
+		it('should redownload a file if it was updated', async function () {
+			const callback = jest.fn().mockReturnValue(true);
+			await updateCatalog(callback);
+
+			const lastCallArgs = callback.mock.lastCall?.[0];
+			const catalog = lastCallArgs.catalog as Catalog;
+
+			await changeFirstMra(catalog);
+
+			callback.mockClear();
+
+			await updateCatalog(callback);
+
+			expect(callback).toHaveBeenNthCalledWith(1, {
+				fresh: false,
+				message: 'Getting the latest MiSTer Arcade Database...',
+			});
+			expect(callback).toHaveBeenNthCalledWith(2, {
+				fresh: false,
+				message: 'Checking for anything new in The Ypsilon Unofficial',
+			});
+			expect(callback).toHaveBeenNthCalledWith(3, {
+				fresh: false,
+				message: expect.stringMatching(/Updating .*mra/),
+			});
+
+			const lastCallArgs2 = callback.mock.lastCall?.[0];
+			expect(lastCallArgs2.complete).toBe(true);
+			expect(lastCallArgs2.updates).toHaveLength(1);
+			expect(lastCallArgs2.message).toBe('Update finished');
+
+			const catalog2 = lastCallArgs2.catalog as Catalog;
+			await assertCatalog(catalog2);
+		});
 	});
 
-	it('should not download anything if the second update has nothing new', async function () {
-		const callback = jest.fn().mockReturnValue(true);
-		await updateCatalog(callback);
+	// https://github.com/city41/AMMiSTer/issues/125
+	// in this bug, it was grabbing DonkeyKong3's rbf for DonkeyKong
+	// by mistake. This test asserts this is no longer happening
+	describe('donkeykong/donkeykong3 bug', function () {
+		beforeAll(function () {
+			// only enable the main mister distribution, where DK lives
+			// @ts-expect-error doesn't know it is a mock
+			getSetting.mockImplementation((settingKey: keyof Settings) => {
+				switch (settingKey) {
+					case 'rootDir':
+						return Promise.resolve(TMP_DIR);
+					case 'downloadRoms':
+						return Promise.resolve(false);
+					case 'updateDbs': {
+						const updateDbs = defaultUpdateDbs.map((udb) => {
+							return {
+								...udb,
+								enabled: udb.db_id === 'distribution_mister',
+							};
+						});
 
-		callback.mockClear();
-
-		await updateCatalog(callback);
-
-		expect(callback).toHaveBeenNthCalledWith(1, {
-			fresh: false,
-			message: 'Getting the latest MiSTer Arcade Database...',
-		});
-		expect(callback).toHaveBeenNthCalledWith(2, {
-			fresh: false,
-			message: 'Checking for anything new in The Ypsilon Unofficial',
-		});
-
-		const lastCallArgs = callback.mock.lastCall?.[0];
-		expect(lastCallArgs.complete).toBe(true);
-		expect(lastCallArgs.updates).toHaveLength(0);
-		expect(lastCallArgs.message).toBe('No updates available');
-
-		const catalog = lastCallArgs.catalog as Catalog;
-		await assertCatalog(catalog);
-	});
-
-	it('should redownload a file if it was updated', async function () {
-		const callback = jest.fn().mockReturnValue(true);
-		await updateCatalog(callback);
-
-		const lastCallArgs = callback.mock.lastCall?.[0];
-		const catalog = lastCallArgs.catalog as Catalog;
-
-		await changeFirstMra(catalog);
-
-		callback.mockClear();
-
-		await updateCatalog(callback);
-
-		expect(callback).toHaveBeenNthCalledWith(1, {
-			fresh: false,
-			message: 'Getting the latest MiSTer Arcade Database...',
-		});
-		expect(callback).toHaveBeenNthCalledWith(2, {
-			fresh: false,
-			message: 'Checking for anything new in The Ypsilon Unofficial',
-		});
-		expect(callback).toHaveBeenNthCalledWith(3, {
-			fresh: false,
-			message: expect.stringMatching(/Updating .*mra/),
+						return Promise.resolve(updateDbs);
+					}
+					default:
+						return Promise.resolve('mock-setting');
+				}
+			});
 		});
 
-		const lastCallArgs2 = callback.mock.lastCall?.[0];
-		expect(lastCallArgs2.complete).toBe(true);
-		expect(lastCallArgs2.updates).toHaveLength(1);
-		expect(lastCallArgs2.message).toBe('Update finished');
+		it('should not set the dk3 rbf for dk', async function () {
+			const callback = jest.fn().mockReturnValue(true);
+			await updateCatalog(callback);
 
-		const catalog2 = lastCallArgs2.catalog as Catalog;
-		await assertCatalog(catalog2);
+			const lastCallArgs = callback.mock.lastCall?.[0];
+			const catalog = lastCallArgs.catalog as Catalog;
+			const distributionMister = catalog.distribution_mister;
+
+			const dkEntry = distributionMister.find(
+				(ce) => ce.gameName === 'Donkey Kong'
+			);
+			expect(dkEntry).toBeDefined();
+
+			expect(dkEntry!.files.rbf?.fileName).not.toContain('DonkeyKong3');
+		});
 	});
 });

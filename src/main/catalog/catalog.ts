@@ -33,6 +33,7 @@ import * as settings from '../settings';
 import { defaultUpdateDbs } from '../settings/defaultUpdateDbs';
 import { areAllNonDependentDbsEnabled } from '../settings/util';
 import { getAllCatalogEntries } from './util';
+import { getDatedFilenamePathComponents } from '../util/getDatedFilenamePathComponents';
 
 let _currentCatalog: Catalog | null = null;
 
@@ -396,7 +397,7 @@ function xmlToArray(val: string | string[] | null | undefined): string[] {
 
 /**
  * Takes an mra file and parses it to grab its metadata and ultimately
- * form an catalog entry.
+ * form a catalog entry.
  *
  * Returns null to indicate this entry should not be added to the catalog.
  * Today that only happens for hbmame games
@@ -437,13 +438,18 @@ async function parseMraToCatalogEntry(
 			mameVersion,
 		} = parsed.misterromdescription;
 
-		const rbfFileEntry = fileEntries.find(
-			(fe) =>
-				fe.type === 'rbf' &&
-				fe.relFilePath
-					.toLowerCase()
-					.startsWith(path.join('_Arcade', 'cores', rbf).toLowerCase())
-		);
+		const rbfFileEntry = fileEntries.find((fe) => {
+			if (fe.type !== 'rbf') {
+				return false;
+			}
+
+			const baseFileName = path.parse(fe.fileName).name;
+			const fileNameComponents = getDatedFilenamePathComponents(baseFileName);
+
+			return (
+				(fileNameComponents?.fileNameBase ?? baseFileName).toLowerCase() === rbf
+			);
+		});
 
 		const romEntries = Array.isArray(rom) ? rom : [rom];
 		const romEntryWithZip = romEntries.find(
