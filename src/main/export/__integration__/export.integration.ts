@@ -17,8 +17,6 @@ import { getSetting } from '../../settings';
 
 const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-export');
 
-jest.retryTimes(2);
-
 jest.mock('../../settings', () => {
 	return {
 		getSetting: jest.fn(),
@@ -449,7 +447,7 @@ describe('export integration', function () {
 
 				await assertExportLog(TMP_DIR);
 			}
-		}, 30000);
+		});
 	});
 
 	describe('speed exports', function () {

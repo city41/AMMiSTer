@@ -13,7 +13,7 @@
 		"prod-frontend": "cross-env NODE_ENV=production webpack --progress --color",
 		"prod": "yarn clean && yarn prod-backend && yarn prod-frontend && node scripts/copyIcons.js",
 		"test:unit": "yarn jest --config jest.unit.config.js",
-		"test:integration": "yarn jest --config jest.integration.config.js",
+		"test:integration": "yarn jest --config jest.integration.config.js --verbose",
 		"lint": "yarn eslint src",
 		"build:win": "electron-builder build --win",
 		"build:mac": "electron-builder build --mac",

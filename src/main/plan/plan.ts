@@ -148,8 +148,8 @@ function convertLegacyDirectory(
  * Plans used to just store CatalogEntrys in them. This was a bad idea,
  * as updates could change the name of MRA files, causing orphans. Plan entries
  * are now just a db_id and mra file path, and use the current catalog to get
- * the rest of the info. 
- * 
+ * the rest of the info.
+ *
  * This function converts the old style plan to new style
  */
 function convertLegacyPlan(plan: LegacyPlan | Plan): Plan {
