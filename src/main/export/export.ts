@@ -610,6 +610,8 @@ async function doExport(
 	clientFactory: (logger: winston.Logger) => FileClient
 ) {
 	const catalog = await getCurrentCatalog();
+	const destPathsToIgnore =
+		(await settings.getSetting<string[]>('destPathsToIgnore')) ?? [];
 
 	if (!catalog) {
 		throw new Error('doExport: no current catalog');
@@ -679,7 +681,27 @@ async function doExport(
 			[getExistingDestPaths.name]: destRomPaths,
 			for: 'games/mame',
 		});
-		const fileOperations = buildFileOperations(srcPaths, destPaths);
+
+		const finalDestPaths = destPaths.filter((dp) => {
+			if (isDestExactFileOperationPath(dp)) {
+				if (
+					destPathsToIgnore.some(
+						(dpti) => dpti.toLowerCase() === dp.relPath.toLowerCase()
+					)
+				) {
+					exportLogger.info({
+						destPathsToIgnore: dp.relPath,
+						message:
+							'removing this paths from destPaths as it is in destPathsToIgnore',
+					});
+					return false;
+				}
+			}
+
+			return true;
+		});
+
+		const fileOperations = buildFileOperations(srcPaths, finalDestPaths);
 
 		exportLogger.info({ [buildFileOperations.name]: fileOperations });
 
