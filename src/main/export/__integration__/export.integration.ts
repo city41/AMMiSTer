@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from '../../util/universalPath';
+import nodePath from 'path';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import { defaultUpdateDbs } from '../../settings/defaultUpdateDbs';
@@ -14,6 +15,7 @@ import type { Settings } from '../../settings/types';
 import { exportToDirectory } from '../export';
 import { exists } from '../../util/fs';
 import { getSetting } from '../../settings';
+import mkdirp from 'mkdirp';
 
 const TMP_DIR = path.resolve(os.tmpdir(), 'ammister-integration-tests-export');
 
@@ -219,6 +221,8 @@ describe('export integration', function () {
 					}
 					case 'exportOptimization':
 						return Promise.resolve('space');
+					case 'destPathsToIgnore':
+						return Promise.resolve([]);
 					default:
 						return Promise.resolve('mock-setting');
 				}
@@ -355,6 +359,96 @@ describe('export integration', function () {
 				secondPlan.games,
 				catalogEntries
 			);
+		});
+
+		it('should not delete files in the destPathsToIgnore array', async function () {
+			const exportDir = path.resolve(TMP_DIR, 'exported-plan-with-ignores');
+			const fileToLeaveAlone = 'games/mame/donttouch.txt';
+
+			// @ts-expect-error doesnt know it is a mock
+			getSetting.mockImplementation((settingKey: keyof Settings) => {
+				switch (settingKey) {
+					case 'rootDir':
+						return Promise.resolve(TMP_DIR);
+					case 'downloadRoms':
+						return Promise.resolve(false);
+					case 'updateDbs': {
+						const updateDbs = defaultUpdateDbs.map((udb) => {
+							return {
+								...udb,
+								enabled: udb.db_id === 'theypsilon_unofficial_distribution',
+							};
+						});
+
+						return Promise.resolve(updateDbs);
+					}
+					case 'exportOptimization':
+						return Promise.resolve('space');
+					case 'destPathsToIgnore':
+						return Promise.resolve([fileToLeaveAlone]);
+					default:
+						return Promise.resolve('mock-setting');
+				}
+			});
+
+			const pathToMake = nodePath.dirname(
+				path.resolve(exportDir, fileToLeaveAlone)
+			);
+			await mkdirp(pathToMake);
+
+			await fsp.writeFile(
+				path.resolve(exportDir, fileToLeaveAlone),
+				'leave me alone!'
+			);
+
+			const ignoredFileStatBefore = await fsp.stat(
+				path.resolve(exportDir, fileToLeaveAlone)
+			);
+
+			expect(ignoredFileStatBefore.isFile()).toBe(true);
+
+			const updateCatalogCallback = jest.fn().mockReturnValue(true);
+			await updateCatalog(updateCatalogCallback);
+
+			const catalog = updateCatalogCallback.mock.lastCall?.[0]
+				.catalog as Catalog;
+			const { updatedAt, ...rest } = catalog;
+			const catalogEntries = Object.values(rest).flat(1);
+			const firstEntry = catalogEntries[0];
+
+			const plan: Plan = {
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+				directoryName: 'integration',
+				isExpanded: true,
+				games: [
+					{
+						directoryName: 'foo',
+						isExpanded: true,
+						games: [
+							{
+								directoryName: 'bar',
+								isExpanded: true,
+								games: [
+									{
+										db_id: firstEntry.db_id,
+										relFilePath: firstEntry.files.mra.relFilePath,
+									},
+								],
+							},
+						],
+					},
+				],
+			};
+
+			const exportCallback = jest.fn().mockReturnValue(true);
+			await exportToDirectory(plan, exportDir, exportCallback);
+
+			const ignoredFileStatAfter = await fsp.stat(
+				path.resolve(exportDir, fileToLeaveAlone)
+			);
+
+			expect(ignoredFileStatAfter.isFile()).toBe(true);
 		});
 
 		// This was added to confirm Jotego's cores (which lack the date in their name) still work,

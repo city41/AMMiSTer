@@ -24,6 +24,13 @@ async function init(userDataPath: string): Promise<void> {
 	await setSetting('rootDir', userDataPath);
 	await setDefaultSetting('downloadRoms', false);
 	await setDefaultSetting('exportOptimization', 'space');
+	await setDefaultSetting('destPathsToIgnore', [
+		// this file is needed for people in Jotego's beta program.
+		// AMMister doesn't really know anything about it, but if we find it
+		// on a mister (or directory), we should leave it alone
+		// https://github.com/city41/AMMiSTer/issues/124
+		'games/mame/jtbeta.zip',
+	]);
 
 	const hasUpdateDbs = await hasSetting('updateDbs');
 

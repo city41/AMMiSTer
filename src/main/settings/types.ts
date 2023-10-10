@@ -30,6 +30,7 @@ export type Settings = {
 	mostRecentPlanDir?: string;
 	updateDbs: UpdateDbConfig[];
 	exportOptimization: ExportOptimization;
+	destPathsToIgnore: string[];
 };
 
 export type SettingChangeListener = (

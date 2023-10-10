@@ -18,6 +18,7 @@ const mockSettings: Settings = {
 	recentPlans: [],
 	updateDbs: defaultUpdateDbs,
 	exportOptimization: 'space',
+	destPathsToIgnore: [],
 };
 
 export const Basic = () => {
