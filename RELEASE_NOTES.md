@@ -4,6 +4,13 @@ Until AMMiSTer reaches 1.0.0, it is considered "beta". More features and improve
 
 # Releases
 
+## Version 0.33.2
+
+- [All] - Fixed a bug where sometimes the wrong core can get assigned to a game
+- [All] - No longer deleting games/mame/jtbeta.zip if it is found
+
+Thanks to matijaerceg for finding these issues.
+
 ## Version 0.33.1
 
 - [All] - A typo fix "Dowloading" to "Downloading", thanks Andy.
