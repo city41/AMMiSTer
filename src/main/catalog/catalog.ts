@@ -51,7 +51,8 @@ const METADATADB_URL =
 	'https://raw.githubusercontent.com/Toryalai1/MiSTer_ArcadeDatabase/db/mad_db.json.zip';
 
 const ROMDB_URL =
-	'https://raw.githubusercontent.com/theypsilon/ArcadeROMsDB_MiSTer/db/arcade_roms_db.json.zip';
+	'https://raw.githubusercontent.com/BigDendy/ArcadeROMsDB_MiSTer/db/arcade_roms_db.json.zip';
+
 /**
  * Some entries in the metadatadb don't match up with MAME slugs,
  * this map fixes that
